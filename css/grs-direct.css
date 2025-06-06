@@ -196,7 +196,6 @@
     left: 0 !important;
     width: 100% !important;
     height: 25px !important;
-   /* background: linear-gradient(rgba(255,255,255,0), rgba(255,255,255,1)) !important;*/
 }
 
 /* Only apply truncation when the class is present */
@@ -212,7 +211,6 @@
     left: 0 !important;
     width: 100% !important;
     height: 25px !important;
-    /*background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1)) !important;*/
 }
 
 .grs-direct-read-more,
@@ -242,17 +240,17 @@
     clear: both !important;
 }
 
-/* Navigation dots */
+/* Navigation dots - centered relative to entire container */
 .grs-direct-slider .slick-dots {
     bottom: -30px !important;
     text-align: center !important;
-    width: calc(100% - 280px) !important;
-    margin-left: 280px !important;
+    width: calc(100% + 280px) !important; /* Extend width to cover summary area */
+    margin-left: -280px !important; /* Pull back to start of container */
     position: absolute !important;
     list-style: none !important;
     display: block !important;
     padding: 0 !important;
-    left: 0 !important; /* Ensure proper alignment */
+    left: 0 !important;
 }
 
 .grs-direct-slider .slick-dots li {
@@ -276,17 +274,60 @@
     color: transparent !important;
     border: 0 !important;
     outline: none !important;
-    background: #ccc !important; /* Light gray background */
-    border-radius: 50% !important; /* Make dots circular */
+    background: #ccc !important;
+    border-radius: 50% !important;
 }
 
 .grs-direct-slider .slick-dots li.slick-active button {
-    background: #666 !important; /* Darker gray for active dot */
+    background: #666 !important;
 }
 
-/* Override the default content styling */
 .grs-direct-slider .slick-dots li button:before {
-    content: "" !important; /* Remove the default content */
+    content: "" !important;
+}
+
+/* NAVIGATION ARROWS - ENABLE AND STYLE */
+.grs-direct-slider .slick-prev,
+.grs-direct-slider .slick-next {
+    display: block !important; /* Override the display: none */
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    color: white !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: background 0.3s ease !important;
+}
+
+
+.grs-direct-slider .slick-prev {
+    left: 0px !important;
+}
+
+.grs-direct-slider .slick-next {
+    right: 0px !important;
+}
+
+.grs-direct-slider .slick-prev:before,
+.grs-direct-slider .slick-next:before {
+    font-family: 'slick' !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    opacity: 1 !important;
+    color: rgb(69, 69, 69) !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+.grs-direct-slider .slick-prev:before {
+    content: '←' !important;
+}
+
+.grs-direct-slider .slick-next:before {
+    content: '→' !important;
 }
 
 /* Responsive adjustments */
@@ -305,6 +346,14 @@
     .grs-direct-slider .slick-dots {
         width: 100% !important;
         margin-left: 0 !important;
+    }
+    
+    .grs-direct-slider .slick-prev {
+        left: 10px !important;
+    }
+    
+    .grs-direct-slider .slick-next {
+        right: 10px !important;
     }
 }
 
