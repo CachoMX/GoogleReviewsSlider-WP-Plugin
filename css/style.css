@@ -1,0 +1,311 @@
+.grs-slider {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0; /* Add this */
+}
+
+.grs-review {
+    box-sizing: border-box;
+    padding: 15px;
+    height: 100%; /* Make all reviews same height */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 1px 1px 7px 0 rgba(0, 0, 0, .13), 0 0 2px 0 rgba(0, 0, 0, .05);
+    border: none;
+    background-color: white;
+    backdrop-filter: blur(0);
+    border-radius: 5px;
+}
+
+.ti-review-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.ti-profile-img {
+    margin-right: 10px;
+}
+
+.ti-profile-img img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.ti-profile-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.ti-name {
+    font-weight: 700;
+    font-size: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #000;
+}
+
+.ti-date {
+    color: #000;
+    opacity: .5;
+    font-size: 11.2px !important;
+}
+
+.grs-rating {
+    margin-bottom: 10px;
+}
+
+.grs-rating .dashicons-star-filled {
+    color: gold;
+}
+
+.grs-text-container {
+    position: relative;
+}
+
+.grs-review .grs-text {
+    line-height: 21.75px;
+    font-size: 16px;
+    text-align: left;
+    transition: max-height 0.5s ease;
+    max-height: 87px; /* Initially set the max height to 87px */
+    overflow: hidden;
+    padding-right: 0;
+}
+
+.grs-review .full-text {
+    display: none;
+}
+
+.grs-review .read-more, .grs-review .hide {
+    display: block;
+    color: #888 !important;
+    font-size: 13.5px;
+    text-decoration: none;
+    margin-top: 5px;
+}
+
+.grs-review .read-more:hover, .grs-review .hide:hover {
+    text-decoration: underline;
+}
+
+.slick-dots {
+    bottom: -45px; /* Move dots 45px below their default position */
+}
+
+.grs-container {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start; /* Change from center to flex-start */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 45px; /* Add padding for dots */
+}
+
+.grs-summary {
+    flex: 0 0 250px;
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    position: sticky; /* Add this */
+    top: 20px; /* Add this */
+    margin-top: 0; /* Remove negative margin */
+    height: fit-content; /* Add this */
+}
+
+
+.ti-rating-large {
+    font-size: 24px;
+    color: #000;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.ti-stars.star-lg {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+.ti-stars.star-lg .dashicons-star-filled {
+    color: #FFC107;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.ti-rating-text {
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.ti-large-logo {
+    margin-top: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .grs-container {
+        flex-direction: column;
+    }
+    
+    .grs-summary {
+        flex: none;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+
+.place-finder {
+    position: relative;
+    margin: 20px 0;
+}
+
+#pac-input {
+    width: 400px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#map {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Container for the slides */
+.slick-track {
+    display: flex;
+    align-items: stretch;
+    gap: 20px;
+}
+
+/* Individual slide */
+.slick-slide {
+    margin: 0 10px;
+    height: auto; /* Add this */
+}
+
+.slick-slide > div {
+    height: 100%; /* Add this */
+}
+
+/* Alternative method to hide them completely */
+.slick-arrow {
+    display: none !important;
+}
+
+/* Add these rules to your style.css file */
+
+.grs-text-container {
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.grs-review .grs-text {
+    line-height: 21.75px !important;
+    font-size: 16px !important;
+    text-align: left !important;
+    transition: max-height 0.5s ease !important;
+    max-height: none !important; /* Remove the height restriction initially */
+    overflow: visible !important;
+    padding-right: 0 !important;
+    display: block !important;
+    color: #333 !important; /* Ensure text is visible */
+}
+
+.grs-review .short-text,
+.grs-review .full-text {
+    display: inline !important;
+    visibility: visible !important;
+}
+
+/* Increase the slide height to accommodate content */
+.slick-slide {
+    height: auto !important;
+    min-height: 200px !important;
+}
+
+/* Make sure review cards have appropriate height */
+.grs-review {
+    min-height: 200px !important;
+}
+
+/* Fix for Avada-specific overrides */
+.fusion-text .grs-review p {
+    margin-bottom: 10px !important;
+}
+
+/* Make sure the slider is visible */
+.grs-slider {
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-height: 200px !important;
+}
+
+/* Avada-specific fixes */
+
+/* Override any Avada content hiding */
+.fusion-text .grs-review,
+.fusion-text .grs-text-container,
+.fusion-text .grs-text,
+.fusion-text .short-text,
+.fusion-text .full-text {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Fix for Avada's slide handling */
+.fusion-content-boxes .grs-slider .slick-slide,
+.fusion-builder-container .grs-slider .slick-slide {
+    min-height: 200px !important;
+    visibility: visible !important;
+}
+
+/* Make sure text colors are visible */
+.fusion-text .grs-text {
+    color: #333 !important;
+}
+
+/* Fix for Avada's fusion-column that might be hiding content */
+.fusion-layout-column .grs-text-container,
+.fusion-layout-column .grs-text {
+    min-height: 1px !important; 
+    height: auto !important;
+    position: static !important;
+}
+
+/* Force text to display inline when it should */
+.fusion-text .grs-text .short-text,
+.fusion-text .grs-text .full-text {
+    display: inline !important;
+}
+
+/* Ensure slick slider is visible */
+.fusion-text .slick-track,
+.fusion-text .slick-list {
+    display: flex !important;
+    overflow: visible !important;
+}
+
+/* Force review boxes to maintain dimensions */
+.fusion-text .grs-slider .grs-review {
+    width: 100% !important;
+    min-height: 200px !important;
+    box-sizing: border-box !important;
+    padding: 15px !important;
+}
+
+/* Fix z-index issues */
+.fusion-text .grs-slider {
+    z-index: 1 !important;
+    position: relative !important;
+}
