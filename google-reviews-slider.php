@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved performance.
- * Version: 1.1
+ * Version: 1.2
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '1.1');
+define('GRS_VERSION', '1.2');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -39,6 +39,9 @@ function grs_activation_hook() {
     $existing_options = get_option('grs_settings', array());
     $options = wp_parse_args($existing_options, $default_options);
     update_option('grs_settings', $options);
+    
+    // Update version
+    update_option('grs_version', GRS_VERSION);
     
     // Clear any cached reviews on activation
     delete_transient('grs_reviews');
@@ -79,8 +82,8 @@ function grs_update_notice() {
     
     if (version_compare($current_version, GRS_VERSION, '<')) {
         echo '<div class="notice notice-info is-dismissible">';
-        echo '<p><strong>Google Reviews Slider</strong> has been updated to version ' . GRS_VERSION . '. ';
-        echo '<a href="' . admin_url('admin.php?page=google_reviews_slider') . '">Review your settings</a></p>';
+        echo '<p><strong>Google Reviews Slider</strong> has been updated to version ' . GRS_VERSION . '! ';
+        echo '<a href="' . admin_url('admin.php?page=google_reviews_slider') . '">View what\'s new</a></p>';
         echo '</div>';
         
         // Update the stored version

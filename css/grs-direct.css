@@ -1,140 +1,90 @@
 /* 
- * Consolidated CSS for Google Reviews Slider
- * This addresses layout conflicts and fixes render issues
+ * Google Reviews Slider - Fixed CSS
+ * Replace your css/grs-direct.css file with this content
  */
 
-/* Main container */
+/* Main wrapper */
 .grs-direct-wrapper {
     margin-bottom: 50px !important;
     padding: 0 !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: visible !important;
+    overflow: visible !important; /* Ensure arrows aren't clipped */
     position: relative !important;
 }
 
+/* Container principal */
 .grs-direct-container {
     max-width: 1200px !important;
     margin: 0 auto !important;
-    padding-bottom: 45px !important;
+    padding-bottom: 60px !important;
     position: relative !important;
-    clear: both !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    display: flex !important;
+    gap: 30px !important;
+    align-items: flex-start !important;
 }
 
 /* Summary box */
 .grs-direct-summary {
     background: white !important;
-    padding: 20px !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    padding: 30px 20px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
     text-align: center !important;
-    width: 250px !important;
-    float: left !important;
-    margin-right: 30px !important;
-    min-height: 265px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    z-index: 1 !important;
+    flex: 0 0 250px !important;
+    position: sticky !important;
+    top: 20px !important;
+    height: fit-content !important;
 }
 
-/* Star ratings */
-.grs-direct-stars {
-    display: flex !important;
-    justify-content: center !important;
-    margin: 15px 0 !important;
-}
-
-.grs-direct-stars .dashicons-star-filled {
-    color: #FFC107 !important;
-    font-size: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-}
-
-.grs-direct-rating-large {
-    font-size: 28px !important;
-    font-weight: bold !important;
-    color: #000 !important;
-    display: block !important;
-    margin-bottom: 10px !important;
-}
-
-.grs-direct-stars.small .dashicons-star-filled {
-    font-size: 16px !important;
-    width: 16px !important;
-    height: 16px !important;
-}
-
-/* Review slider container */
+/* Slider container */
 .grs-direct-slider-container {
-    overflow: hidden !important;
-    margin-left: 280px !important; /* Adjust based on summary width + margin */
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: visible !important; /* Changed to visible to show arrows */
+    position: relative !important;
+    padding: 0 30px !important; /* Add padding for arrow space */
 }
 
-/* Slick slider overrides - force horizontal layout */
-.grs-direct-slider .slick-list {
-    overflow: visible !important;
+/* Main slider */
+.grs-direct-slider {
+    position: relative !important;
     margin: 0 !important;
-    padding: 0 10px !important; /* Add padding instead of negative margin */
+}
+
+/* Slick overrides */
+.grs-direct-slider .slick-list {
+    overflow: hidden !important;
+    margin: 0 -10px !important;
+    padding: 0 !important;
 }
 
 .grs-direct-slider .slick-track {
     display: flex !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    left: 0 !important; /* Prevent left offset */
+    align-items: stretch !important;
 }
 
 .grs-direct-slider .slick-slide {
     height: auto !important;
-    float: left !important;
-    min-height: 220px !important;
-    margin: 0 10px !important;
-    opacity: 1 !important; /* Ensure all slides are visible */
+    padding: 0 10px !important;
 }
 
-/* Hide slider content initially */
-.grs-direct-slider {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease;
-    position: relative !important;
+.grs-direct-slider .slick-slide > div {
+    height: 100% !important;
 }
 
-.grs-direct-slider.slick-initialized {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Add a loading state */
-.grs-direct-slider:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #fff;
-    z-index: 1;
-}
-
-.grs-direct-slider.slick-initialized:before {
-    display: none;
-}
-
-/* Review slide styles */
+/* Review cards */
 .grs-direct-review {
     box-sizing: border-box !important;
     padding: 20px !important;
-    height: auto !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: 1px 1px 7px 0 rgba(0, 0, 0, .13), 0 0 2px 0 rgba(0, 0, 0, .05) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     border: 1px solid #e8e8e8 !important;
     background-color: white !important;
-    min-height: 265px !important;
+    border-radius: 4px !important;
+    min-height: 250px !important;
 }
 
 /* Review header */
@@ -156,69 +106,96 @@
     object-fit: cover !important;
 }
 
+.grs-direct-profile-details {
+    flex: 1 !important;
+}
+
 .grs-direct-name {
     font-weight: 700 !important;
     font-size: 16px !important;
     color: #000 !important;
+    line-height: 1.2 !important;
 }
 
 .grs-direct-date {
-    color: #000 !important;
-    opacity: .5 !important;
+    color: #666 !important;
     font-size: 14px !important;
+    line-height: 1.2 !important;
+}
+
+/* Stars */
+.grs-direct-stars {
+    display: flex !important;
+    justify-content: center !important;
+    margin: 15px 0 !important;
 }
 
 .grs-direct-stars.small {
     justify-content: flex-start !important;
-    margin: 0 0 10px 0 !important;
+    margin: 0 0 15px 0 !important;
 }
 
-/* Review text container */
-.grs-direct-text-container {
-    position: relative !important;
-    overflow: hidden !important;
+.grs-direct-stars .dashicons-star-filled {
+    color: #FFC107 !important;
+    font-size: 24px !important;
+    width: 24px !important;
+    height: 24px !important;
+}
+
+.grs-direct-stars.small .dashicons-star-filled {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.grs-direct-rating-large {
+    font-size: 28px !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    display: block !important;
+    margin-bottom: 10px !important;
+}
+
+.grs-direct-rating-text {
+    margin: 15px 0 !important;
+    font-size: 14px !important;
+    color: #666 !important;
+}
+
+/* Review content */
+.grs-direct-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .grs-direct-text {
-    margin: 0 !important;
+    margin: 0 0 10px 0 !important;
     padding: 0 !important;
-    transition: max-height 0.3s ease-out !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+    font-size: 14px !important;
 }
 
 .grs-direct-text.truncated {
-    max-height: 100px !important;
-}
-
-.grs-direct-text.truncated:after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 25px !important;
-}
-
-/* Only apply truncation when the class is present */
-.grs-direct-review .grs-direct-text.truncated {
-    max-height: 100px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 4 !important;
+    -webkit-box-orient: vertical !important;
     overflow: hidden !important;
-}
-
-.grs-direct-review .grs-direct-text.truncated:after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 25px !important;
 }
 
 .grs-direct-read-more,
 .grs-direct-hide {
     color: #666 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     text-decoration: none !important;
     cursor: pointer !important;
+    margin-top: auto !important;
+}
+
+.grs-direct-read-more:hover,
+.grs-direct-hide:hover {
+    text-decoration: underline !important;
 }
 
 /* Google logo */
@@ -233,82 +210,35 @@
     height: auto !important;
 }
 
-/* Clear float to contain the layout */
-.grs-direct-container:after {
-    content: "" !important;
-    display: table !important;
-    clear: both !important;
-}
-
-/* Navigation dots - centered relative to entire container */
-.grs-direct-slider .slick-dots {
-    bottom: -30px !important;
-    text-align: center !important;
-    width: calc(100% + 280px) !important; /* Extend width to cover summary area */
-    margin-left: -280px !important; /* Pull back to start of container */
-    position: absolute !important;
-    list-style: none !important;
-    display: block !important;
-    padding: 0 !important;
-    left: 0 !important;
-}
-
-.grs-direct-slider .slick-dots li {
-    position: relative !important;
-    display: inline-block !important;
-    margin: 0 5px !important;
-    padding: 0 !important;
-    cursor: pointer !important;
-    width: 12px !important;
-    height: 12px !important;
-}
-
-.grs-direct-slider .slick-dots li button {
-    font-size: 0 !important;
-    line-height: 0 !important;
-    display: block !important;
-    width: 12px !important;
-    height: 12px !important;
-    padding: 0 !important;
-    cursor: pointer !important;
-    color: transparent !important;
-    border: 0 !important;
-    outline: none !important;
-    background: #ccc !important;
-    border-radius: 50% !important;
-}
-
-.grs-direct-slider .slick-dots li.slick-active button {
-    background: #666 !important;
-}
-
-.grs-direct-slider .slick-dots li button:before {
-    content: "" !important;
-}
-
-/* NAVIGATION ARROWS - ENABLE AND STYLE */
+/* Navigation arrows */
 .grs-direct-slider .slick-prev,
 .grs-direct-slider .slick-next {
-    display: block !important; /* Override the display: none */
     position: absolute !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    border: none !important;
+    width: 40px !important;
+    height: 40px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #ddd !important;
     border-radius: 50% !important;
-    color: white !important;
-    font-size: 18px !important;
+    z-index: 100 !important; /* Increased z-index */
     cursor: pointer !important;
-    z-index: 10 !important;
-    transition: background 0.3s ease !important;
+    transition: all 0.3s ease !important;
+    display: block !important; /* Force display */
 }
 
-
 .grs-direct-slider .slick-prev {
-    left: 0px !important;
+    left: -25px !important; /* Position within padding area */
 }
 
 .grs-direct-slider .slick-next {
-    right: 0px !important;
+    right: -25px !important; /* Position within padding area */
+}
+
+.grs-direct-slider .slick-prev:hover,
+.grs-direct-slider .slick-next:hover {
+    background: white !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .grs-direct-slider .slick-prev:before,
@@ -316,8 +246,8 @@
     font-family: 'slick' !important;
     font-size: 20px !important;
     line-height: 1 !important;
-    opacity: 1 !important;
-    color: rgb(69, 69, 69) !important;
+    opacity: 0.75 !important;
+    color: #333 !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
 }
@@ -330,22 +260,66 @@
     content: '→' !important;
 }
 
-/* Responsive adjustments */
+/* Navigation dots */
+.grs-direct-slider.slick-dotted.slick-slider {
+    margin-bottom: 30px !important;
+}
+
+.grs-direct-slider .slick-dots {
+    position: absolute !important;
+    bottom: -25px !important;
+    left: 0 !important;
+    right: 0 !important;
+    text-align: center !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.grs-direct-slider .slick-dots li {
+    display: inline-block !important;
+    margin: 0 5px !important;
+    width: 10px !important;
+    height: 10px !important;
+}
+
+.grs-direct-slider .slick-dots li button {
+    display: block !important;
+    width: 10px !important;
+    height: 10px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    background: #ccc !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.grs-direct-slider .slick-dots li button:before {
+    content: '' !important;
+}
+
+.grs-direct-slider .slick-dots li.slick-active button {
+    background: #333 !important;
+}
+
+.grs-direct-slider .slick-dots li button:hover {
+    background: #666 !important;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
+    .grs-direct-container {
+        flex-direction: column !important;
+    }
+    
     .grs-direct-summary {
-        float: none !important;
+        flex: none !important;
         width: 100% !important;
-        margin-right: 0 !important;
-        margin-bottom: 30px !important;
-    }
-    
-    .grs-direct-slider-container {
-        margin-left: 0 !important;
-    }
-    
-    .grs-direct-slider .slick-dots {
-        width: 100% !important;
-        margin-left: 0 !important;
+        margin-bottom: 20px !important;
+        position: static !important;
     }
     
     .grs-direct-slider .slick-prev {
@@ -357,18 +331,10 @@
     }
 }
 
-/* Force visibility overrides for theme conflicts */
-.grs-direct-slider,
-.grs-direct-review,
-.grs-direct-text,
-.grs-direct-stars,
-.grs-direct-read-more,
-.grs-direct-hide {
+/* Force visibility */
+.grs-direct-slider.slick-initialized,
+.grs-direct-slider.slick-initialized * {
     visibility: visible !important;
     opacity: 1 !important;
-    display: block !important;
 }
 
-.grs-direct-stars {
-    display: flex !important;
-}

@@ -115,6 +115,20 @@ function grs_options_page() {
             color: #666;
             font-size: 12px;
         }
+        .grs-changelog {
+            background: #e8f4f8;
+            border: 1px solid #c3dce8;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .grs-changelog h3 {
+            margin-top: 0;
+            color: #0073aa;
+        }
+        .grs-changelog ul {
+            margin-bottom: 0;
+        }
     </style>
     <div class="wrap">
         <h1>
@@ -181,14 +195,32 @@ function grs_options_page() {
             </li>
         </ol>
 
-        <h3>What's New in Version 1.1</h3>
-        <ul>
-            <li>✅ Improved cache management with manual clear option</li>
-            <li>✅ Better error handling and user feedback</li>
-            <li>✅ Enhanced admin interface with status indicators</li>
-            <li>✅ Performance optimizations</li>
-            <li>✅ Better WordPress compatibility</li>
-        </ul>
+        <div class="grs-changelog">
+            <h3>🎉 What's New in Version 1.2</h3>
+            <ul>
+                <li>✅ <strong>Fixed "Read More" functionality</strong> - Now expands only the clicked review instead of all reviews</li>
+                <li>✅ <strong>Improved navigation</strong> - Added visible pagination dots and navigation arrows</li>
+                <li>✅ <strong>Better layout handling</strong> - Fixed cut-off reviews on slider edges</li>
+                <li>✅ <strong>Enhanced responsive design</strong> - Improved mobile and tablet display</li>
+                <li>✅ <strong>Optimized performance</strong> - Smoother animations and transitions</li>
+                <li>✅ <strong>Bug fixes</strong> - Resolved various display issues with Avada and other themes</li>
+            </ul>
+        </div>
+
+        <h3>Previous Updates</h3>
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">Version 1.1</summary>
+            <ul style="margin-top: 10px;">
+                <li>✅ Improved cache management with manual clear option</li>
+                <li>✅ Better error handling and user feedback</li>
+                <li>✅ Enhanced admin interface with status indicators</li>
+                <li>✅ Performance optimizations</li>
+                <li>✅ Better WordPress compatibility</li>
+            </ul>
+        </details>
+
+        <h3>Support</h3>
+        <p>Need help? Visit our <a href="https://carlosaragon.online/contact/" target="_blank">support page</a> or check out the <a href="https://wordpress.org/support/plugin/google-reviews-slider/" target="_blank">WordPress forum</a>.</p>
     </div>
 
     <script>
