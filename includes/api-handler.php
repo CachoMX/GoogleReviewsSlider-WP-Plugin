@@ -53,8 +53,10 @@ function grs_get_reviews() {
     });
 
     // Cache both the reviews and total count
-    set_transient('grs_reviews', $filtered_reviews, DAY_IN_SECONDS);
-    set_transient('grs_total_review_count', $total_review_count, DAY_IN_SECONDS);
+    // Set cache for 1 month (30 days)
+    $one_month = 30 * DAY_IN_SECONDS;
+    set_transient('grs_reviews', $filtered_reviews, $one_month);
+    set_transient('grs_total_review_count', $total_review_count, $one_month);
 
     return [
         'reviews' => $filtered_reviews,

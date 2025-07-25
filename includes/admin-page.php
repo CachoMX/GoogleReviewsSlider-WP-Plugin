@@ -151,7 +151,7 @@ function grs_options_page() {
             <div class="grs-cache-section">
                 <h3>Cache Management</h3>
                 <p><strong>Cache Status:</strong> <span id="cache-status"><?php echo $cache_status; ?></span></p>
-                <p>Reviews are cached for 24 hours to improve performance and reduce API calls.</p>
+                <p>Reviews are cached for 1 month to improve performance and reduce API calls.</p>
                 <button type="button" id="clear-cache-btn" class="button button-secondary">Clear Cache Now</button>
                 <span id="cache-message" style="margin-left: 10px;"></span>
             </div>
