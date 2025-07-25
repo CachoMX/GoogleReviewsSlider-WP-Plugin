@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved performance.
- * Version: 1.2
+ * Version: 1.3
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '1.2');
+define('GRS_VERSION', '1.3');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -74,6 +74,167 @@ function grs_enqueue_assets() {
     ));
 }
 add_action('wp_enqueue_scripts', 'grs_enqueue_assets');
+
+// Add mobile-specific inline styles
+add_action('wp_head', 'grs_mobile_inline_styles', 999);
+function grs_mobile_inline_styles() {
+    // Only add on pages with the shortcode
+    global $post;
+    if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'google_reviews_slider')) {
+        return;
+    }
+    ?>
+    <style id="grs-mobile-fixes">
+    /* Critical mobile fixes for Google Reviews Slider */
+    @media screen and (max-width: 768px) {
+        .grs-direct-wrapper {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 15px !important;
+        }
+        
+        .grs-direct-slider {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            min-height: 300px !important;
+        }
+        
+        .grs-direct-slider .slick-slide {
+            opacity: 1 !important;
+            visibility: visible !important;
+            height: auto !important;
+        }
+        
+        .grs-direct-review {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: flex !important;
+            min-height: 200px !important;
+            background: white !important;
+            border: 1px solid #e8e8e8 !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .grs-direct-slider .slick-track {
+            display: flex !important;
+        }
+        
+        .grs-direct-slider .slick-initialized .slick-slide {
+            display: block !important;
+        }
+        
+        /* Force review content to show */
+        .grs-direct-header,
+        .grs-direct-profile-img,
+        .grs-direct-profile-details,
+        .grs-direct-name,
+        .grs-direct-date,
+        .grs-direct-stars,
+        .grs-direct-content,
+        .grs-direct-text {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+        }
+        
+        .grs-direct-header {
+            display: flex !important;
+        }
+        
+        .grs-direct-stars {
+            display: flex !important;
+        }
+        
+        .grs-direct-stars .dashicons-star-filled {
+            color: #FFC107 !important;
+            font-size: 16px !important;
+            width: 16px !important;
+            height: 16px !important;
+        }
+        
+        /* Ensure text is readable */
+        .grs-direct-text {
+            color: #333 !important;
+            font-size: 13px !important;
+            line-height: 1.5 !important;
+        }
+        
+        .grs-direct-name {
+            color: #000 !important;
+            font-weight: 700 !important;
+        }
+        
+        .grs-direct-date {
+            color: #666 !important;
+        }
+        
+        /* Fix truncation on mobile */
+        .grs-direct-text.truncated {
+            display: -webkit-box !important;
+            -webkit-line-clamp: 4 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+        }
+        
+        /* Summary box mobile */
+        .grs-direct-summary {
+            background: white !important;
+            padding: 20px !important;
+            margin-bottom: 20px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        /* Profile images */
+        .grs-direct-profile-img img {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 50% !important;
+            display: block !important;
+        }
+    }
+    
+    /* Additional fix for iOS Safari */
+    @supports (-webkit-touch-callout: none) {
+        .grs-direct-slider,
+        .grs-direct-slider * {
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+    }
+    </style>
+    
+    <script>
+    // Mobile-specific JavaScript fixes
+    (function() {
+        if (window.innerWidth <= 768) {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Force display of reviews on mobile
+                setTimeout(function() {
+                    var reviews = document.querySelectorAll('.grs-direct-review');
+                    reviews.forEach(function(review) {
+                        review.style.opacity = '1';
+                        review.style.visibility = 'visible';
+                        review.style.display = 'flex';
+                    });
+                    
+                    var sliders = document.querySelectorAll('.grs-direct-slider');
+                    sliders.forEach(function(slider) {
+                        slider.style.opacity = '1';
+                        slider.style.visibility = 'visible';
+                        slider.style.minHeight = '300px';
+                    });
+                    
+                    // Trigger resize event to refresh slider
+                    if (typeof jQuery !== 'undefined' && jQuery('.grs-direct-slider').hasClass('slick-initialized')) {
+                        jQuery('.grs-direct-slider').slick('refresh');
+                    }
+                }, 500);
+            });
+        }
+    })();
+    </script>
+    <?php
+}
 
 // Add version check and update notice
 add_action('admin_notices', 'grs_update_notice');

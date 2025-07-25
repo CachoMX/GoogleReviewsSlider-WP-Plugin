@@ -1,39 +1,34 @@
 <?php
 /**
- * Google Reviews Slider - UPDATED Shortcode Implementation
- * Fixed to work with improved CSS and JavaScript
+ * Google Reviews Slider - Fixed Mobile Display
+ * Updated shortcode implementation with mobile fixes
  */
 
 add_action('init', 'grs_direct_init');
 
 function grs_direct_init() {
     add_shortcode('google_reviews_slider', 'grs_direct_display');
-    
-    // Register and enqueue assets
     add_action('wp_enqueue_scripts', 'grs_direct_enqueue_assets');
 }
 
 function grs_direct_enqueue_assets() {
-    // Only enqueue on pages that use the shortcode
     if (!has_shortcode(get_post()->post_content ?? '', 'google_reviews_slider') && !is_admin()) {
         return;
     }
     
-    // Enqueue required styles and scripts
     wp_enqueue_style('dashicons');
     wp_enqueue_script('jquery');
     
-    // Use CDN for Slick resources with version control
+    // Slick carousel
     wp_enqueue_style('grs-slick', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', array(), '1.8.1');
     wp_enqueue_style('grs-slick-theme', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', array(), '1.8.1');
     wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.8.1', true);
     
-    // Enqueue our custom styles and scripts with cache busting
-    $version = get_option('grs_version', '1.1') . '.' . time(); // Cache busting during development
+    // Custom styles and scripts
+    $version = get_option('grs_version', '1.2') . '.' . time();
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('grs-slick', 'grs-slick-theme'), $version);
     wp_enqueue_script('grs-direct-script', plugins_url('js/script.js', dirname(__FILE__)), array('jquery', 'grs-slick-js'), $version, true);
     
-    // Localize script with useful data
     wp_localize_script('grs-direct-script', 'grsData', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('grs_nonce'),
@@ -43,25 +38,21 @@ function grs_direct_enqueue_assets() {
 }
 
 function grs_direct_display($atts) {
-    // Parse shortcode attributes
     $atts = shortcode_atts(array(
         'show_summary' => 'true',
         'min_rating' => null,
         'autoplay' => 'true',
         'autoplay_speed' => '4000',
         'slides_desktop' => '3',
-        'slides_tablet' => '2',
+        'slides_tablet' => '2', 
         'slides_mobile' => '1'
     ), $atts, 'google_reviews_slider');
     
-    // Get reviews data from API handler
     $options = get_option('grs_settings');
     $cached_reviews = get_transient('grs_reviews');
     $total_review_count = get_transient('grs_total_review_count');
     
-    // Check if we need to fetch reviews
     if ($cached_reviews === false || $total_review_count === false) {
-        // Include API handler if not already included
         if (!function_exists('grs_get_reviews')) {
             include_once(plugin_dir_path(dirname(__FILE__)) . 'includes/api-handler.php');
         }
@@ -75,7 +66,7 @@ function grs_direct_display($atts) {
                     <br><small>This message is only visible to administrators.</small>
                 </div>';
             }
-            return ''; // Don't show errors to regular visitors
+            return '';
         }
         
         $reviews = $result['reviews'];
@@ -94,7 +85,6 @@ function grs_direct_display($atts) {
         return '';
     }
     
-    // Apply minimum rating filter from shortcode attribute
     if ($atts['min_rating'] !== null) {
         $min_rating = intval($atts['min_rating']);
         $reviews = array_filter($reviews, function($review) use ($min_rating) {
@@ -102,23 +92,19 @@ function grs_direct_display($atts) {
         });
     }
     
-    // Calculate average rating for display
     $total_rating = 0;
     foreach ($reviews as $review) {
         $total_rating += $review['rating'];
     }
     $average_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 5;
     
-    // Generate a unique ID for this slider instance
     $unique_id = 'grs-slider-' . uniqid();
     
-    // Start output buffering
     ob_start();
     ?>
     <div class="grs-direct-wrapper" id="<?php echo esc_attr($unique_id); ?>-wrapper">
         <div class="grs-direct-container">
             <?php if ($atts['show_summary'] === 'true') : ?>
-            <!-- Summary section -->
             <div class="grs-direct-summary">
                 <div class="grs-direct-rating-large">EXCELLENT</div>
                 <div class="grs-direct-stars">
@@ -139,7 +125,6 @@ function grs_direct_display($atts) {
             </div>
             <?php endif; ?>
             
-            <!-- Reviews slider -->
             <div class="grs-direct-slider-container">
                 <div id="<?php echo esc_attr($unique_id); ?>" 
                      class="grs-direct-slider" 
@@ -197,21 +182,22 @@ function grs_direct_display($atts) {
         </div>
     </div>
     
-    <?php
-    // Add debug info for administrators
-    if (current_user_can('manage_options') && (defined('WP_DEBUG') && WP_DEBUG)) {
-        ?>
-        <script>
-        console.log('Google Reviews Slider Debug Info:', {
-            sliderId: '<?php echo $unique_id; ?>',
-            reviewCount: <?php echo count($reviews); ?>,
-            totalReviews: <?php echo $total_review_count; ?>,
-            averageRating: <?php echo $average_rating; ?>,
-            attributes: <?php echo json_encode($atts); ?>
-        });
-        </script>
-        <?php
-    }
+    <!-- Mobile-specific initialization script -->
+    <script>
+    (function() {
+        // Force initialization on mobile
+        if (window.innerWidth <= 768) {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    if (typeof jQuery !== 'undefined' && jQuery('.grs-direct-slider').length) {
+                        jQuery('.grs-direct-slider').trigger('refresh');
+                    }
+                }, 100);
+            });
+        }
+    })();
+    </script>
     
+    <?php
     return ob_get_clean();
 }

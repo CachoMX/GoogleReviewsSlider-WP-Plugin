@@ -1,6 +1,6 @@
 /* 
- * Google Reviews Slider - Fixed CSS
- * Replace your css/grs-direct.css file with this content
+ * Google Reviews Slider - Mobile Fixed CSS
+ * Fixed display issues on mobile devices
  */
 
 /* Main wrapper */
@@ -9,8 +9,9 @@
     padding: 0 !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    overflow: visible !important; /* Ensure arrows aren't clipped */
+    overflow: visible !important;
     position: relative !important;
+    display: block !important;
 }
 
 /* Container principal */
@@ -41,15 +42,17 @@
 .grs-direct-slider-container {
     flex: 1 !important;
     min-width: 0 !important;
-    overflow: visible !important; /* Changed to visible to show arrows */
+    overflow: visible !important;
     position: relative !important;
-    padding: 0 30px !important; /* Add padding for arrow space */
+    padding: 0 30px !important;
 }
 
 /* Main slider */
 .grs-direct-slider {
     position: relative !important;
     margin: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 /* Slick overrides */
@@ -67,6 +70,8 @@
 .grs-direct-slider .slick-slide {
     height: auto !important;
     padding: 0 10px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .grs-direct-slider .slick-slide > div {
@@ -85,6 +90,8 @@
     background-color: white !important;
     border-radius: 4px !important;
     min-height: 250px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Review header */
@@ -96,6 +103,7 @@
 
 .grs-direct-profile-img {
     margin-right: 15px !important;
+    flex-shrink: 0 !important;
 }
 
 .grs-direct-profile-img img {
@@ -108,6 +116,7 @@
 
 .grs-direct-profile-details {
     flex: 1 !important;
+    min-width: 0 !important;
 }
 
 .grs-direct-name {
@@ -115,6 +124,7 @@
     font-size: 16px !important;
     color: #000 !important;
     line-height: 1.2 !important;
+    word-wrap: break-word !important;
 }
 
 .grs-direct-date {
@@ -175,6 +185,8 @@
     line-height: 1.5 !important;
     color: #333 !important;
     font-size: 14px !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
 }
 
 .grs-direct-text.truncated {
@@ -221,18 +233,18 @@
     background: rgba(255, 255, 255, 0.9) !important;
     border: 1px solid #ddd !important;
     border-radius: 50% !important;
-    z-index: 100 !important; /* Increased z-index */
+    z-index: 100 !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
-    display: block !important; /* Force display */
+    display: block !important;
 }
 
 .grs-direct-slider .slick-prev {
-    left: -25px !important; /* Position within padding area */
+    left: -25px !important;
 }
 
 .grs-direct-slider .slick-next {
-    right: -25px !important; /* Position within padding area */
+    right: -25px !important;
 }
 
 .grs-direct-slider .slick-prev:hover,
@@ -309,10 +321,16 @@
     background: #666 !important;
 }
 
-/* Responsive design */
+/* Mobile-specific styles */
 @media (max-width: 768px) {
+    .grs-direct-wrapper {
+        padding: 0 15px !important;
+    }
+    
     .grs-direct-container {
         flex-direction: column !important;
+        padding-bottom: 40px !important;
+        gap: 20px !important;
     }
     
     .grs-direct-summary {
@@ -320,21 +338,112 @@
         width: 100% !important;
         margin-bottom: 20px !important;
         position: static !important;
+        padding: 20px 15px !important;
+    }
+    
+    .grs-direct-slider-container {
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    
+    .grs-direct-slider {
+        width: 100% !important;
+    }
+    
+    .grs-direct-slider .slick-list {
+        margin: 0 !important;
+        padding: 0 5px !important;
+    }
+    
+    .grs-direct-slider .slick-slide {
+        padding: 0 5px !important;
+    }
+    
+    .grs-direct-review {
+        min-height: 200px !important;
+        padding: 15px !important;
     }
     
     .grs-direct-slider .slick-prev {
         left: 10px !important;
+        width: 35px !important;
+        height: 35px !important;
     }
     
     .grs-direct-slider .slick-next {
         right: 10px !important;
+        width: 35px !important;
+        height: 35px !important;
+    }
+    
+    .grs-direct-slider .slick-prev:before,
+    .grs-direct-slider .slick-next:before {
+        font-size: 16px !important;
+    }
+    
+    .grs-direct-rating-large {
+        font-size: 24px !important;
+    }
+    
+    .grs-direct-name {
+        font-size: 14px !important;
+    }
+    
+    .grs-direct-date {
+        font-size: 12px !important;
+    }
+    
+    .grs-direct-text {
+        font-size: 13px !important;
+    }
+    
+    /* Force visibility on mobile */
+    .grs-direct-slider,
+    .grs-direct-slider .slick-list,
+    .grs-direct-slider .slick-track,
+    .grs-direct-slider .slick-slide,
+    .grs-direct-review,
+    .grs-direct-review * {
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+    }
+    
+    .grs-direct-slider .slick-track {
+        display: flex !important;
+    }
+    
+    .grs-direct-header,
+    .grs-direct-content,
+    .grs-direct-stars {
+        display: flex !important;
     }
 }
 
-/* Force visibility */
+/* Force visibility everywhere */
 .grs-direct-slider.slick-initialized,
 .grs-direct-slider.slick-initialized * {
     visibility: visible !important;
     opacity: 1 !important;
 }
 
+/* Additional mobile fixes for smaller screens */
+@media (max-width: 480px) {
+    .grs-direct-wrapper {
+        padding: 0 10px !important;
+    }
+    
+    .grs-direct-review {
+        min-height: 180px !important;
+        padding: 12px !important;
+    }
+    
+    .grs-direct-profile-img img {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .grs-direct-profile-img {
+        margin-right: 10px !important;
+    }
+}

@@ -1,79 +1,102 @@
-// Google Reviews Slider - Fixed Read More Functionality
-// Replace your js/script.js file with this content
-
+// Google Reviews Slider - Mobile Fixed JavaScript
 jQuery(document).ready(function($) {
-    console.log("Google Reviews Slider: Starting with fixed read more...");
+    console.log("Google Reviews Slider: Initializing with mobile fixes...");
+    
+    // Check if we're on mobile
+    const isMobile = window.innerWidth <= 768;
     
     // Initialize slider
     function initSlider() {
-        const $slider = $('.grs-direct-slider');
+        const $sliders = $('.grs-direct-slider');
         
-        if ($slider.length === 0) {
-            console.log('No slider found');
+        if ($sliders.length === 0) {
+            console.log('No sliders found');
             return;
         }
         
-        if ($slider.hasClass('slick-initialized')) {
-            console.log('Slider already initialized');
-            return;
-        }
-        
-        const reviewCount = $slider.find('.grs-direct-review').length;
-        console.log('Initializing slider with', reviewCount, 'reviews');
-        
-        try {
-            $slider.slick({
-                slidesToShow: 3,
-                slidesToScroll: 1,
-                infinite: reviewCount > 3,
-                dots: reviewCount > 3,
-                arrows: reviewCount > 3,
-                autoplay: reviewCount > 3,
-                autoplaySpeed: 4000,
-                speed: 500,
-                pauseOnHover: true,
-                adaptiveHeight: false,
-                variableWidth: false,
-                centerMode: false,
-                prevArrow: '<button class="slick-prev">‹</button>',
-                nextArrow: '<button class="slick-next">›</button>',
-                responsive: [
-                    {
-                        breakpoint: 1024,
-                        settings: {
-                            slidesToShow: 2,
-                            slidesToScroll: 1,
-                            infinite: reviewCount > 2,
-                            dots: reviewCount > 2,
-                            arrows: reviewCount > 2
-                        }
-                    },
-                    {
-                        breakpoint: 768,
-                        settings: {
-                            slidesToShow: 1,
-                            slidesToScroll: 1,
-                            infinite: reviewCount > 1,
-                            dots: reviewCount > 1,
-                            arrows: reviewCount > 1
-                        }
-                    }
-                ]
-            });
+        $sliders.each(function() {
+            const $slider = $(this);
             
-            $slider.on('init reInit afterChange', function(event, slick) {
+            if ($slider.hasClass('slick-initialized')) {
+                console.log('Slider already initialized');
+                return;
+            }
+            
+            const reviewCount = $slider.find('.grs-direct-review').length;
+            console.log('Initializing slider with', reviewCount, 'reviews');
+            
+            // Get data attributes
+            const autoplay = $slider.data('autoplay') === 'true';
+            const autoplaySpeed = parseInt($slider.data('autoplay-speed')) || 4000;
+            const slidesDesktop = parseInt($slider.data('slides-desktop')) || 3;
+            const slidesTablet = parseInt($slider.data('slides-tablet')) || 2;
+            const slidesMobile = parseInt($slider.data('slides-mobile')) || 1;
+            
+            try {
+                $slider.slick({
+                    slidesToShow: slidesDesktop,
+                    slidesToScroll: 1,
+                    infinite: reviewCount > slidesDesktop,
+                    dots: true,
+                    arrows: reviewCount > 1,
+                    autoplay: autoplay && reviewCount > slidesDesktop,
+                    autoplaySpeed: autoplaySpeed,
+                    speed: 500,
+                    pauseOnHover: true,
+                    adaptiveHeight: false,
+                    variableWidth: false,
+                    centerMode: false,
+                    mobileFirst: false,
+                    prevArrow: '<button type="button" class="slick-prev" aria-label="Previous">‹</button>',
+                    nextArrow: '<button type="button" class="slick-next" aria-label="Next">›</button>',
+                    responsive: [
+                        {
+                            breakpoint: 1024,
+                            settings: {
+                                slidesToShow: slidesTablet,
+                                slidesToScroll: 1,
+                                infinite: reviewCount > slidesTablet,
+                                dots: true,
+                                arrows: reviewCount > slidesTablet
+                            }
+                        },
+                        {
+                            breakpoint: 768,
+                            settings: {
+                                slidesToShow: slidesMobile,
+                                slidesToScroll: 1,
+                                infinite: reviewCount > slidesMobile,
+                                dots: true,
+                                arrows: reviewCount > slidesMobile,
+                                adaptiveHeight: true
+                            }
+                        }
+                    ]
+                });
+                
+                // Force visibility after initialization
                 $slider.css({
                     'opacity': '1',
-                    'visibility': 'visible',
-                    'display': 'block'
+                    'visibility': 'visible'
                 });
-            });
-            
-            console.log('Slider initialized successfully');
-            
-        } catch (error) {
-            console.error('Slider initialization failed:', error);
-        }
+                
+                // Force refresh on mobile
+                if (isMobile) {
+                    setTimeout(function() {
+                        $slider.slick('setPosition');
+                        $slider.find('.slick-slide').css({
+                            'opacity': '1',
+                            'visibility': 'visible'
+                        });
+                    }, 100);
+                }
+                
+                console.log('Slider initialized successfully');
+                
+            } catch (error) {
+                console.error('Slider initialization failed:', error);
+            }
+        });
     }
     
     // Initialize read more functionality
@@ -85,7 +108,6 @@ jQuery(document).ready(function($) {
             const $showLess = $review.find('.grs-direct-hide');
             const text = $text.text().trim();
             
-            // Check if text needs truncation
             if (text.length > 150) {
                 $text.addClass('truncated');
                 $readMore.show();
@@ -97,7 +119,7 @@ jQuery(document).ready(function($) {
         });
     }
     
-    // Read more click handler - expand only the clicked review
+    // Read more click handler
     $(document).on('click', '.grs-direct-read-more', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -113,12 +135,13 @@ jQuery(document).ready(function($) {
         $showLess.show();
         
         // Update slider position
-        if ($('.grs-direct-slider').hasClass('slick-initialized')) {
-            $('.grs-direct-slider').slick('setPosition');
+        const $slider = $this.closest('.grs-direct-slider');
+        if ($slider.hasClass('slick-initialized')) {
+            $slider.slick('setPosition');
         }
     });
     
-    // Show less click handler - collapse only the clicked review
+    // Show less click handler
     $(document).on('click', '.grs-direct-hide', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -134,50 +157,107 @@ jQuery(document).ready(function($) {
         $readMore.show();
         
         // Update slider position
-        if ($('.grs-direct-slider').hasClass('slick-initialized')) {
-            $('.grs-direct-slider').slick('setPosition');
+        const $slider = $this.closest('.grs-direct-slider');
+        if ($slider.hasClass('slick-initialized')) {
+            $slider.slick('setPosition');
         }
     });
     
     // Main initialization
-    function waitAndInit() {
-        let attempts = 0;
+    function init() {
+        console.log('Starting initialization...');
         
-        function check() {
-            attempts++;
-            
-            if (typeof $.fn.slick !== 'undefined') {
-                console.log('Slick library loaded');
-                initReadMore();
-                initSlider();
-            } else if (attempts < 50) {
-                setTimeout(check, 200);
-            } else {
-                console.error('Slick library failed to load');
-            }
+        // Initialize read more functionality first
+        initReadMore();
+        
+        // Check if Slick is loaded
+        if (typeof $.fn.slick !== 'undefined') {
+            console.log('Slick is loaded, initializing slider...');
+            initSlider();
+        } else {
+            console.log('Waiting for Slick to load...');
+            // Wait for Slick to load
+            let attempts = 0;
+            const checkInterval = setInterval(function() {
+                attempts++;
+                if (typeof $.fn.slick !== 'undefined') {
+                    console.log('Slick loaded after', attempts, 'attempts');
+                    clearInterval(checkInterval);
+                    initSlider();
+                } else if (attempts > 50) {
+                    console.error('Slick failed to load after 50 attempts');
+                    clearInterval(checkInterval);
+                }
+            }, 100);
         }
-        
-        check();
     }
     
     // Start initialization
-    waitAndInit();
+    init();
     
-    // Backup on window load
-    $(window).on('load', function() {
-        setTimeout(function() {
-            if ($('.grs-direct-slider').length && !$('.grs-direct-slider').hasClass('slick-initialized')) {
-                console.log('Backup initialization');
-                waitAndInit();
-            }
-        }, 1000);
-    });
+    // Mobile-specific initialization
+    if (isMobile) {
+        // Force re-initialization after DOM is fully loaded
+        $(window).on('load', function() {
+            setTimeout(function() {
+                $('.grs-direct-slider').each(function() {
+                    const $slider = $(this);
+                    if ($slider.hasClass('slick-initialized')) {
+                        $slider.slick('setPosition');
+                    } else {
+                        console.log('Re-initializing slider on mobile...');
+                        init();
+                    }
+                });
+            }, 500);
+        });
+        
+        // Handle orientation change
+        $(window).on('orientationchange', function() {
+            setTimeout(function() {
+                $('.grs-direct-slider').each(function() {
+                    if ($(this).hasClass('slick-initialized')) {
+                        $(this).slick('setPosition');
+                    }
+                });
+            }, 300);
+        });
+    }
     
     // Resize handler
+    let resizeTimer;
     $(window).on('resize', function() {
-        if ($('.grs-direct-slider').hasClass('slick-initialized')) {
-            $('.grs-direct-slider').slick('setPosition');
-        }
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            $('.grs-direct-slider').each(function() {
+                if ($(this).hasClass('slick-initialized')) {
+                    $(this).slick('setPosition');
+                }
+            });
+        }, 250);
     });
+    
+    // Force visibility fix
+    function forceVisibility() {
+        $('.grs-direct-slider, .grs-direct-review').css({
+            'visibility': 'visible',
+            'opacity': '1'
+        });
+    }
+    
+    // Apply visibility fix
+    forceVisibility();
+    setTimeout(forceVisibility, 1000);
+    
+    // Debug information
+    if (window.grsData && window.grsData.isDebug) {
+        console.log('Google Reviews Slider Debug:', {
+            'Mobile': isMobile,
+            'Window Width': window.innerWidth,
+            'Sliders Found': $('.grs-direct-slider').length,
+            'Reviews Found': $('.grs-direct-review').length,
+            'jQuery Version': $.fn.jquery,
+            'Slick Loaded': typeof $.fn.slick !== 'undefined'
+        });
+    }
 });
-
