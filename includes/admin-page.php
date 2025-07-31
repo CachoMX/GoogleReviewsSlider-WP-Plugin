@@ -232,6 +232,19 @@ function grs_options_page() {
             </li>
         </ol>
 
+        <button type="button" onclick="testAPI()" class="button">Test API Connection</button>
+        <script>
+        function testAPI() {
+            jQuery.post(ajaxurl, {
+                action: 'grs_test_api',
+                nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+            }, function(response) {
+                console.log('API Test Response:', response);
+                alert('Check console for API response');
+            });
+        }
+        </script>
+
         <div class="grs-changelog">
             <h3>🎉 What's New in Version 2.0</h3>
             <ul>

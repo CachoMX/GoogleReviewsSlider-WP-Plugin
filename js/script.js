@@ -522,5 +522,22 @@ jQuery(document).ready(function($) {
         }
     }, 10000);
     
+    // Check if Slick is loaded
+    console.log('Slick loaded?', typeof jQuery.fn.slick);
+
+    // Check if slider exists
+    console.log('Slider elements:', jQuery('.grs-direct-slider').length);
+
+    // Check if already initialized
+    console.log('Already initialized?', jQuery('.grs-direct-slider').hasClass('slick-initialized'));
+
+    // Try to manually initialize
+    jQuery('.grs-direct-slider').slick({
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        dots: true,
+        arrows: true
+    });
+
     console.log('Google Reviews Slider initialization complete');
 });

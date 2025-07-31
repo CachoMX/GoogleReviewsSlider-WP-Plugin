@@ -284,9 +284,14 @@ class GRS_Reviews_Manager {
             
             // Extract reviews
             $('#extract-reviews-btn').on('click', function() {
+                console.log('Extract button clicked');
                 var button = $(this);
                 var status = $('#extraction-status');
                 var reviewsLimit = $('#reviews_limit').val();
+                
+                console.log('Place ID:', placeId);
+                console.log('Reviews Limit:', reviewsLimit);
+                console.log('Nonce:', '<?php echo wp_create_nonce("grs_nonce"); ?>');
                 
                 button.prop('disabled', true);
                 status.removeClass('success error').addClass('loading').html(
@@ -303,6 +308,7 @@ class GRS_Reviews_Manager {
                         nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                     },
                     success: function(response) {
+                        console.log('Success response:', response);
                         if (response.success) {
                             var data = response.data;
                             status.removeClass('loading error').addClass('success').html(
@@ -315,12 +321,15 @@ class GRS_Reviews_Manager {
                                 location.reload();
                             }, 2000);
                         } else {
+                            console.error('Error in response:', response);
                             status.removeClass('loading success').addClass('error').html(
-                                '<span class="dashicons dashicons-warning"></span> Error: ' + response.data
+                                '<span class="dashicons dashicons-warning"></span> Error: ' + (response.data || 'Unknown error')
                             );
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
+                        console.error('AJAX error:', xhr, status, error);
+                        console.error('Response Text:', xhr.responseText);
                         status.removeClass('loading success').addClass('error').html(
                             '<span class="dashicons dashicons-warning"></span> An error occurred while extracting reviews.'
                         );

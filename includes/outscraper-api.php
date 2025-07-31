@@ -189,17 +189,53 @@ class GRS_Outscraper_API {
                 'reviews_per_rating' => isset($place_data['reviews_per_rating']) ? $place_data['reviews_per_rating'] : null
             );
             
-            // Extract reviews
-            if (!isset($place_data['reviews_data']) || !is_array($place_data['reviews_data'])) {
+            // Extract reviews - handle different possible field names
+            $reviews = array();
+            if (isset($place_data['reviews_data']) && is_array($place_data['reviews_data'])) {
+                $reviews = $place_data['reviews_data'];
+            } elseif (isset($place_data['reviews']) && is_array($place_data['reviews'])) {
+                $reviews = $place_data['reviews'];
+            }
+            
+            if (empty($reviews)) {
                 throw new Exception('No reviews found in API response');
             }
             
-            $reviews = $place_data['reviews_data'];
             $results['reviews_found'] = count($reviews);
+            
+            // Process each review to ensure proper data structure
+            $processed_reviews = array();
+            foreach ($reviews as $review) {
+                // Map Outscraper fields to our expected structure
+                $processed_review = array(
+                    'review_id' => isset($review['review_id']) ? $review['review_id'] : 
+                                (isset($review['id']) ? $review['id'] : uniqid()),
+                    'author_name' => isset($review['author_title']) ? $review['author_title'] : 
+                                    (isset($review['name']) ? $review['name'] : 
+                                    (isset($review['author_name']) ? $review['author_name'] : 'Anonymous')),
+                    'author_url' => isset($review['author_link']) ? $review['author_link'] : 
+                                (isset($review['author_url']) ? $review['author_url'] : null),
+                    'profile_photo_url' => isset($review['author_image']) ? $review['author_image'] : 
+                                        (isset($review['profile_photo_url']) ? $review['profile_photo_url'] : null),
+                    'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
+                    'text' => isset($review['review_text']) ? $review['review_text'] : 
+                            (isset($review['text']) ? $review['text'] : ''),
+                    'time' => isset($review['review_timestamp']) ? $review['review_timestamp'] : 
+                            (isset($review['time']) ? $review['time'] : time()),
+                    'relative_time_description' => isset($review['review_datetime_utc']) ? $review['review_datetime_utc'] : 
+                                                (isset($review['relative_time_description']) ? $review['relative_time_description'] : ''),
+                    'language' => isset($review['review_language']) ? $review['review_language'] : 'en',
+                    'photos_links' => isset($review['review_photos']) ? $review['review_photos'] : null,
+                    'review_likes_count' => isset($review['likes_count']) ? intval($review['likes_count']) : 0,
+                    'is_local_guide' => isset($review['is_local_guide']) ? $review['is_local_guide'] : false
+                );
+                
+                $processed_reviews[] = $processed_review;
+            }
             
             // Save reviews to database
             require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-            $saved_count = GRS_Database::save_reviews($place_id, $reviews);
+            $saved_count = GRS_Database::save_reviews($place_id, $processed_reviews);
             
             $results['reviews_saved'] = $saved_count;
             $results['success'] = true;
@@ -235,7 +271,8 @@ class GRS_Outscraper_API {
      * @return array|WP_Error
      */
     public function get_usage_info() {
-        $url = self::API_BASE_URL . '/usage';
+        // Try the correct endpoint for Outscraper
+        $url = self::API_BASE_URL . '/api-keys/me';
         
         $response = wp_remote_get($url, array(
             'timeout' => 30,
@@ -253,6 +290,26 @@ class GRS_Outscraper_API {
         $response_body = wp_remote_retrieve_body($response);
         
         if ($response_code !== 200) {
+            // If the first endpoint fails, try an alternative
+            $url_alt = self::API_BASE_URL . '/account/info';
+            
+            $response_alt = wp_remote_get($url_alt, array(
+                'timeout' => 30,
+                'headers' => array(
+                    'X-API-KEY' => $this->api_token,
+                    'Accept' => 'application/json'
+                )
+            ));
+            
+            if (!is_wp_error($response_alt)) {
+                $response_code = wp_remote_retrieve_response_code($response_alt);
+                $response_body = wp_remote_retrieve_body($response_alt);
+                
+                if ($response_code === 200) {
+                    return json_decode($response_body, true);
+                }
+            }
+            
             return new WP_Error(
                 'api_error',
                 sprintf('API returned error code: %d', $response_code),
@@ -308,18 +365,23 @@ add_action('wp_ajax_grs_extract_reviews', 'grs_handle_extract_reviews');
 function grs_handle_extract_reviews() {
     // Check permissions
     if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
+        wp_send_json_error('Unauthorized access');
+        return;
     }
     
     // Verify nonce
-    check_ajax_referer('grs_nonce', 'nonce');
+    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
     
     // Get parameters
-    $place_id = sanitize_text_field($_POST['place_id']);
+    $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
     $reviews_limit = isset($_POST['reviews_limit']) ? intval($_POST['reviews_limit']) : 100;
     
     if (empty($place_id)) {
         wp_send_json_error('Place ID is required');
+        return;
     }
     
     // Initialize API
@@ -330,6 +392,7 @@ function grs_handle_extract_reviews() {
     
     if (is_wp_error($response)) {
         wp_send_json_error($response->get_error_message());
+        return;
     }
     
     // Process and save reviews
@@ -338,30 +401,40 @@ function grs_handle_extract_reviews() {
     if ($results['success']) {
         wp_send_json_success($results);
     } else {
-        wp_send_json_error($results['error']);
+        wp_send_json_error($results['error'] ?: 'Unknown error occurred');
     }
 }
 
-// AJAX handler for checking API usage
-add_action('wp_ajax_grs_check_api_usage', 'grs_handle_check_api_usage');
-function grs_handle_check_api_usage() {
-    // Check permissions
+// Debug function to test the API connection
+add_action('wp_ajax_grs_test_api', 'grs_test_api_connection');
+function grs_test_api_connection() {
     if (!current_user_can('manage_options')) {
         wp_die('Unauthorized');
     }
     
-    // Verify nonce
-    check_ajax_referer('grs_nonce', 'nonce');
-    
-    // Initialize API
     $api = new GRS_Outscraper_API();
     
-    // Get usage info
-    $usage = $api->get_usage_info();
+    // Test the API token
+    $test_url = GRS_Outscraper_API::API_BASE_URL . '/maps/reviews-v3?query=test&reviewsLimit=1&async=false';
     
-    if (is_wp_error($usage)) {
-        wp_send_json_error($usage->get_error_message());
+    $response = wp_remote_get($test_url, array(
+        'timeout' => 30,
+        'headers' => array(
+            'X-API-KEY' => $api->api_token,
+            'Accept' => 'application/json'
+        )
+    ));
+    
+    if (is_wp_error($response)) {
+        wp_send_json_error('Connection error: ' . $response->get_error_message());
+        return;
     }
     
-    wp_send_json_success($usage);
+    $response_code = wp_remote_retrieve_response_code($response);
+    $response_body = wp_remote_retrieve_body($response);
+    
+    wp_send_json_success(array(
+        'code' => $response_code,
+        'body' => json_decode($response_body, true)
+    ));
 }

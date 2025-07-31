@@ -102,10 +102,10 @@ class GRS_Database {
             $data = array(
                 'place_id' => $place_id,
                 'review_id' => isset($review['review_id']) ? $review['review_id'] : md5($review['author_name'] . $review['time']),
-                'author_name' => $review['author_name'],
+                'author_name' => !empty($review['author_name']) ? $review['author_name'] : 'Anonymous User',
                 'author_url' => isset($review['author_url']) ? $review['author_url'] : null,
                 'profile_photo_url' => isset($review['profile_photo_url']) ? $review['profile_photo_url'] : null,
-                'rating' => intval($review['rating']),
+                'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
                 'text' => isset($review['text']) ? $review['text'] : '',
                 'time' => isset($review['time']) ? $review['time'] : time(),
                 'relative_time_description' => isset($review['relative_time_description']) ? $review['relative_time_description'] : '',
@@ -151,6 +151,8 @@ class GRS_Database {
             "SELECT * FROM $table_name 
             WHERE place_id = %s 
             AND rating >= %d 
+            AND text != ''
+            AND text IS NOT NULL
             ORDER BY time DESC 
             LIMIT %d",
             $place_id,

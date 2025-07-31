@@ -282,14 +282,25 @@ include(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
 // Add AJAX endpoint for clearing cache
 add_action('wp_ajax_grs_clear_cache', 'grs_clear_cache_callback');
 function grs_clear_cache_callback() {
-    check_ajax_referer('grs_nonce', 'nonce');
+    // Check nonce
+    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
     
     if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
+        wp_send_json_error('Unauthorized');
+        return;
     }
     
     delete_transient('grs_reviews');
     delete_transient('grs_total_review_count');
     
     wp_send_json_success('Cache cleared successfully');
+}
+
+// Simple test AJAX handler
+add_action('wp_ajax_grs_test_ajax', 'grs_test_ajax_handler');
+function grs_test_ajax_handler() {
+    wp_send_json_success(array('message' => 'AJAX is working!'));
 }

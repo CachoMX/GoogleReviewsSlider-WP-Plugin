@@ -406,6 +406,30 @@ function grs_direct_display($atts) {
         setInterval(forceVisibility, 3000);
         
     })();
+
+    // Force slider initialization after a delay
+    setTimeout(function() {
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.slick !== 'undefined') {
+            jQuery('.grs-direct-slider').each(function() {
+                if (!jQuery(this).hasClass('slick-initialized')) {
+                    jQuery(this).slick({
+                        slidesToShow: 3,
+                        slidesToScroll: 1,
+                        dots: true,
+                        arrows: true,
+                        responsive: [
+                            {
+                                breakpoint: 768,
+                                settings: {
+                                    slidesToShow: 1
+                                }
+                            }
+                        ]
+                    });
+                }
+            });
+        }
+    }, 1000);
     </script>
     
     <!-- Fallback CSS for non-JavaScript users -->
