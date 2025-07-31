@@ -1,4 +1,15 @@
 <?php
+// Enqueue admin styles
+add_action('admin_enqueue_scripts', 'grs_admin_enqueue_scripts');
+function grs_admin_enqueue_scripts($hook) {
+    // Only load on our admin page
+    if ($hook !== 'toplevel_page_google_reviews_slider') {
+        return;
+    }
+    
+    wp_enqueue_style('grs-admin-styles', GRS_PLUGIN_URL . 'css/admin-styles.css', array(), GRS_VERSION);
+}
+
 function grs_add_admin_menu() {
     add_menu_page(
         'Google Reviews Slider', // Page title
@@ -46,6 +57,14 @@ function grs_settings_init() {
         'pluginPage', 
         'grs_pluginPage_section'
     );
+
+    add_settings_field(
+        'grs_outscraper_token', 
+        __('Outscraper API Token', 'grs'), 
+        'grs_outscraper_token_render', 
+        'pluginPage', 
+        'grs_pluginPage_section'
+    );
 }
 add_action('admin_init', 'grs_settings_init');
 
@@ -87,6 +106,17 @@ function grs_min_rating_render() {
         <option value='5' <?php selected($current, '5'); ?>>5 Stars only</option>
     </select>
     <p class="description">Only show reviews with this rating or higher.</p>
+    <?php
+}
+
+function grs_outscraper_token_render() {
+    $options = get_option('grs_settings');
+    $default_token = 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg';
+    $current_token = isset($options['grs_outscraper_token']) ? $options['grs_outscraper_token'] : $default_token;
+    ?>
+    <input type='text' name='grs_settings[grs_outscraper_token]' style="width: 400px;" 
+           value='<?php echo esc_attr($current_token); ?>'>
+    <p class="description">Outscraper API token for extracting more reviews. Default token is pre-filled.</p>
     <?php
 }
 
@@ -169,6 +199,13 @@ function grs_options_page() {
             <?php endif; ?>
 
             <?php submit_button(); ?>
+            <?php 
+            // Show reviews manager if we have a place ID
+            if (!empty($options['grs_place_id'])) : 
+                require_once(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
+                GRS_Reviews_Manager::display_interface($options['grs_place_id']);
+            endif;
+            ?>
         </form>
 
         <h2>How to Use the Google Reviews Slider</h2>
@@ -196,18 +233,39 @@ function grs_options_page() {
         </ol>
 
         <div class="grs-changelog">
-            <h3>🎉 What's New in Version 1.2</h3>
+            <h3>🎉 What's New in Version 2.0</h3>
             <ul>
-                <li>✅ <strong>Fixed "Read More" functionality</strong> - Now expands only the clicked review instead of all reviews</li>
-                <li>✅ <strong>Improved navigation</strong> - Added visible pagination dots and navigation arrows</li>
-                <li>✅ <strong>Better layout handling</strong> - Fixed cut-off reviews on slider edges</li>
-                <li>✅ <strong>Enhanced responsive design</strong> - Improved mobile and tablet display</li>
-                <li>✅ <strong>Optimized performance</strong> - Smoother animations and transitions</li>
-                <li>✅ <strong>Bug fixes</strong> - Resolved various display issues with Avada and other themes</li>
+                <li>✅ <strong>Outscraper Integration</strong> - Extract up to 500 reviews from Google!</li>
+                <li>✅ <strong>Review Database</strong> - All reviews stored locally for instant access</li>
+                <li>✅ <strong>Review Manager</strong> - View, filter, and manage all your reviews</li>
+                <li>✅ <strong>Statistics Dashboard</strong> - See review counts by rating breakdown</li>
+                <li>✅ <strong>Extraction History</strong> - Track when and how many reviews were extracted</li>
+                <li>✅ <strong>Enhanced Filtering</strong> - Show only 5-star reviews with plenty to display</li>
+                <li>✅ <strong>API Usage Tracking</strong> - Monitor your Outscraper API usage</li>
+                <li>✅ <strong>Performance Boost</strong> - Database caching for lightning-fast loading</li>
             </ul>
         </div>
 
         <h3>Previous Updates</h3>
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">Version 1.3</summary>
+            <ul style="margin-top: 10px;">
+                <li>✅ Fixed mobile display issues</li>
+                <li>✅ Improved Avada theme compatibility</li>
+                <li>✅ Enhanced review text visibility</li>
+                <li>✅ Better responsive behavior</li>
+            </ul>
+        </details>
+        <details>
+            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">Version 1.2</summary>
+            <ul style="margin-top: 10px;">
+                <li>✅ Fixed "Read More" functionality</li>
+                <li>✅ Added visible pagination dots</li>
+                <li>✅ Improved navigation arrows</li>
+                <li>✅ Better layout handling</li>
+                <li>✅ Enhanced responsive design</li>
+            </ul>
+        </details>
         <details>
             <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">Version 1.1</summary>
             <ul style="margin-top: 10px;">

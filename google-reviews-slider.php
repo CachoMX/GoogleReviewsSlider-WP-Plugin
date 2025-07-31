@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved performance.
- * Version: 1.3
+ * Version: 2.0
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '1.3');
+define('GRS_VERSION', '2.0');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -46,6 +46,13 @@ function grs_activation_hook() {
     // Clear any cached reviews on activation
     delete_transient('grs_reviews');
     delete_transient('grs_total_review_count');
+
+    // Initialize database tables
+    require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+    GRS_Database::init();
+
+    // Add Outscraper API token to default options
+    $default_options['grs_outscraper_token'] = 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg';
 }
 
 // Plugin deactivation hook
@@ -265,9 +272,12 @@ function grs_add_settings_link($links) {
 }
 
 // Include necessary files
+include(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+include(GRS_PLUGIN_PATH . 'includes/outscraper-api.php');
 include(GRS_PLUGIN_PATH . 'includes/admin-page.php');
 include(GRS_PLUGIN_PATH . 'includes/shortcode.php');
 include(GRS_PLUGIN_PATH . 'includes/api-handler.php');
+include(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
 
 // Add AJAX endpoint for clearing cache
 add_action('wp_ajax_grs_clear_cache', 'grs_clear_cache_callback');

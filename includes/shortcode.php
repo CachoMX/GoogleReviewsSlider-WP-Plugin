@@ -67,60 +67,80 @@ function grs_direct_display($atts) {
         'slides_mobile' => '1'
     ), $atts, 'google_reviews_slider');
     
-    // Get plugin settings and cached data
+    // Get plugin settings
     $options = get_option('grs_settings');
-    $cached_reviews = get_transient('grs_reviews');
-    $total_review_count = get_transient('grs_total_review_count');
+    $place_id = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';
     
-    // If no cached data, fetch from API
-    if ($cached_reviews === false || $total_review_count === false) {
-        if (!function_exists('grs_get_reviews')) {
-            include_once(plugin_dir_path(dirname(__FILE__)) . 'includes/api-handler.php');
-        }
-        
-        $result = grs_get_reviews();
-        
-        if (isset($result['error'])) {
-            if (current_user_can('manage_options')) {
-                return '<div class="grs-error" style="padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404; margin: 20px 0;">
-                    <strong>Google Reviews Slider Error:</strong> ' . esc_html($result['error']) . '
-                    <br><small>This message is only visible to administrators. <a href="' . admin_url('admin.php?page=google_reviews_slider') . '">Configure Settings</a></small>
-                </div>';
-            }
-            return '';
-        }
-        
-        $reviews = $result['reviews'];
-        $total_review_count = $result['total_count'];
-    } else {
-        $reviews = $cached_reviews;
-    }
-    
-    // Check if we have reviews to display
-    if (empty($reviews)) {
+    if (empty($place_id)) {
         if (current_user_can('manage_options')) {
             return '<div class="grs-error" style="padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404; margin: 20px 0;">
-                <strong>Google Reviews Slider:</strong> No reviews available. Please check your API configuration.
+                <strong>Google Reviews Slider:</strong> Place ID not configured.
                 <br><small>This message is only visible to administrators. <a href="' . admin_url('admin.php?page=google_reviews_slider') . '">Configure Settings</a></small>
             </div>';
         }
         return '';
     }
     
-    // Filter reviews by minimum rating if specified
-    if ($atts['min_rating'] !== null) {
-        $min_rating = intval($atts['min_rating']);
-        $reviews = array_filter($reviews, function($review) use ($min_rating) {
-            return $review['rating'] >= $min_rating;
-        });
+    // Load database handler
+    require_once(plugin_dir_path(dirname(__FILE__)) . 'includes/database-handler.php');
+    
+    // Determine minimum rating
+    $min_rating = $atts['min_rating'] !== null ? intval($atts['min_rating']) : 
+                  (isset($options['grs_min_rating']) ? intval($options['grs_min_rating']) : 1);
+    
+    // Get reviews from database
+    $reviews = GRS_Database::get_reviews($place_id, $min_rating, 50);
+    
+    // If no reviews in database, try to get from Google API first
+    if (empty($reviews)) {
+        // Try cached transient data first
+        $cached_reviews = get_transient('grs_reviews');
+        
+        if ($cached_reviews === false) {
+            // Try to fetch from Google API
+            if (!function_exists('grs_get_reviews')) {
+                include_once(plugin_dir_path(dirname(__FILE__)) . 'includes/api-handler.php');
+            }
+            
+            $result = grs_get_reviews();
+            
+            if (!isset($result['error']) && isset($result['reviews'])) {
+                $reviews = $result['reviews'];
+                // Save to database for future use
+                GRS_Database::save_reviews($place_id, $reviews);
+            }
+        } else {
+            $reviews = $cached_reviews;
+            // Save cached reviews to database
+            GRS_Database::save_reviews($place_id, $reviews);
+        }
     }
     
-    // Calculate average rating
-    $total_rating = 0;
-    foreach ($reviews as $review) {
-        $total_rating += $review['rating'];
+    // Get stats for the summary
+    $stats = GRS_Database::get_review_stats($place_id);
+    $total_review_count = $stats['total'];
+    
+    // Check if we have reviews to display
+    if (empty($reviews)) {
+        if (current_user_can('manage_options')) {
+            return '<div class="grs-error" style="padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404; margin: 20px 0;">
+                <strong>Google Reviews Slider:</strong> No reviews found. 
+                <br>Please <a href="' . admin_url('admin.php?page=google_reviews_slider') . '">extract reviews</a> using the admin panel.
+                <br><small>This message is only visible to administrators.</small>
+            </div>';
+        }
+        return '';
     }
-    $average_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 5;
+    
+    // Reviews are already filtered by rating from database query
+    
+    // Calculate average rating
+    $average_rating = $stats['average'] ?: 5;
+    
+    // Use actual total from database if available
+    if ($total_review_count === 0 && !empty($reviews)) {
+        $total_review_count = count($reviews);
+    }
     
     // Generate unique ID for this slider instance
     $unique_id = 'grs-slider-' . uniqid();
@@ -235,7 +255,9 @@ function grs_direct_display($atts) {
                         $review_text = !empty($review['text']) ? $review['text'] : '(No review text provided)';
                         $needs_truncation = strlen($review_text) > 150;
                         $author_name = esc_html($review['author_name']);
-                        $time_description = esc_html($review['relative_time_description']);
+                        $time_description = !empty($review['relative_time_description']) ? 
+                            esc_html($review['relative_time_description']) : 
+                            date('F Y', $review['time']);
                         $profile_photo = !empty($review['profile_photo_url']) ? 
                             esc_url($review['profile_photo_url']) : 
                             plugins_url('assets/default-avatar.png', dirname(__FILE__));
