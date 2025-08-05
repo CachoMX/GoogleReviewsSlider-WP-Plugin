@@ -116,9 +116,34 @@ function grs_direct_display($atts) {
         }
     }
     
-    // Get stats for the summary
+    // Get stats for the summary    
     $stats = GRS_Database::get_review_stats($place_id);
-    $total_review_count = $stats['total'];
+
+    // Get the actual total from Google instead of database count
+    $options = get_option('grs_settings');
+    $api_key = isset($options['grs_api_key']) ? $options['grs_api_key'] : '';
+
+    // Try to get the real total from Google
+    $google_total = get_transient('grs_google_total_reviews');
+    if ($google_total === false && !empty($api_key)) {
+        // Make API call to get place details
+        $url = "https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id&key=$api_key&fields=user_ratings_total";
+        $response = wp_remote_get($url);
+        
+        if (!is_wp_error($response)) {
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+            
+            if (isset($data['result']['user_ratings_total'])) {
+                $google_total = $data['result']['user_ratings_total'];
+                // Cache for 24 hours
+                set_transient('grs_google_total_reviews', $google_total, DAY_IN_SECONDS);
+            }
+        }
+    }
+
+    // Use Google total if available, otherwise fall back to database count
+    $total_review_count = $google_total !== false ? $google_total : $stats['total'];
     
     // Check if we have reviews to display
     if (empty($reviews)) {
@@ -227,14 +252,11 @@ function grs_direct_display($atts) {
                 </div>
                 <div class="grs-direct-rating-text">
                     Based on <strong><?php echo esc_html($total_review_count); ?> reviews</strong>
-                    <?php if (count($reviews) < $total_review_count) : ?>
-                        <br><small>Showing <?php echo count($reviews); ?> recent reviews</small>
-                    <?php endif; ?>
                 </div>
                 <div class="grs-direct-logo">
                     <img src="<?php echo esc_url(plugins_url('assets/google-logo.svg', dirname(__FILE__))); ?>" 
-                         alt="Google" width="110" height="35"
-                         style="max-width: 110px; height: auto;">
+                        alt="Google" width="110" height="35"
+                        style="max-width: 110px; height: auto;">
                 </div>
             </div>
             <?php endif; ?>
