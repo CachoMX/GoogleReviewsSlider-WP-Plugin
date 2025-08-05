@@ -299,6 +299,7 @@ function grs_clear_cache_callback() {
     wp_send_json_success('Cache cleared successfully');
 }
 
+
 // Simple test AJAX handler
 add_action('wp_ajax_grs_test_ajax', 'grs_test_ajax_handler');
 function grs_test_ajax_handler() {
