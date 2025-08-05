@@ -1,5 +1,25 @@
 jQuery(document).ready(function($) {
     console.log("Google Reviews Slider: Initializing horizontal layout...");
+    setTimeout(function() {
+        var sliderCount = $('.grs-direct-slider.slick-initialized').length;
+        var arrowCount = $('.grs-direct-slider .slick-arrow').length;
+        console.log('GRS Debug - Sliders initialized:', sliderCount);
+        console.log('GRS Debug - Arrows found:', arrowCount);
+        
+        // Force arrow visibility if they exist but are hidden
+        $('.grs-direct-slider .slick-arrow').each(function() {
+            var display = $(this).css('display');
+            var visibility = $(this).css('visibility');
+            console.log('Arrow display:', display, 'visibility:', visibility);
+            
+            // Force show
+            $(this).css({
+                'display': 'flex',
+                'opacity': '1',
+                'visibility': 'visible'
+            });
+        });
+    }, 2000);
     
     // Initialize all sliders
     function initializeSliders() {
@@ -147,4 +167,5 @@ jQuery(document).ready(function($) {
             $('.grs-direct-slider.slick-initialized').slick('setPosition');
         }, 250);
     });
+
 });
