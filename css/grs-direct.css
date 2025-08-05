@@ -1,382 +1,205 @@
-/* 
- * Google Reviews Slider - Mobile Fixed CSS
- * Comprehensive fix for Avada theme compatibility and mobile display
- */
+/* CRITICAL FIX: Force Horizontal Layout for Google Reviews Slider */
 
-/* CRITICAL: High specificity overrides for Avada compatibility */
+/* Reset any conflicting styles */
 .grs-direct-wrapper,
-.fusion-body .grs-direct-wrapper,
-.fusion-builder-container .grs-direct-wrapper,
-body .grs-direct-wrapper {
-    margin-bottom: 50px !important;
-    padding: 0 !important;
-    width: 100% !important;
+.grs-direct-wrapper * {
     box-sizing: border-box !important;
-    overflow: visible !important;
-    position: relative !important;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    clear: both !important;
 }
 
-/* Container principal with Avada overrides */
-.grs-direct-container,
-.fusion-body .grs-direct-container,
-.fusion-builder-container .grs-direct-container {
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding-bottom: 60px !important;
-    position: relative !important;
+/* Main container */
+.grs-direct-container {
     display: flex !important;
     gap: 30px !important;
     align-items: flex-start !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
 }
 
-/* Summary box with theme overrides */
-.grs-direct-summary,
-.fusion-body .grs-direct-summary,
-.fusion-builder-container .grs-direct-summary {
+/* Summary box */
+.grs-direct-summary {
+    flex: 0 0 250px !important;
     background: white !important;
     padding: 30px 20px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
     text-align: center !important;
-    flex: 0 0 250px !important;
     position: sticky !important;
     top: 20px !important;
-    height: fit-content !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
 }
 
-/* Slider container with theme overrides */
-.grs-direct-slider-container,
-.fusion-body .grs-direct-slider-container,
-.fusion-builder-container .grs-direct-slider-container {
+/* CRITICAL: Slider container */
+.grs-direct-slider-container {
     flex: 1 !important;
     min-width: 0 !important;
-    overflow: visible !important;
-    position: relative !important;
-    padding: 0 30px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
-/* CRITICAL: Main slider fixes */
-.grs-direct-slider,
-.fusion-body .grs-direct-slider,
-.fusion-builder-container .grs-direct-slider,
-.fusion-text .grs-direct-slider {
-    position: relative !important;
-    margin: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 300px !important;
-    background: transparent !important;
-}
-
-/* CRITICAL: Slick overrides for Avada */
-.grs-direct-slider .slick-list,
-.fusion-body .grs-direct-slider .slick-list,
-.fusion-builder-container .grs-direct-slider .slick-list {
     overflow: hidden !important;
-    margin: 0 -10px !important;
+}
+
+/* CRITICAL: Main slider element */
+.grs-direct-slider {
+    width: 100% !important;
+    position: relative !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* CRITICAL: Slick list container */
+.grs-direct-slider .slick-list {
+    overflow: hidden !important;
+    position: relative !important;
+    display: block !important;
+    margin: 0 !important;
     padding: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    position: relative !important;
-    height: auto !important;
 }
 
-.grs-direct-slider .slick-track,
-.fusion-body .grs-direct-slider .slick-track,
-.fusion-builder-container .grs-direct-slider .slick-track {
-    display: flex !important;
-    align-items: stretch !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+/* CRITICAL: Slick track - This makes reviews horizontal */
+.grs-direct-slider .slick-track {
     position: relative !important;
-    left: 0 !important;
     top: 0 !important;
-    width: auto !important;
-    height: auto !important;
+    left: 0 !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
-.grs-direct-slider .slick-slide,
-.fusion-body .grs-direct-slider .slick-slide,
-.fusion-builder-container .grs-direct-slider .slick-slide {
-    height: auto !important;
-    padding: 0 10px !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: block !important;
-    position: relative !important;
-    float: none !important;
-    width: auto !important;
+/* CRITICAL: Before/after for clearfix */
+.grs-direct-slider .slick-track:before,
+.grs-direct-slider .slick-track:after {
+    display: table !important;
+    content: '' !important;
+}
+
+.grs-direct-slider .slick-track:after {
+    clear: both !important;
+}
+
+/* CRITICAL: Individual slides - Float left for horizontal display */
+.grs-direct-slider .slick-slide {
+    display: none !important;
+    float: left !important;
+    height: 100% !important;
     min-height: 1px !important;
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
 }
 
-.grs-direct-slider .slick-slide > div,
-.fusion-body .grs-direct-slider .slick-slide > div,
-.fusion-builder-container .grs-direct-slider .slick-slide > div {
-    height: 100% !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+/* CRITICAL: Show slides when initialized */
+.grs-direct-slider.slick-initialized .slick-slide {
     display: block !important;
 }
 
-/* CRITICAL: Review cards with maximum specificity */
-.grs-direct-review,
-.fusion-body .grs-direct-review,
-.fusion-builder-container .grs-direct-review,
-.fusion-text .grs-direct-review,
-.fusion-content-boxes .grs-direct-review {
-    box-sizing: border-box !important;
-    padding: 20px !important;
+/* Ensure slide content takes full height */
+.grs-direct-slider .slick-slide > div {
     height: 100% !important;
+}
+
+.grs-direct-slide {
+    height: 100% !important;
+}
+
+/* Review cards */
+.grs-direct-review {
+    height: 100% !important;
+    min-height: 280px !important;
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
     display: flex !important;
     flex-direction: column !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
-    border: 1px solid #e8e8e8 !important;
-    background-color: white !important;
-    border-radius: 4px !important;
-    min-height: 250px !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
     margin: 0 !important;
-    width: 100% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-/* CRITICAL: Review content visibility */
-.grs-direct-header,
-.fusion-body .grs-direct-header,
-.fusion-text .grs-direct-header {
+/* Review header */
+.grs-direct-header {
     display: flex !important;
     align-items: center !important;
     margin-bottom: 15px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    position: relative !important;
 }
 
-.grs-direct-profile-img,
-.fusion-body .grs-direct-profile-img,
-.fusion-text .grs-direct-profile-img {
-    margin-right: 15px !important;
-    flex-shrink: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
-.grs-direct-profile-img img,
-.fusion-body .grs-direct-profile-img img,
-.fusion-text .grs-direct-profile-img img {
+/* Profile image */
+.grs-direct-profile-img {
     width: 45px !important;
     height: 45px !important;
-    border-radius: 50% !important;
-    display: block !important;
-    object-fit: cover !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    margin-right: 12px !important;
+    flex-shrink: 0 !important;
 }
 
-.grs-direct-profile-details,
-.fusion-body .grs-direct-profile-details,
-.fusion-text .grs-direct-profile-details {
+.grs-direct-profile-img img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+/* Profile details */
+.grs-direct-profile-details {
     flex: 1 !important;
     min-width: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
 }
 
-.grs-direct-name,
-.fusion-body .grs-direct-name,
-.fusion-text .grs-direct-name {
-    font-weight: 700 !important;
-    font-size: 16px !important;
-    color: #000 !important;
-    line-height: 1.2 !important;
-    word-wrap: break-word !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
+.grs-direct-name {
+    font-weight: 600 !important;
+    color: #333 !important;
+    font-size: 15px !important;
+    margin-bottom: 2px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
-.grs-direct-date,
-.fusion-body .grs-direct-date,
-.fusion-text .grs-direct-date {
-    color: #666 !important;
-    font-size: 14px !important;
-    line-height: 1.2 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
+.grs-direct-date {
+    color: #999 !important;
+    font-size: 13px !important;
 }
 
-/* CRITICAL: Stars visibility */
-.grs-direct-stars,
-.fusion-body .grs-direct-stars,
-.fusion-text .grs-direct-stars {
+/* Stars */
+.grs-direct-stars {
     display: flex !important;
-    justify-content: center !important;
-    margin: 15px 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    position: relative !important;
+    margin-bottom: 15px !important;
 }
 
-.grs-direct-stars.small,
-.fusion-body .grs-direct-stars.small,
-.fusion-text .grs-direct-stars.small {
-    justify-content: flex-start !important;
-    margin: 0 0 15px 0 !important;
-}
-
-.grs-direct-stars .dashicons-star-filled,
-.fusion-body .grs-direct-stars .dashicons-star-filled,
-.fusion-text .grs-direct-stars .dashicons-star-filled {
+.grs-direct-stars.small .dashicons-star-filled {
     color: #FFC107 !important;
-    font-size: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline-block !important;
-}
-
-.grs-direct-stars.small .dashicons-star-filled,
-.fusion-body .grs-direct-stars.small .dashicons-star-filled,
-.fusion-text .grs-direct-stars.small .dashicons-star-filled {
     font-size: 16px !important;
     width: 16px !important;
     height: 16px !important;
 }
 
-/* CRITICAL: Review text content */
-.grs-direct-content,
-.fusion-body .grs-direct-content,
-.fusion-text .grs-direct-content {
+/* Content */
+.grs-direct-content {
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    position: relative !important;
 }
 
-.grs-direct-text,
-.fusion-body .grs-direct-text,
-.fusion-text .grs-direct-text,
-.fusion-content-boxes .grs-direct-text {
-    margin: 0 0 10px 0 !important;
-    padding: 0 !important;
-    line-height: 1.5 !important;
-    color: #333 !important;
+.grs-direct-text {
+    color: #555 !important;
+    line-height: 1.6 !important;
     font-size: 14px !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    position: relative !important;
-    width: 100% !important;
-    background: transparent !important;
+    flex: 1 !important;
 }
 
-.grs-direct-text.truncated,
-.fusion-body .grs-direct-text.truncated,
-.fusion-text .grs-direct-text.truncated {
+.grs-direct-text.truncated {
     display: -webkit-box !important;
     -webkit-line-clamp: 4 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
-    text-overflow: ellipsis !important;
 }
 
-/* Read more buttons */
+/* Read more button */
 .grs-direct-read-more,
-.grs-direct-hide,
-.fusion-body .grs-direct-read-more,
-.fusion-body .grs-direct-hide,
-.fusion-text .grs-direct-read-more,
-.fusion-text .grs-direct-hide {
-    color: #666 !important;
+.grs-direct-hide {
+    color: #0073aa !important;
     font-size: 13px !important;
     text-decoration: none !important;
     cursor: pointer !important;
-    margin-top: auto !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline-block !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
+    margin-top: 10px !important;
 }
 
-.grs-direct-read-more:hover,
-.grs-direct-hide:hover,
-.fusion-body .grs-direct-read-more:hover,
-.fusion-body .grs-direct-hide:hover {
-    text-decoration: underline !important;
-}
-
-/* Summary content */
-.grs-direct-rating-large,
-.fusion-body .grs-direct-rating-large {
-    font-size: 28px !important;
-    font-weight: bold !important;
-    color: #000 !important;
-    display: block !important;
-    margin-bottom: 10px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-.grs-direct-rating-text,
-.fusion-body .grs-direct-rating-text {
-    margin: 15px 0 !important;
-    font-size: 14px !important;
-    color: #666 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
-.grs-direct-logo,
-.fusion-body .grs-direct-logo {
-    display: flex !important;
-    justify-content: center !important;
-    margin-top: 20px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-.grs-direct-logo img,
-.fusion-body .grs-direct-logo img {
-    max-width: 110px !important;
-    height: auto !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
-/* Navigation elements */
+/* Navigation arrows */
 .grs-direct-slider .slick-prev,
 .grs-direct-slider .slick-next {
     position: absolute !important;
@@ -384,332 +207,97 @@ body .grs-direct-wrapper {
     transform: translateY(-50%) !important;
     width: 40px !important;
     height: 40px !important;
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: white !important;
     border: 1px solid #ddd !important;
     border-radius: 50% !important;
-    z-index: 100 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    z-index: 1 !important;
 }
 
 .grs-direct-slider .slick-prev {
-    left: -25px !important;
+    left: -50px !important;
 }
 
 .grs-direct-slider .slick-next {
-    right: -25px !important;
+    right: -50px !important;
 }
 
-.grs-direct-slider .slick-prev:hover,
-.grs-direct-slider .slick-next:hover {
-    background: white !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+.grs-direct-slider .slick-prev:before {
+    content: '←' !important;
 }
 
-/* Navigation dots */
+.grs-direct-slider .slick-next:before {
+    content: '→' !important;
+}
+
+.grs-direct-slider .slick-prev:before,
+.grs-direct-slider .slick-next:before {
+    color: #333 !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+}
+
+/* Dots */
 .grs-direct-slider .slick-dots {
     position: absolute !important;
-    bottom: -25px !important;
-    left: 0 !important;
-    right: 0 !important;
-    text-align: center !important;
+    bottom: -35px !important;
+    width: 100% !important;
     list-style: none !important;
+    text-align: center !important;
     margin: 0 !important;
     padding: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
 }
 
 .grs-direct-slider .slick-dots li {
     display: inline-block !important;
     margin: 0 5px !important;
-    width: 10px !important;
-    height: 10px !important;
-    opacity: 1 !important;
-    visibility: visible !important;
 }
 
-.grs-direct-slider .slick-dots li button {
-    display: block !important;
-    width: 10px !important;
-    height: 10px !important;
-    padding: 0 !important;
-    border: none !important;
-    border-radius: 50% !important;
-    background: #ccc !important;
-    font-size: 0 !important;
-    line-height: 0 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+.grs-direct-slider .slick-dots li button:before {
+    color: #ccc !important;
+    font-size: 10px !important;
 }
 
-.grs-direct-slider .slick-dots li.slick-active button {
-    background: #333 !important;
+.grs-direct-slider .slick-dots li.slick-active button:before {
+    color: #333 !important;
 }
 
-/* MOBILE RESPONSIVE FIXES */
+/* Mobile responsive */
 @media (max-width: 768px) {
-    /* Force mobile layout */
-    .grs-direct-wrapper,
-    .fusion-body .grs-direct-wrapper,
-    .fusion-builder-container .grs-direct-wrapper {
-        padding: 0 15px !important;
+    .grs-direct-container {
+        flex-direction: column !important;
+    }
+    
+    .grs-direct-summary {
+        flex: none !important;
+        width: 100% !important;
+        position: static !important;
         margin-bottom: 30px !important;
     }
     
-    .grs-direct-container,
-    .fusion-body .grs-direct-container,
-    .fusion-builder-container .grs-direct-container {
-        flex-direction: column !important;
-        padding-bottom: 40px !important;
-        gap: 20px !important;
-    }
-    
-    .grs-direct-summary,
-    .fusion-body .grs-direct-summary,
-    .fusion-builder-container .grs-direct-summary {
-        flex: none !important;
-        width: 100% !important;
-        margin-bottom: 20px !important;
-        position: static !important;
-        padding: 20px 15px !important;
-    }
-    
-    .grs-direct-slider-container,
-    .fusion-body .grs-direct-slider-container,
-    .fusion-builder-container .grs-direct-slider-container {
-        padding: 0 !important;
-        width: 100% !important;
-    }
-    
-    /* CRITICAL: Mobile slider fixes */
-    .grs-direct-slider,
-    .fusion-body .grs-direct-slider,
-    .fusion-builder-container .grs-direct-slider {
-        width: 100% !important;
-        min-height: 250px !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    .grs-direct-slider .slick-list,
-    .fusion-body .grs-direct-slider .slick-list,
-    .fusion-builder-container .grs-direct-slider .slick-list {
-        margin: 0 !important;
-        padding: 0 5px !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    .grs-direct-slider .slick-slide,
-    .fusion-body .grs-direct-slider .slick-slide,
-    .fusion-builder-container .grs-direct-slider .slick-slide {
-        padding: 0 5px !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    /* CRITICAL: Mobile review cards */
-    .grs-direct-review,
-    .fusion-body .grs-direct-review,
-    .fusion-builder-container .grs-direct-review,
-    .fusion-text .grs-direct-review {
-        min-height: 200px !important;
-        padding: 15px !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: flex !important;
-        flex-direction: column !important;
-        background: white !important;
-        border: 1px solid #e8e8e8 !important;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
-        margin: 0 !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    /* Force all mobile content to be visible */
-    .grs-direct-header,
-    .grs-direct-profile-img,
-    .grs-direct-profile-details,
-    .grs-direct-name,
-    .grs-direct-date,
-    .grs-direct-stars,
-    .grs-direct-content,
-    .grs-direct-text,
-    .fusion-body .grs-direct-header,
-    .fusion-body .grs-direct-profile-img,
-    .fusion-body .grs-direct-profile-details,
-    .fusion-body .grs-direct-name,
-    .fusion-body .grs-direct-date,
-    .fusion-body .grs-direct-stars,
-    .fusion-body .grs-direct-content,
-    .fusion-body .grs-direct-text {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-        position: relative !important;
-        width: auto !important;
-        height: auto !important;
-    }
-    
-    .grs-direct-header,
-    .fusion-body .grs-direct-header {
-        display: flex !important;
-    }
-    
-    .grs-direct-content,
-    .fusion-body .grs-direct-content {
-        display: flex !important;
-        flex-direction: column !important;
-    }
-    
-    .grs-direct-stars,
-    .fusion-body .grs-direct-stars {
-        display: flex !important;
-    }
-    
-    /* Mobile navigation */
     .grs-direct-slider .slick-prev {
         left: 10px !important;
-        width: 35px !important;
-        height: 35px !important;
     }
     
     .grs-direct-slider .slick-next {
         right: 10px !important;
-        width: 35px !important;
-        height: 35px !important;
-    }
-    
-    /* Mobile typography adjustments */
-    .grs-direct-rating-large {
-        font-size: 24px !important;
-    }
-    
-    .grs-direct-name {
-        font-size: 14px !important;
-    }
-    
-    .grs-direct-date {
-        font-size: 12px !important;
-    }
-    
-    .grs-direct-text {
-        font-size: 13px !important;
-    }
-    
-    .grs-direct-profile-img img {
-        width: 40px !important;
-        height: 40px !important;
-    }
-    
-    .grs-direct-profile-img {
-        margin-right: 10px !important;
     }
 }
 
-/* SMALLEST MOBILE SCREENS */
-@media (max-width: 480px) {
-    .grs-direct-wrapper {
-        padding: 0 10px !important;
-    }
-    
-    .grs-direct-review {
-        min-height: 180px !important;
-        padding: 12px !important;
-    }
+/* CRITICAL: Override any vertical stacking */
+.grs-direct-wrapper .slick-vertical .slick-slide {
+    float: left !important;
+    height: 100% !important;
+    border: none !important;
 }
 
-/* CRITICAL: Force visibility across all Avada contexts */
-.fusion-builder-live .grs-direct-wrapper,
-.fusion-builder-live .grs-direct-slider,
-.fusion-builder-live .grs-direct-review,
-.fusion-builder-live .grs-direct-text,
-.fusion-content-boxes .grs-direct-wrapper,
-.fusion-content-boxes .grs-direct-slider,
-.fusion-content-boxes .grs-direct-review,
-.fusion-content-boxes .grs-direct-text,
-.fusion-text .grs-direct-wrapper,
-.fusion-text .grs-direct-slider,
-.fusion-text .grs-direct-review,
-.fusion-text .grs-direct-text {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-    position: relative !important;
-}
-
-.fusion-builder-live .grs-direct-review,
-.fusion-content-boxes .grs-direct-review,
-.fusion-text .grs-direct-review {
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-/* Force Slick to show properly in all contexts */
-.grs-direct-slider.slick-initialized,
-.grs-direct-slider.slick-initialized *,
-.fusion-body .grs-direct-slider.slick-initialized,
-.fusion-body .grs-direct-slider.slick-initialized *,
-.fusion-builder-container .grs-direct-slider.slick-initialized,
-.fusion-builder-container .grs-direct-slider.slick-initialized * {
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* Additional iOS Safari fixes */
-@supports (-webkit-touch-callout: none) {
-    .grs-direct-slider,
-    .grs-direct-slider *,
-    .fusion-body .grs-direct-slider,
-    .fusion-body .grs-direct-slider * {
-        -webkit-transform: translate3d(0, 0, 0) !important;
-        transform: translate3d(0, 0, 0) !important;
-    }
-}
-
-/* Animation fixes */
-.grs-direct-slider .slick-slide {
-    transition: none !important;
-}
-
-.grs-direct-slider .slick-track {
-    transition: transform 0.5s ease !important;
-}
-
-/* Prevent theme conflicts */
-.grs-direct-wrapper * {
-    box-sizing: border-box !important;
-}
-
-/* Text selection and interaction */
-.grs-direct-text {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    -moz-user-select: text !important;
-    -ms-user-select: text !important;
-}
-
-/* Ensure proper stacking */
+/* Ensure wrapper has proper padding for navigation */
 .grs-direct-wrapper {
-    z-index: 1 !important;
+    padding: 0 60px !important;
 }
 
-.grs-direct-slider .slick-prev,
-.grs-direct-slider .slick-next {
-    z-index: 100 !important;
-}
-
-.grs-direct-slider .slick-dots {
-    z-index: 99 !important;
+@media (max-width: 768px) {
+    .grs-direct-wrapper {
+        padding: 0 15px !important;
+    }
 }
