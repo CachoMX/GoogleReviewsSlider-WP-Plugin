@@ -304,3 +304,47 @@ add_action('wp_ajax_grs_test_ajax', 'grs_test_ajax_handler');
 function grs_test_ajax_handler() {
     wp_send_json_success(array('message' => 'AJAX is working!'));
 }
+
+// AJAX handler for checking API usage
+add_action('wp_ajax_grs_check_api_usage', 'grs_check_api_usage_handler');
+function grs_check_api_usage_handler() {
+    // Check permissions
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized access');
+        return;
+    }
+    
+    // Verify nonce
+    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+    
+    // Get API usage
+    $api = new GRS_Outscraper_API();
+    $usage = $api->get_usage_info();
+    
+    if (is_wp_error($usage)) {
+        wp_send_json_error('Unable to retrieve usage information');
+        return;
+    }
+    
+    // Format the usage data
+    $formatted = array();
+    if (isset($usage['credits_left'])) {
+        $formatted['Credits Remaining'] = $usage['credits_left'];
+    }
+    if (isset($usage['requests_left'])) {
+        $formatted['Requests Remaining'] = $usage['requests_left'];
+    }
+    if (isset($usage['plan'])) {
+        $formatted['Plan'] = $usage['plan'];
+    }
+    
+    // If no specific fields found, return all data
+    if (empty($formatted)) {
+        $formatted = $usage;
+    }
+    
+    wp_send_json_success($formatted);
+}

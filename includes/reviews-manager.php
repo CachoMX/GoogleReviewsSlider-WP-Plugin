@@ -53,11 +53,7 @@ class GRS_Reviews_Manager {
                     <label for="reviews_limit">Number of reviews to extract:</label>
                     <select id="reviews_limit" name="reviews_limit">
                         <option value="10">10 Reviews</option>
-                        <option value="25">25 Reviews</option>
-                        <option value="50" selected>50 Reviews</option>
-                        <option value="100">100 Reviews</option>
-                        <option value="200">200 Reviews</option>
-                        <option value="500">500 Reviews</option>
+                        <option value="15" selected>15 Reviews</option>
                     </select>
                     
                     <button type="button" id="extract-reviews-btn" class="button button-primary">
@@ -124,6 +120,14 @@ class GRS_Reviews_Manager {
                     
                     <button type="button" id="refresh-reviews-btn" class="button">
                         <span class="dashicons dashicons-update"></span> Refresh
+                    </button>
+                    
+                    <button type="button" id="remove-duplicates-btn" class="button">
+                        <span class="dashicons dashicons-trash"></span> Remove Duplicates
+                    </button>
+                    
+                    <button type="button" id="delete-all-reviews-btn" class="button" style="background: #dc3545; color: white; border-color: #dc3545;">
+                        <span class="dashicons dashicons-warning"></span> Delete All Reviews
                     </button>
                 </div>
                 
@@ -276,6 +280,11 @@ class GRS_Reviews_Manager {
             font-size: 12px;
             margin-left: 5px;
         }
+        
+        #delete-all-reviews-btn:hover {
+            background: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
         </style>
         
         <script>
@@ -283,7 +292,14 @@ class GRS_Reviews_Manager {
             var placeId = '<?php echo esc_js($place_id); ?>';
             
             // Extract reviews
+            var isExtracting = false; // Flag to prevent multiple clicks
+            
             $('#extract-reviews-btn').on('click', function() {
+                // Prevent multiple simultaneous extractions
+                if (isExtracting) {
+                    return false;
+                }
+                
                 console.log('Extract button clicked');
                 var button = $(this);
                 var status = $('#extraction-status');
@@ -293,6 +309,7 @@ class GRS_Reviews_Manager {
                 console.log('Reviews Limit:', reviewsLimit);
                 console.log('Nonce:', '<?php echo wp_create_nonce("grs_nonce"); ?>');
                 
+                isExtracting = true;
                 button.prop('disabled', true);
                 status.removeClass('success error').addClass('loading').html(
                     '<span class="dashicons dashicons-update spinning"></span> Extracting reviews...'
@@ -336,6 +353,7 @@ class GRS_Reviews_Manager {
                     },
                     complete: function() {
                         button.prop('disabled', false);
+                        isExtracting = false; // Reset the flag
                     }
                 });
             });
@@ -415,6 +433,81 @@ class GRS_Reviews_Manager {
                 var cell = $(this).closest('.review-text-cell');
                 cell.toggleClass('review-text-full');
                 $(this).text(cell.hasClass('review-text-full') ? 'Show less' : 'Read more');
+            });
+            
+            // Remove duplicates
+            $('#remove-duplicates-btn').on('click', function() {
+                var button = $(this);
+                
+                if (confirm('This will remove duplicate reviews. Continue?')) {
+                    button.prop('disabled', true);
+                    button.html('<span class="dashicons dashicons-update spinning"></span> Removing duplicates...');
+                    
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'grs_remove_duplicates',
+                            place_id: placeId,
+                            nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert('Removed ' + response.data + ' duplicate reviews.');
+                                location.reload();
+                            } else {
+                                alert('Error removing duplicates: ' + response.data);
+                            }
+                        },
+                        error: function() {
+                            alert('Error removing duplicates.');
+                        },
+                        complete: function() {
+                            button.prop('disabled', false);
+                            button.html('<span class="dashicons dashicons-trash"></span> Remove Duplicates');
+                        }
+                    });
+                }
+            });
+            
+            // Delete all reviews
+            $('#delete-all-reviews-btn').on('click', function() {
+                var button = $(this);
+                
+                var confirmMessage = 'WARNING: This will permanently delete ALL reviews for this location.\n\n' +
+                                   'Are you absolutely sure you want to continue?';
+                
+                if (confirm(confirmMessage)) {
+                    if (confirm('This action cannot be undone. Delete all reviews?')) {
+                        button.prop('disabled', true);
+                        button.html('<span class="dashicons dashicons-update spinning"></span> Deleting all reviews...');
+                        
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'grs_delete_all_reviews',
+                                place_id: placeId,
+                                nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Successfully deleted ' + response.data + ' reviews.');
+                                    location.reload();
+                                } else {
+                                    alert('Error deleting reviews: ' + response.data);
+                                }
+                            },
+                            error: function() {
+                                alert('Error deleting reviews.');
+                            },
+                            complete: function() {
+                                button.prop('disabled', false);
+                                button.html('<span class="dashicons dashicons-warning"></span> Delete All Reviews');
+                            }
+                        });
+                    }
+                }
             });
         });
         </script>
@@ -504,4 +597,42 @@ function grs_handle_get_reviews_table() {
     $html = ob_get_clean();
     
     wp_send_json_success($html);
+}
+
+// AJAX handler for removing duplicates
+add_action('wp_ajax_grs_remove_duplicates', 'grs_handle_remove_duplicates');
+function grs_handle_remove_duplicates() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Unauthorized');
+    }
+    
+    check_ajax_referer('grs_nonce', 'nonce');
+    
+    $place_id = sanitize_text_field($_POST['place_id']);
+    
+    require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+    $removed = GRS_Database::remove_duplicates($place_id);
+    
+    wp_send_json_success($removed);
+}
+
+// AJAX handler for deleting all reviews
+add_action('wp_ajax_grs_delete_all_reviews', 'grs_handle_delete_all_reviews');
+function grs_handle_delete_all_reviews() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Unauthorized');
+    }
+    
+    check_ajax_referer('grs_nonce', 'nonce');
+    
+    $place_id = sanitize_text_field($_POST['place_id']);
+    
+    require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+    $deleted = GRS_Database::delete_all_reviews($place_id);
+    
+    // Also clear any cached reviews
+    delete_transient('grs_reviews');
+    delete_transient('grs_total_review_count');
+    
+    wp_send_json_success($deleted);
 }

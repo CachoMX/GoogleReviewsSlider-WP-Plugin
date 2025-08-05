@@ -123,8 +123,27 @@ class GRS_Database {
                 'source' => 'outscraper'
             );
             
-            // Insert or update review
-            $result = $wpdb->replace($table_name, $data);
+            // Check if review already exists
+            $existing = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $table_name WHERE place_id = %s AND review_id = %s",
+                $place_id,
+                $data['review_id']
+            ));
+            
+            if ($existing) {
+                // Update existing review
+                $result = $wpdb->update(
+                    $table_name,
+                    $data,
+                    array(
+                        'place_id' => $place_id,
+                        'review_id' => $data['review_id']
+                    )
+                );
+            } else {
+                // Insert new review
+                $result = $wpdb->insert($table_name, $data);
+            }
             
             if ($result !== false) {
                 $saved_count++;
@@ -313,5 +332,59 @@ class GRS_Database {
         }
         
         return $wpdb->query($query);
+    }
+    
+    /**
+     * Remove duplicate reviews
+     * 
+     * @param string $place_id
+     * @return int Number of duplicates removed
+     */
+    public static function remove_duplicates($place_id = null) {
+        global $wpdb;
+        
+        $table_name = $wpdb->prefix . 'grs_reviews';
+        
+        // Find and delete duplicates, keeping the one with the lowest ID
+        if ($place_id) {
+            $query = "
+                DELETE r1 FROM $table_name r1
+                INNER JOIN $table_name r2 
+                WHERE r1.id > r2.id 
+                AND r1.place_id = r2.place_id 
+                AND r1.review_id = r2.review_id
+                AND r1.place_id = %s
+            ";
+            
+            return $wpdb->query($wpdb->prepare($query, $place_id));
+        } else {
+            $query = "
+                DELETE r1 FROM $table_name r1
+                INNER JOIN $table_name r2 
+                WHERE r1.id > r2.id 
+                AND r1.place_id = r2.place_id 
+                AND r1.review_id = r2.review_id
+            ";
+            
+            return $wpdb->query($query);
+        }
+    }
+    
+    /**
+     * Delete all reviews for a place
+     * 
+     * @param string $place_id
+     * @return int Number of reviews deleted
+     */
+    public static function delete_all_reviews($place_id) {
+        global $wpdb;
+        
+        $table_name = $wpdb->prefix . 'grs_reviews';
+        
+        return $wpdb->delete(
+            $table_name,
+            array('place_id' => $place_id),
+            array('%s')
+        );
     }
 }
