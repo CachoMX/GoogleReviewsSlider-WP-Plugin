@@ -205,7 +205,11 @@ function grs_direct_display($atts) {
         box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
     }
     .grs-direct-summary {
+<<<<<<< HEAD
         background: #ffffffff !important;
+=======
+        background: #FFF9C4 !important;
+>>>>>>> 2998ed01a3d308cd73b0a89055f4df70d677bbf8
         margin: 0 auto !important;
         text-align: center !important;
     }
@@ -229,7 +233,11 @@ function grs_direct_display($atts) {
             width: 100% !important;
             margin: 0 auto 20px auto !important;
             position: static !important;
+<<<<<<< HEAD
             background: #ffffffff !important;
+=======
+            background: #FFF9C4 !important;
+>>>>>>> 2998ed01a3d308cd73b0a89055f4df70d677bbf8
         }
         .grs-direct-slider {
             min-height: 320px !important;
@@ -531,7 +539,11 @@ function grs_theme_compatibility_css() {
             margin: 0 auto 20px auto !important;
             width: auto !important;
             box-sizing: border-box !important;
+<<<<<<< HEAD
             background: #ffffffff !important;
+=======
+            background: #FFF9C4 !important;
+>>>>>>> 2998ed01a3d308cd73b0a89055f4df70d677bbf8
             text-align: center !important;
         }
         

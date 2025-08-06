@@ -185,7 +185,11 @@ function grs_mobile_inline_styles() {
         
         /* Summary box mobile */
         .grs-direct-summary {
+<<<<<<< HEAD
             background: #ffffffff !important;
+=======
+            background: #FFF9C4 !important;
+>>>>>>> 2998ed01a3d308cd73b0a89055f4df70d677bbf8
             padding: 20px !important;
             margin: 0 auto 20px auto !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
