@@ -33,9 +33,11 @@ function grs_activation_hook() {
     $default_options = array(
         'grs_api_key' => '',
         'grs_place_id' => '',
-        'grs_min_rating' => '1'
+        'grs_min_rating' => '1',
+        // Pre-populate Outscraper token so API requests work out of the box
+        'grs_outscraper_token' => 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg',
     );
-    
+
     $existing_options = get_option('grs_settings', array());
     $options = wp_parse_args($existing_options, $default_options);
     update_option('grs_settings', $options);
@@ -50,9 +52,6 @@ function grs_activation_hook() {
     // Initialize database tables
     require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
     GRS_Database::init();
-
-    // Add Outscraper API token to default options
-    $default_options['grs_outscraper_token'] = 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg';
 }
 
 // Plugin deactivation hook
@@ -186,10 +185,11 @@ function grs_mobile_inline_styles() {
         
         /* Summary box mobile */
         .grs-direct-summary {
-            background: white !important;
+            background: #ffffffff !important;
             padding: 20px !important;
-            margin-bottom: 20px !important;
+            margin: 0 auto 20px auto !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            text-align: center !important;
         }
         
         /* Profile images */

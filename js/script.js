@@ -82,6 +82,14 @@ jQuery(document).ready(function($) {
                     }
                 ]
             });
+
+            // Ensure autoplay starts without interaction
+            if (autoplay) {
+                $slider.slick('slickPlay');
+                $slider.on('afterChange', function() {
+                    $slider.slick('slickPlay');
+                });
+            }
             
             console.log('Slider initialized successfully');
             
