@@ -211,6 +211,8 @@
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
 }
 
 .grs-direct-text.truncated {
@@ -251,6 +253,11 @@
     text-indent: 0 !important;
     font-size: 0 !important;
     line-height: 0 !important;
+}
+
+.grs-direct-slider .slick-prev:focus,
+.grs-direct-slider .slick-next:focus {
+    outline: 2px solid #0073aa !important;
 }
 
 /* Position arrows */
@@ -499,6 +506,15 @@
     
     .grs-mobile-device .grs-direct-review {
         display: flex !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .grs-direct-review {
+        padding: 15px !important;
+    }
+    .grs-direct-text.truncated {
+        -webkit-line-clamp: 6 !important;
     }
 }
 
