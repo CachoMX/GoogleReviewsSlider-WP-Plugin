@@ -64,8 +64,9 @@ function grs_direct_display($atts) {
         'autoplay' => 'true',
         'autoplay_speed' => '4000',
         'slides_desktop' => '3',
-        'slides_tablet' => '2', 
-        'slides_mobile' => '1'
+        'slides_tablet' => '2',
+        'slides_mobile' => '1',
+        'arrows' => 'true'
     ), $atts, 'google_reviews_slider');
     
     // Get plugin settings
@@ -292,6 +293,7 @@ function grs_direct_display($atts) {
                      data-slides-desktop="<?php echo esc_attr($atts['slides_desktop']); ?>"
                      data-slides-tablet="<?php echo esc_attr($atts['slides_tablet']); ?>"
                      data-slides-mobile="<?php echo esc_attr($atts['slides_mobile']); ?>"
+                     data-arrows="<?php echo esc_attr($atts['arrows']); ?>"
                      role="region"
                      aria-label="Customer Reviews Slider">
                     

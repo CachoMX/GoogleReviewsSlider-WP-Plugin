@@ -382,8 +382,7 @@
     
     /* Ensure track displays properly */
     .grs-direct-slider .slick-track {
-        display: flex !important;
-        align-items: stretch !important;
+        display: block !important;
     }
     
     /* Mobile review cards */
@@ -460,16 +459,21 @@
         width: 30px !important;
         height: 30px !important;
         background: rgba(255, 255, 255, 0.9) !important;
+        z-index: 3 !important;
     }
-    
+
     .grs-direct-slider .slick-prev {
         left: 10px !important;
-        z-index: 3 !important;
     }
-    
+
     .grs-direct-slider .slick-next {
         right: 10px !important;
-        z-index: 3 !important;
+    }
+
+    .grs-direct-slider .slick-prev:before,
+    .grs-direct-slider .slick-next:before {
+        color: #333 !important;
+        font-size: 20px !important;
     }
     
     /* Dots position on mobile */
@@ -495,13 +499,10 @@
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
-    .grs-direct-slider,
-    .grs-direct-slider * {
+    .grs-direct-review,
+    .grs-direct-review * {
         -webkit-transform: translate3d(0, 0, 0) !important;
         transform: translate3d(0, 0, 0) !important;
-    }
-    
-    .grs-direct-review {
         -webkit-backface-visibility: hidden !important;
         backface-visibility: hidden !important;
     }
