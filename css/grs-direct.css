@@ -17,6 +17,16 @@
     margin: 0 auto !important;
 }
 
+
+/* Ensure summary stars are centered and yellow */
+.grs-direct-summary .grs-direct-stars {
+    justify-content: center !important;
+}
+
+.grs-direct-summary .dashicons-star-filled {
+    color: #FFC107 !important;
+}
+
 /* Summary box */
 .grs-direct-summary {
     flex: 0 0 250px !important;
