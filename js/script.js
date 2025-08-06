@@ -23,21 +23,23 @@ jQuery(document).ready(function($) {
             var slidesDesktop = parseInt($slider.data('slides-desktop')) || 3;
             var slidesTablet = parseInt($slider.data('slides-tablet')) || 2;
             var slidesMobile = parseInt($slider.data('slides-mobile')) || 1;
+            var arrows = $slider.data('arrows') !== 'false';
             
             console.log('Initializing slider with settings:', {
                 slidesToShow: isMobile ? slidesMobile : slidesDesktop,
                 autoplay: autoplay,
                 autoplaySpeed: autoplaySpeed,
+                arrows: arrows,
                 isMobile: isMobile
             });
-            
+
             // Initialize Slick with horizontal settings
             $slider.slick({
-                slidesToShow: slidesDesktop,
+                slidesToShow: isMobile ? slidesMobile : slidesDesktop,
                 slidesToScroll: 1,
                 infinite: true,
                 dots: true,
-                arrows: true,
+                arrows: arrows,
                 autoplay: autoplay,
                 autoplaySpeed: autoplaySpeed,
                 pauseOnHover: true,
