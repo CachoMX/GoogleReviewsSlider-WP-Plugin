@@ -46,7 +46,7 @@ class GRS_Outscraper_API {
             'ignoreEmpty' => 'false',
             'async' => 'false', // We'll use synchronous for now
             'language' => 'en',
-            'fields' => 'query,name,reviews_data,reviews_per_rating,reviews_link,web_site,verified,phone,address,postal_code,opening_hours,current_opening_status'
+            'fields' => 'query,name,reviews_data,reviews_per_rating,reviews_link,website,verified,phone,address,postal_code,opening_hours,current_opening_status'
         );
         
         $params = wp_parse_args($params, $default_params);
@@ -183,7 +183,7 @@ class GRS_Outscraper_API {
                 'name' => isset($place_data['name']) ? $place_data['name'] : '',
                 'address' => isset($place_data['address']) ? $place_data['address'] : '',
                 'phone' => isset($place_data['phone']) ? $place_data['phone'] : '',
-                'website' => isset($place_data['web_site']) ? $place_data['web_site'] : '',
+                'website' => isset($place_data['website']) ? $place_data['website'] : '',
                 'verified' => isset($place_data['verified']) ? $place_data['verified'] : false,
                 'reviews_link' => isset($place_data['reviews_link']) ? $place_data['reviews_link'] : '',
                 'reviews_per_rating' => isset($place_data['reviews_per_rating']) ? $place_data['reviews_per_rating'] : null
