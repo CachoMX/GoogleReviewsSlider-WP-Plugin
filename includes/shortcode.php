@@ -204,6 +204,11 @@ function grs_direct_display($atts) {
         margin-bottom: 15px !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
     }
+    .grs-direct-summary {
+        background: #FFF9C4 !important;
+        margin: 0 auto !important;
+        text-align: center !important;
+    }
     .grs-direct-text {
         color: #333 !important;
         opacity: 1 !important;
@@ -222,8 +227,9 @@ function grs_direct_display($atts) {
         }
         .grs-direct-summary {
             width: 100% !important;
-            margin-bottom: 20px !important;
+            margin: 0 auto 20px auto !important;
             position: static !important;
+            background: #FFF9C4 !important;
         }
         .grs-direct-slider {
             min-height: 320px !important;
@@ -522,9 +528,11 @@ function grs_theme_compatibility_css() {
         }
         
         .grs-direct-summary {
-            margin: 0 15px 20px 15px !important;
+            margin: 0 auto 20px auto !important;
             width: auto !important;
             box-sizing: border-box !important;
+            background: #FFF9C4 !important;
+            text-align: center !important;
         }
         
         .grs-direct-slider-container {
