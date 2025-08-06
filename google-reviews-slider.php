@@ -185,10 +185,11 @@ function grs_mobile_inline_styles() {
         
         /* Summary box mobile */
         .grs-direct-summary {
-            background: white !important;
+            background: #FFF9C4 !important;
             padding: 20px !important;
-            margin-bottom: 20px !important;
+            margin: 0 auto 20px auto !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            text-align: center !important;
         }
         
         /* Profile images */
