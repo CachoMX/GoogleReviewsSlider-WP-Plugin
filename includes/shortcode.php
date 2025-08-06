@@ -1,7 +1,8 @@
 <?php
+// Updated includes/shortcode.php - Mobile Display Fix
 /**
- * Google Reviews Slider - Fixed Shortcode with Avada and Mobile Compatibility
- * Enhanced implementation with comprehensive theme compatibility
+ * Google Reviews Slider - Fixed Shortcode with Mobile Compatibility
+ * Enhanced implementation with comprehensive mobile support
  */
 
 add_action('init', 'grs_direct_init');
@@ -39,7 +40,7 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.8.1', true);
     
     // Custom styles and scripts with cache busting
-    $version = get_option('grs_version', '1.3') . '.' . time();
+    $version = get_option('grs_version', '2.0') . '.' . time();
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('grs-slick', 'grs-slick-theme'), $version);
     wp_enqueue_script('grs-direct-script', plugins_url('js/script.js', dirname(__FILE__)), array('jquery', 'grs-slick-js'), $version, true);
     
@@ -157,15 +158,8 @@ function grs_direct_display($atts) {
         return '';
     }
     
-    // Reviews are already filtered by rating from database query
-    
     // Calculate average rating
     $average_rating = $stats['average'] ?: 5;
-    
-    // Use actual total from database if available
-    if ($total_review_count === 0 && !empty($reviews)) {
-        $total_review_count = count($reviews);
-    }
     
     // Generate unique ID for this slider instance
     $unique_id = 'grs-slider-' . uniqid();
@@ -216,24 +210,38 @@ function grs_direct_display($atts) {
         visibility: visible !important;
         display: block !important;
     }
-    <?php if ($is_avada): ?>
-    /* Avada-specific overrides */
-    .fusion-body .grs-direct-wrapper,
-    .fusion-builder-container .grs-direct-wrapper,
-    .fusion-text .grs-direct-wrapper {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
+    
+    /* Mobile-specific critical styles */
+    @media screen and (max-width: 768px) {
+        .grs-direct-wrapper {
+            padding: 0 15px !important;
+            overflow-x: hidden !important;
+        }
+        .grs-direct-container {
+            flex-direction: column !important;
+        }
+        .grs-direct-summary {
+            width: 100% !important;
+            margin-bottom: 20px !important;
+            position: static !important;
+        }
+        .grs-direct-slider {
+            min-height: 320px !important;
+        }
+        .grs-direct-review {
+            min-height: 280px !important;
+            margin: 0 !important;
+            padding: 20px !important;
+        }
+        .grs-direct-slider .slick-slide {
+            width: 100% !important;
+            padding: 0 5px !important;
+        }
+        .grs-direct-text {
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+        }
     }
-    .fusion-body .grs-direct-review,
-    .fusion-builder-container .grs-direct-review,
-    .fusion-text .grs-direct-review {
-        display: flex !important;
-        flex-direction: column !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    <?php endif; ?>
     </style>
     
     <div class="grs-direct-wrapper<?php echo esc_attr($body_classes); ?>" 
@@ -343,9 +351,12 @@ function grs_direct_display($atts) {
     (function() {
         'use strict';
         
+        var sliderId = '<?php echo esc_js($unique_id); ?>';
+        var isMobile = window.innerWidth <= 768;
+        
         // Immediate visibility fix
         function forceVisibility() {
-            var wrapper = document.getElementById('<?php echo esc_js($unique_id); ?>-wrapper');
+            var wrapper = document.getElementById(sliderId + '-wrapper');
             if (wrapper) {
                 wrapper.style.opacity = '1';
                 wrapper.style.visibility = 'visible';
@@ -366,22 +377,19 @@ function grs_direct_display($atts) {
                     texts[j].style.visibility = 'visible';
                     texts[j].style.display = 'block';
                 }
+                
+                var slider = document.getElementById(sliderId);
+                if (slider) {
+                    slider.style.minHeight = isMobile ? '320px' : '250px';
+                    slider.style.opacity = '1';
+                    slider.style.visibility = 'visible';
+                    slider.style.display = 'block';
+                }
             }
         }
         
         // Apply fixes immediately
         forceVisibility();
-        
-        // Mobile-specific immediate fixes
-        if (window.innerWidth <= 768) {
-            var slider = document.getElementById('<?php echo esc_js($unique_id); ?>');
-            if (slider) {
-                slider.style.minHeight = '300px';
-                slider.style.opacity = '1';
-                slider.style.visibility = 'visible';
-                slider.style.display = 'block';
-            }
-        }
         
         // Enhanced DOM ready detection
         function ready(fn) {
@@ -397,61 +405,41 @@ function grs_direct_display($atts) {
             forceVisibility();
             
             // Additional mobile fixes
-            if (window.innerWidth <= 768) {
+            if (isMobile) {
                 setTimeout(forceVisibility, 100);
                 setTimeout(forceVisibility, 500);
+                setTimeout(forceVisibility, 1000);
             }
         });
         
-        // Avada live builder compatibility
+        // Mobile-specific initialization
+        if (isMobile) {
+            // Set interval to keep enforcing visibility
+            var visibilityInterval = setInterval(function() {
+                var slider = document.getElementById(sliderId);
+                if (slider && slider.classList.contains('slick-initialized')) {
+                    clearInterval(visibilityInterval);
+                } else {
+                    forceVisibility();
+                }
+            }, 200);
+            
+            // Clear interval after 5 seconds
+            setTimeout(function() {
+                clearInterval(visibilityInterval);
+            }, 5000);
+        }
+        
         <?php if ($is_avada): ?>
+        // Avada live builder compatibility
         if (window.FusionEvents) {
             window.FusionEvents.on('fusion-element-render-fusion_text', function() {
                 setTimeout(forceVisibility, 100);
             });
         }
-        
-        // Check for live builder context
-        if (document.body.classList.contains('fusion-builder-live')) {
-            var checkCount = 0;
-            var checkInterval = setInterval(function() {
-                forceVisibility();
-                checkCount++;
-                if (checkCount > 20) { // Stop after 20 attempts
-                    clearInterval(checkInterval);
-                }
-            }, 500);
-        }
         <?php endif; ?>
         
-        // Periodic visibility enforcement for stubborn themes
-        setInterval(forceVisibility, 3000);
-        
     })();
-
-    // Force slider initialization after a delay
-    setTimeout(function() {
-        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.slick !== 'undefined') {
-            jQuery('.grs-direct-slider').each(function() {
-                if (!jQuery(this).hasClass('slick-initialized')) {
-                    jQuery(this).slick({
-                        slidesToShow: 3,
-                        slidesToScroll: 1,
-                        dots: true,
-                        arrows: true,
-                        responsive: [
-                            {
-                                breakpoint: 768,
-                                settings: {
-                                    slidesToShow: 1
-                                }
-                            }
-                        ]
-                    });
-                }
-            });
-        }
-    }, 1000);
     </script>
     
     <!-- Fallback CSS for non-JavaScript users -->
@@ -464,7 +452,7 @@ function grs_direct_display($atts) {
         .grs-direct-review {
             display: block !important;
             margin-bottom: 20px !important;
-            padding: 15px !important;
+            padding: 20px !important;
             border: 1px solid #ddd !important;
             background: white !important;
         }
@@ -475,14 +463,20 @@ function grs_direct_display($atts) {
             display: block !important;
             margin-bottom: 15px !important;
         }
+        @media screen and (max-width: 768px) {
+            .grs-direct-wrapper {
+                padding: 0 15px !important;
+            }
+            .grs-direct-review {
+                margin: 10px 0 !important;
+            }
+        }
         </style>
     </noscript>
     
     <?php
     return ob_get_clean();
 }
-
-// Note: grs_clear_cache_callback() is already declared in the main plugin file
 
 // Add compatibility hooks for popular themes
 add_action('wp_head', 'grs_theme_compatibility_css', 999);
@@ -515,107 +509,141 @@ function grs_theme_compatibility_css() {
         position: relative !important;
     }
     
-    .grs-direct-slider {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-        position: relative !important;
-    }
-    
-    .grs-direct-review {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: flex !important;
-        flex-direction: column !important;
-        background: white !important;
-        position: relative !important;
-    }
-    
-    <?php if ($is_avada): ?>
-    /* Avada-specific fixes */
-    .fusion-body .grs-direct-wrapper,
-    .fusion-builder-container .grs-direct-wrapper,
-    .fusion-text .grs-direct-wrapper,
-    .fusion-content-boxes .grs-direct-wrapper {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-        overflow: visible !important;
-        transform: none !important;
-    }
-    
-    .fusion-body .grs-direct-slider,
-    .fusion-builder-container .grs-direct-slider,
-    .fusion-text .grs-direct-slider {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    .fusion-body .grs-direct-review,
-    .fusion-builder-container .grs-direct-review,
-    .fusion-text .grs-direct-review {
-        display: flex !important;
-        flex-direction: column !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-    
-    .fusion-body .grs-direct-text,
-    .fusion-builder-container .grs-direct-text,
-    .fusion-text .grs-direct-text {
-        color: #333 !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    <?php endif; ?>
-    
-    <?php if ($is_mobile): ?>
-    /* Mobile-specific fixes */
+    /* Mobile-specific overrides */
     @media screen and (max-width: 768px) {
         .grs-direct-wrapper {
-            padding: 0 15px !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
         }
         
         .grs-direct-container {
-            flex-direction: column !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         
         .grs-direct-summary {
-            width: 100% !important;
-            margin-bottom: 20px !important;
-            position: static !important;
+            margin: 0 15px 20px 15px !important;
+            width: auto !important;
+            box-sizing: border-box !important;
         }
         
         .grs-direct-slider-container {
-            padding: 0 !important;
+            padding: 0 15px !important;
+            margin-bottom: 40px !important;
         }
         
         .grs-direct-slider {
-            min-height: 250px !important;
+            min-height: 320px !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        .grs-direct-slider .slick-slide {
+            opacity: 1 !important;
+            visibility: visible !important;
+            height: auto !important;
+            min-height: 280px !important;
         }
         
         .grs-direct-review {
-            min-height: 200px !important;
-            padding: 15px !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 280px !important;
+            background: white !important;
+            border: 1px solid #e8e8e8 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            padding: 20px !important;
+        }
+        
+        .grs-direct-header,
+        .grs-direct-profile-img,
+        .grs-direct-profile-details,
+        .grs-direct-name,
+        .grs-direct-date,
+        .grs-direct-stars,
+        .grs-direct-content,
+        .grs-direct-text {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+        }
+        
+        .grs-direct-header {
+            display: flex !important;
+        }
+        
+        .grs-direct-stars {
+            display: flex !important;
+        }
+        
+        .grs-direct-text {
+            color: #333 !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+        }
+        
+        /* Force slick slider to work properly on mobile */
+        .grs-direct-slider .slick-track {
+            display: flex !important;
+            align-items: stretch !important;
+        }
+        
+        .grs-direct-slider.slick-initialized .slick-slide {
+            display: block !important;
+            float: left !important;
+            height: 100% !important;
+        }
+        
+        /* Navigation arrows on mobile */
+        .grs-direct-slider .slick-prev,
+        .grs-direct-slider .slick-next {
+            display: flex !important;
+            width: 30px !important;
+            height: 30px !important;
+            z-index: 3 !important;
+        }
+        
+        .grs-direct-slider .slick-prev {
+            left: 10px !important;
+        }
+        
+        .grs-direct-slider .slick-next {
+            right: 10px !important;
+        }
+        
+        /* Dots positioning */
+        .grs-direct-slider .slick-dots {
+            position: relative !important;
+            bottom: auto !important;
+            margin-top: 20px !important;
+        }
+    }
+    
+    <?php if ($is_avada): ?>
+    /* Avada-specific mobile fixes */
+    @media screen and (max-width: 768px) {
+        .fusion-body .grs-direct-wrapper,
+        .fusion-builder-container .grs-direct-wrapper,
+        .fusion-text .grs-direct-wrapper {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            overflow: visible !important;
+            transform: none !important;
+        }
+        
+        .fusion-body .grs-direct-review,
+        .fusion-builder-container .grs-direct-review,
+        .fusion-text .grs-direct-review {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
     }
     <?php endif; ?>
-    
-    /* Text selection and interaction */
-    .grs-direct-text {
-        user-select: text !important;
-        -webkit-user-select: text !important;
-        -moz-user-select: text !important;
-        -ms-user-select: text !important;
-    }
-    
-    /* Prevent conflicts with lazy loading */
-    .grs-direct-wrapper img {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
     
     /* iOS Safari fixes */
     @supports (-webkit-touch-callout: none) {
@@ -623,6 +651,23 @@ function grs_theme_compatibility_css() {
         .grs-direct-slider * {
             -webkit-transform: translate3d(0, 0, 0) !important;
             transform: translate3d(0, 0, 0) !important;
+        }
+        
+        @media screen and (max-width: 768px) {
+            .grs-direct-review {
+                -webkit-backface-visibility: hidden !important;
+                backface-visibility: hidden !important;
+            }
+        }
+    }
+    
+    /* Force text selection on mobile */
+    @media screen and (max-width: 768px) {
+        .grs-direct-text {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
         }
     }
     </style>
@@ -649,7 +694,7 @@ function grs_add_body_classes($classes) {
     return $classes;
 }
 
-// Add inline script for immediate execution
+// Add inline script for immediate mobile execution
 add_action('wp_footer', 'grs_footer_script', 999);
 function grs_footer_script() {
     global $post;
@@ -660,54 +705,69 @@ function grs_footer_script() {
     
     ?>
     <script type="text/javascript">
-    // Final fallback for visibility issues
+    // Final mobile visibility enforcement
     (function() {
         'use strict';
         
-        function finalVisibilityCheck() {
-            var sliders = document.querySelectorAll('.grs-direct-slider');
-            var reviews = document.querySelectorAll('.grs-direct-review');
-            
-            // Check if any reviews are hidden
-            var hiddenReviews = 0;
-            for (var i = 0; i < reviews.length; i++) {
-                var computedStyle = window.getComputedStyle(reviews[i]);
-                if (computedStyle.opacity === '0' || computedStyle.visibility === 'hidden' || computedStyle.display === 'none') {
-                    hiddenReviews++;
-                }
-            }
-            
-            // If more than half are hidden, force them visible
-            if (hiddenReviews > reviews.length / 2) {
-                console.log('GRS: Forcing visibility for', hiddenReviews, 'hidden reviews');
+        if (window.innerWidth <= 768) {
+            function forceMobileVisibility() {
+                var sliders = document.querySelectorAll('.grs-direct-slider');
+                var reviews = document.querySelectorAll('.grs-direct-review');
+                var texts = document.querySelectorAll('.grs-direct-text');
                 
+                // Force sliders visible
+                for (var i = 0; i < sliders.length; i++) {
+                    sliders[i].style.setProperty('opacity', '1', 'important');
+                    sliders[i].style.setProperty('visibility', 'visible', 'important');
+                    sliders[i].style.setProperty('display', 'block', 'important');
+                    sliders[i].style.setProperty('min-height', '320px', 'important');
+                }
+                
+                // Force reviews visible
                 for (var j = 0; j < reviews.length; j++) {
                     reviews[j].style.setProperty('opacity', '1', 'important');
                     reviews[j].style.setProperty('visibility', 'visible', 'important');
                     reviews[j].style.setProperty('display', 'flex', 'important');
                     reviews[j].style.setProperty('flex-direction', 'column', 'important');
+                    reviews[j].style.setProperty('min-height', '280px', 'important');
                 }
                 
-                for (var k = 0; k < sliders.length; k++) {
-                    sliders[k].style.setProperty('opacity', '1', 'important');
-                    sliders[k].style.setProperty('visibility', 'visible', 'important');
-                    sliders[k].style.setProperty('display', 'block', 'important');
+                // Force text visible
+                for (var k = 0; k < texts.length; k++) {
+                    texts[k].style.setProperty('opacity', '1', 'important');
+                    texts[k].style.setProperty('visibility', 'visible', 'important');
+                    texts[k].style.setProperty('display', 'block', 'important');
+                    texts[k].style.setProperty('color', '#333', 'important');
                 }
+                
+                console.log('GRS: Forced mobile visibility for', reviews.length, 'reviews');
+            }
+            
+            // Run immediately
+            forceMobileVisibility();
+            
+            // Run at multiple intervals to catch lazy-loaded content
+            setTimeout(forceMobileVisibility, 500);
+            setTimeout(forceMobileVisibility, 1000);
+            setTimeout(forceMobileVisibility, 2000);
+            
+            // Also run on window load
+            if (window.addEventListener) {
+                window.addEventListener('load', function() {
+                    setTimeout(forceMobileVisibility, 100);
+                });
+            }
+            
+            // Force refresh slick sliders on mobile
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.slick !== 'undefined') {
+                jQuery(document).ready(function($) {
+                    setTimeout(function() {
+                        $('.grs-direct-slider.slick-initialized').slick('refresh');
+                        forceMobileVisibility();
+                    }, 1500);
+                });
             }
         }
-        
-        // Run checks at multiple intervals
-        setTimeout(finalVisibilityCheck, 1000);
-        setTimeout(finalVisibilityCheck, 3000);
-        setTimeout(finalVisibilityCheck, 5000);
-        
-        // Also run on window load
-        if (window.addEventListener) {
-            window.addEventListener('load', function() {
-                setTimeout(finalVisibilityCheck, 500);
-            });
-        }
-        
     })();
     </script>
     <?php

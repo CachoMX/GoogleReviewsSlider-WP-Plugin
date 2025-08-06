@@ -1,3 +1,5 @@
+/* Updated css/grs-direct.css - Mobile Display Fix */
+
 /* CRITICAL FIX: Force Horizontal Layout for Google Reviews Slider */
 
 /* Reset any conflicting styles */
@@ -29,11 +31,33 @@
     min-height: 260px !important;
 }
 
+/* Rating text styling */
+.grs-direct-rating-large {
+    font-size: 24px !important;
+    font-weight: bold !important;
+    color: #333 !important;
+    margin-bottom: 10px !important;
+}
+
+.grs-direct-rating-text {
+    font-size: 14px !important;
+    color: #666 !important;
+    margin: 15px 0 !important;
+}
+
+/* Logo styling */
+.grs-direct-logo img {
+    max-width: 110px !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
+}
+
 /* CRITICAL: Slider container */
 .grs-direct-slider-container {
     flex: 1 !important;
     min-width: 0 !important;
-    overflow: visible !important; /* Changed to visible for arrows */
+    overflow: visible !important;
     position: relative !important;
     padding: 0 5px !important;
 }
@@ -184,6 +208,9 @@
     line-height: 1.6 !important;
     font-size: 14px !important;
     flex: 1 !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .grs-direct-text.truncated {
@@ -203,14 +230,7 @@
     margin-top: 10px !important;
 }
 
-/* Force arrows to be visible */
-.grs-direct-slider .slick-arrow {
-    display: flex !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Navigation arrows - positioned to overlap slightly */
+/* Navigation arrows */
 .grs-direct-slider .slick-prev,
 .grs-direct-slider .slick-next {
     position: absolute !important;
@@ -233,21 +253,13 @@
     line-height: 0 !important;
 }
 
-/* Position arrows to overlap the edge of reviews */
+/* Position arrows */
 .grs-direct-slider .slick-prev {
     left: -5px !important;
 }
 
 .grs-direct-slider .slick-next {
     right: -5px !important;
-}
-
-/* Hover effects */
-.grs-direct-slider .slick-prev:hover,
-.grs-direct-slider .slick-next:hover {
-    background: rgba(255, 255, 255, 1) !important;
-    border-color: #999 !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
 }
 
 /* Arrow icons */
@@ -259,8 +271,6 @@
     color: #333 !important;
     opacity: 1 !important;
     display: block !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
 }
 
 .grs-direct-slider .slick-prev:before {
@@ -273,20 +283,6 @@
     content: '›' !important;
     font-size: 22px !important;
     margin-right: -2px !important;
-}
-
-/* Active/focus states */
-.grs-direct-slider .slick-prev:focus,
-.grs-direct-slider .slick-next:focus {
-    outline: 2px solid #0073aa !important;
-    outline-offset: 2px !important;
-}
-
-/* Disabled state (for non-infinite sliders) */
-.grs-direct-slider .slick-prev.slick-disabled,
-.grs-direct-slider .slick-next.slick-disabled {
-    opacity: 0.3 !important;
-    cursor: not-allowed !important;
 }
 
 /* Dots */
@@ -314,117 +310,201 @@
     color: #333 !important;
 }
 
-/* Summary box star styling */
-.grs-direct-summary .grs-direct-stars {
-    display: flex !important;
-    justify-content: center !important;
-    margin: 15px 0 !important;
-}
-
-.grs-direct-summary .grs-direct-stars .dashicons-star-filled {
-    color: #FFC107 !important;
-    font-size: 24px !important;
-    width: 24px !important;
-    height: 24px !important;
-}
-
-/* CRITICAL: Override any vertical stacking */
-.grs-direct-wrapper .slick-vertical .slick-slide {
-    float: left !important;
-    height: 100% !important;
-    border: none !important;
-}
-
-/* Ensure wrapper has proper padding for navigation */
-.grs-direct-wrapper {
-    padding: 0 40px !important;
-}
-
-/* Responsive - Tablet */
-@media (max-width: 1024px) {
-    .grs-direct-slider .slick-prev {
-        left: 10px !important;
-    }
-    
-    .grs-direct-slider .slick-next {
-        right: 10px !important;
-    }
-    
-    .grs-direct-wrapper {
-        padding: 0 30px !important;
-    }
-}
-
-/* Mobile responsive */
+/* ENHANCED MOBILE RESPONSIVE STYLES */
 @media (max-width: 768px) {
+    /* Reset container for mobile */
     .grs-direct-container {
         flex-direction: column !important;
         padding: 0 !important;
+        gap: 20px !important;
     }
     
+    /* Summary box for mobile */
     .grs-direct-summary {
         flex: none !important;
         width: 100% !important;
         position: static !important;
-        margin-bottom: 30px !important;
+        margin: 0 15px 20px 15px !important;
         box-sizing: border-box !important;
+        padding: 20px !important;
+        min-height: auto !important;
     }
     
+    /* Wrapper padding */
     .grs-direct-wrapper {
         padding: 0 !important;
-    }
-    
-    /* Hide arrows on mobile */
-    .grs-direct-slider .slick-prev,
-    .grs-direct-slider .slick-next {
-        display: none !important;
+        overflow-x: hidden !important;
     }
     
     /* Mobile slider container */
     .grs-direct-slider-container {
-        padding: 0 !important;
+        padding: 0 15px !important;
         width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 40px !important;
     }
     
-    /* Ensure review cards display properly */
+    /* Ensure slider is visible */
+    .grs-direct-slider {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+        min-height: 320px !important;
+    }
+    
+    /* Mobile slides */
+    .grs-direct-slider .slick-slide {
+        padding: 0 5px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    /* Ensure track displays properly */
+    .grs-direct-slider .slick-track {
+        display: flex !important;
+        align-items: stretch !important;
+    }
+    
+    /* Mobile review cards */
     .grs-direct-review {
-        margin: 10px !important;
+        margin: 0 !important;
         padding: 20px !important;
-        min-height: auto !important;
+        min-height: 280px !important;
         height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        background: white !important;
+        border: 1px solid #e8e8e8 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     
-    /* Fix text display */
-    .grs-direct-content {
-        flex: none !important;
+    /* Ensure all content is visible */
+    .grs-direct-header,
+    .grs-direct-profile-img,
+    .grs-direct-profile-details,
+    .grs-direct-name,
+    .grs-direct-date,
+    .grs-direct-stars,
+    .grs-direct-content,
+    .grs-direct-text {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
     }
     
+    .grs-direct-header {
+        display: flex !important;
+    }
+    
+    .grs-direct-stars {
+        display: flex !important;
+    }
+    
+    /* Mobile text styling */
     .grs-direct-text {
         font-size: 14px !important;
         line-height: 1.6 !important;
+        color: #333 !important;
         overflow: visible !important;
         max-height: none !important;
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     
     .grs-direct-text.truncated {
         max-height: 100px !important;
         overflow: hidden !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 5 !important;
+        -webkit-box-orient: vertical !important;
     }
     
-    /* Ensure full width slides */
-    .grs-direct-slider .slick-slide {
-        padding: 0 5px !important;
+    /* Profile images on mobile */
+    .grs-direct-profile-img {
+        width: 40px !important;
+        height: 40px !important;
     }
     
-    /* Fix dots position on mobile */
+    .grs-direct-profile-img img {
+        width: 40px !important;
+        height: 40px !important;
+        display: block !important;
+    }
+    
+    /* Mobile navigation arrows */
+    .grs-direct-slider .slick-prev,
+    .grs-direct-slider .slick-next {
+        width: 30px !important;
+        height: 30px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    .grs-direct-slider .slick-prev {
+        left: 10px !important;
+        z-index: 3 !important;
+    }
+    
+    .grs-direct-slider .slick-next {
+        right: 10px !important;
+        z-index: 3 !important;
+    }
+    
+    /* Dots position on mobile */
     .grs-direct-slider .slick-dots {
-        bottom: -25px !important;
+        bottom: -30px !important;
+        position: relative !important;
+        margin-top: 20px !important;
+    }
+    
+    /* Force horizontal scrolling on mobile */
+    .grs-direct-slider .slick-list {
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Ensure proper slide width on mobile */
+    .grs-direct-slider .slick-slide {
+        width: 100% !important;
+        max-width: 100% !important;
     }
 }
 
-/* Nuclear option - force all slick buttons to show */
-.grs-direct-slider button[class*="slick-"] {
-    display: flex !important;
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .grs-direct-slider,
+    .grs-direct-slider * {
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        transform: translate3d(0, 0, 0) !important;
+    }
+    
+    .grs-direct-review {
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
+    }
+}
+
+/* Additional mobile visibility enforcement */
+@media screen and (max-width: 768px) {
+    .grs-mobile-device .grs-direct-wrapper,
+    .grs-mobile-device .grs-direct-slider,
+    .grs-mobile-device .grs-direct-review,
+    .grs-mobile-device .grs-direct-text {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+    
+    .grs-mobile-device .grs-direct-review {
+        display: flex !important;
+    }
+}
+
+/* Force review visibility on all devices */
+.grs-direct-slider.slick-initialized .slick-slide .grs-direct-review {
     opacity: 1 !important;
     visibility: visible !important;
+    display: flex !important;
 }
