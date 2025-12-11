@@ -472,11 +472,11 @@
         -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Mobile slides - Let Slick control width, add padding for spacing */
+    /* Mobile slides - NO padding, let review cards handle their own spacing */
     .grs-direct-slider .slick-slide,
     .grs-direct-slider .slick-track .slick-slide,
     .grs-direct-slider.slick-initialized .slick-slide {
-        padding: 0 15px !important;
+        padding: 0 !important;
         margin: 0 !important;
         opacity: 1 !important;
         visibility: visible !important;
@@ -490,9 +490,9 @@
         align-items: stretch !important;
     }
 
-    /* Mobile review cards - Fill slide, max 500px like summary */
+    /* Mobile review cards - SAME width formula as summary box */
     .grs-direct-slider .grs-direct-review {
-        width: 100% !important;
+        width: calc(100% - 30px) !important;
         max-width: 500px !important;
         margin: 0 auto !important;
         padding: 25px 20px !important;
