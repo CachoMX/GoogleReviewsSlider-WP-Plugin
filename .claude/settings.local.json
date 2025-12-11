@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote set-url:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nVersion 2.0.1 - Added automatic update system\n\n## Added\n- GitHub-based automatic update system for all WordPress installations\n- Plugin updater class that checks GitHub releases every 12 hours\n- Automatic update notifications in WordPress admin\n- One-click updates for all 200+ installations\n\n## New Files\n- includes/plugin-updater.php - Auto-update handler\n- DEPLOYMENT.md - Complete deployment guide\n- README.md - Full plugin documentation\n\n## Modified\n- google-reviews-slider.php - Updated version to 2.0.1, added updater integration\n\n## How It Works\n- WordPress automatically checks GitHub for new releases\n- When a new version is published, all sites receive update notification\n- Admins can update with one click from WordPress dashboard\n- No manual installation needed for 200+ sites\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(gh release create:*)",
+      "Bash(curl:*)",
+      "Bash(git commit:*)",
+      "Bash(https://api.github.com/repos/CachoMX/GoogleReviewsSlider-WP-Plugin/releases )",
+      "Bash(where gh)",
+      "Bash(winget:*)",
+      "Bash(gh:*)",
+      "Bash(git checkout:*)",
+      "Bash(export:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

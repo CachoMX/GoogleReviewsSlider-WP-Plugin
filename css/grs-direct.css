@@ -473,7 +473,7 @@
         display: block !important;
     }
     
-    /* Mobile review cards - wider and more prominent */
+    /* Mobile review cards - same width as summary box */
     .grs-direct-review {
         margin: 0 auto !important;
         padding: 25px 20px !important;
@@ -487,7 +487,7 @@
         border-radius: 12px !important;
         opacity: 1 !important;
         visibility: visible !important;
-        width: calc(100% - 10px) !important;
+        width: calc(100% - 30px) !important;
         max-width: 500px !important;
     }
     
@@ -574,11 +574,11 @@
         margin: 0 !important;
     }
 
-    /* Full width review cards on mobile */
-    .grs-direct-review {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
+    /* Review cards match summary width on mobile */
+    .grs-direct-slider .grs-direct-review {
+        width: calc(100% - 30px) !important;
+        max-width: 500px !important;
+        margin: 0 auto !important;
     }
     
     /* Force horizontal scrolling on mobile */

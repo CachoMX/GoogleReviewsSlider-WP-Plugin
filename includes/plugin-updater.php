@@ -70,6 +70,9 @@ class GRS_Plugin_Updater {
 
         // Enable automatic background updates
         add_filter('auto_update_plugin', array($this, 'enable_auto_update'), 10, 2);
+
+        // Keep plugin active after update
+        add_action('upgrader_process_complete', array($this, 'reactivate_plugin'), 10, 2);
     }
 
     /**
@@ -318,6 +321,35 @@ class GRS_Plugin_Updater {
         }
 
         return $update;
+    }
+
+    /**
+     * Reactivate plugin after update to prevent deactivation
+     *
+     * @param WP_Upgrader $upgrader_object
+     * @param array $options
+     */
+    public function reactivate_plugin($upgrader_object, $options) {
+        // Only run for plugin updates
+        if ($options['action'] !== 'update' || $options['type'] !== 'plugin') {
+            return;
+        }
+
+        // Check if our plugin was updated
+        if (isset($options['plugins'])) {
+            foreach ($options['plugins'] as $plugin) {
+                if ($plugin === $this->basename) {
+                    // Plugin was updated, reactivate it
+                    $current = get_option('active_plugins', array());
+
+                    // Check if it's not already active
+                    if (!in_array($this->basename, $current)) {
+                        $current[] = $this->basename;
+                        update_option('active_plugins', $current);
+                    }
+                }
+            }
+        }
     }
 
     /**
