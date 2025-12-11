@@ -81,6 +81,8 @@ jQuery(document).ready(function($) {
                             autoplaySpeed: 5000, // 5 seconds per review
                             centerMode: false,
                             centerPadding: '0px',
+                            variableWidth: false, // Fixed width slides
+                            adaptiveHeight: false, // Prevent height jumping
                             swipe: true,
                             touchMove: true,
                             pauseOnHover: true,
@@ -96,6 +98,28 @@ jQuery(document).ready(function($) {
                 $slider.on('afterChange', function() {
                     $slider.slick('slickPlay');
                 });
+            }
+
+            // Ensure container width is correct on mobile
+            if (isMobile) {
+                setTimeout(function() {
+                    var $container = $slider.closest('.grs-direct-slider-container');
+                    var $list = $slider.find('.slick-list');
+
+                    // Ensure list and container use full width
+                    $container.css({
+                        'width': '100%',
+                        'max-width': '100%'
+                    });
+
+                    $list.css({
+                        'width': '100%',
+                        'max-width': '100%'
+                    });
+
+                    // Refresh Slick positioning
+                    $slider.slick('setPosition');
+                }, 100);
             }
             
             console.log('Slider initialized successfully');

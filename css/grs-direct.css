@@ -445,10 +445,11 @@
         overflow-x: hidden !important;
     }
 
-    /* Mobile slider container - NO padding here */
+    /* Mobile slider container - Full width */
     .grs-direct-slider-container {
         padding: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 20px !important;
     }
@@ -461,21 +462,26 @@
         min-height: 320px !important;
     }
 
-    /* Slick list has the 15px padding for breathing room */
+    /* Slick list - NO padding, let slides handle spacing */
     .grs-direct-slider .slick-list {
-        padding: 0 15px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
         overflow-x: hidden !important;
         overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Mobile slides - full width */
-    .grs-direct-slider .slick-slide {
-        padding: 0 !important;
+    /* Mobile slides - Let Slick control width, add padding for spacing */
+    .grs-direct-slider .slick-slide,
+    .grs-direct-slider .slick-track .slick-slide,
+    .grs-direct-slider.slick-initialized .slick-slide {
+        padding: 0 15px !important;
         margin: 0 !important;
-        width: 100% !important;
         opacity: 1 !important;
         visibility: visible !important;
+        float: none !important;
+        box-sizing: border-box !important;
     }
 
     /* Ensure track displays properly */
@@ -484,9 +490,9 @@
         align-items: stretch !important;
     }
 
-    /* Mobile review cards - SAME width as summary box */
+    /* Mobile review cards - Fill slide, max 500px like summary */
     .grs-direct-slider .grs-direct-review {
-        width: calc(100% - 30px) !important;
+        width: 100% !important;
         max-width: 500px !important;
         margin: 0 auto !important;
         padding: 25px 20px !important;
@@ -500,6 +506,7 @@
         border-radius: 12px !important;
         opacity: 1 !important;
         visibility: visible !important;
+        box-sizing: border-box !important;
     }
     
     /* Ensure all content is visible */
