@@ -22,9 +22,13 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.0');
+define('GRS_VERSION', '2.0.1');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
+
+// GitHub repository info for automatic updates
+define('GRS_GITHUB_USERNAME', 'CachoMX');
+define('GRS_GITHUB_REPOSITORY', 'GoogleReviewsSlider-WP-Plugin');
 
 // Plugin activation hook
 register_activation_hook(__FILE__, 'grs_activation_hook');
@@ -282,6 +286,18 @@ include(GRS_PLUGIN_PATH . 'includes/admin-page.php');
 include(GRS_PLUGIN_PATH . 'includes/shortcode.php');
 include(GRS_PLUGIN_PATH . 'includes/api-handler.php');
 include(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
+
+// Initialize GitHub-based auto-updater
+require_once(GRS_PLUGIN_PATH . 'includes/plugin-updater.php');
+
+if (is_admin()) {
+    new GRS_Plugin_Updater(
+        GRS_GITHUB_USERNAME,
+        GRS_GITHUB_REPOSITORY,
+        __FILE__,
+        GRS_VERSION
+    );
+}
 
 // Add AJAX endpoint for clearing cache
 add_action('wp_ajax_grs_clear_cache', 'grs_clear_cache_callback');
