@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved performance.
- * Version: 2.0.4
+ * Version: 2.0.5
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.0.4');
+define('GRS_VERSION', '2.0.5');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -368,4 +368,59 @@ function grs_check_api_usage_handler() {
     }
     
     wp_send_json_success($formatted);
+}
+
+// AJAX handler for checking plugin updates
+add_action('wp_ajax_grs_check_for_updates', 'grs_check_for_updates_handler');
+function grs_check_for_updates_handler() {
+    // Check permissions
+    if (!current_user_can('update_plugins')) {
+        wp_send_json_error('Unauthorized access');
+        return;
+    }
+
+    // Verify nonce
+    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed');
+        return;
+    }
+
+    // Clear update cache to force fresh check
+    delete_site_transient('update_plugins');
+    delete_transient('grs_github_release_' . md5('https://api.github.com/repos/CachoMX/GoogleReviewsSlider-WP-Plugin/releases/latest'));
+
+    // Check GitHub for latest version
+    $github_api_url = 'https://api.github.com/repos/CachoMX/GoogleReviewsSlider-WP-Plugin/releases/latest';
+    $response = wp_remote_get($github_api_url, array(
+        'timeout' => 15,
+        'headers' => array('Accept' => 'application/vnd.github.v3+json')
+    ));
+
+    if (is_wp_error($response)) {
+        wp_send_json_error('Could not connect to GitHub: ' . $response->get_error_message());
+        return;
+    }
+
+    $response_code = wp_remote_retrieve_response_code($response);
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if ($response_code !== 200 || empty($data['tag_name'])) {
+        wp_send_json_error('Invalid response from GitHub');
+        return;
+    }
+
+    $latest_version = ltrim($data['tag_name'], 'v');
+    $current_version = GRS_VERSION;
+    $update_available = version_compare($current_version, $latest_version, '<');
+
+    // Trigger WordPress to check for updates
+    wp_update_plugins();
+
+    wp_send_json_success(array(
+        'update_available' => $update_available,
+        'current_version' => $current_version,
+        'latest_version' => $latest_version,
+        'plugins_url' => admin_url('plugins.php')
+    ));
 }

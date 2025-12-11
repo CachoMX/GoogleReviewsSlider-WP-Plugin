@@ -185,6 +185,17 @@ function grs_options_page() {
                 <button type="button" id="clear-cache-btn" class="button button-secondary">Clear Cache Now</button>
                 <span id="cache-message" style="margin-left: 10px;"></span>
             </div>
+
+            <div class="grs-cache-section" style="margin-top: 20px;">
+                <h3>🔄 Plugin Updates</h3>
+                <p><strong>Current Version:</strong> <?php echo GRS_VERSION; ?></p>
+                <p>This plugin updates automatically from GitHub. Click below to check for updates immediately.</p>
+                <button type="button" id="check-updates-btn" class="button button-primary">
+                    <span class="dashicons dashicons-update"></span> Check for Updates Now
+                </button>
+                <span id="update-message" style="margin-left: 10px;"></span>
+                <div id="update-info" style="margin-top: 15px; display: none;"></div>
+            </div>
             
             <h3>Find Your Place ID</h3>
             <?php if (!$api_key) : ?>
@@ -301,9 +312,9 @@ function grs_options_page() {
             var button = $(this);
             var message = $('#cache-message');
             var status = $('#cache-status');
-            
+
             button.prop('disabled', true).text('Clearing...');
-            
+
             $.ajax({
                 url: ajaxurl,
                 type: 'POST',
@@ -327,6 +338,59 @@ function grs_options_page() {
                 },
                 complete: function() {
                     button.prop('disabled', false).text('Clear Cache Now');
+                }
+            });
+        });
+
+        // Check for updates functionality
+        $('#check-updates-btn').on('click', function() {
+            var button = $(this);
+            var message = $('#update-message');
+            var infoDiv = $('#update-info');
+
+            button.prop('disabled', true).html('<span class="dashicons dashicons-update spinning"></span> Checking...');
+            message.html('');
+            infoDiv.hide();
+
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'grs_check_for_updates',
+                    nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        var data = response.data;
+
+                        if (data.update_available) {
+                            message.html('<span style="color: #00a32a;">✓ Update available: Version ' + data.latest_version + '</span>');
+                            infoDiv.html(
+                                '<div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 4px;">' +
+                                '<h4 style="margin-top: 0;">🎉 New Version Available!</h4>' +
+                                '<p><strong>Current:</strong> ' + data.current_version + '</p>' +
+                                '<p><strong>Latest:</strong> ' + data.latest_version + '</p>' +
+                                '<p><strong>What to do:</strong> The plugin will update automatically in the background. Or you can go to <a href="' + data.plugins_url + '">Plugins page</a> to update now.</p>' +
+                                '</div>'
+                            ).show();
+                        } else {
+                            message.html('<span style="color: #00a32a;">✓ You have the latest version!</span>');
+                            infoDiv.html(
+                                '<div style="background: #e7f3ff; border-left: 4px solid #0073aa; padding: 15px; border-radius: 4px;">' +
+                                '<p><strong>Current Version:</strong> ' + data.current_version + '</p>' +
+                                '<p>You are running the latest version of Google Reviews Slider.</p>' +
+                                '</div>'
+                            ).show();
+                        }
+                    } else {
+                        message.html('<span style="color: #d63638;">✗ Error: ' + (response.data || 'Could not check for updates') + '</span>');
+                    }
+                },
+                error: function() {
+                    message.html('<span style="color: #d63638;">✗ Error checking for updates</span>');
+                },
+                complete: function() {
+                    button.prop('disabled', false).html('<span class="dashicons dashicons-update"></span> Check for Updates Now');
                 }
             });
         });
