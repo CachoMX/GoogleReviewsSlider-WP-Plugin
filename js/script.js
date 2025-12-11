@@ -1,22 +1,31 @@
 // Updated js/script.js - Mobile Display Fix
 jQuery(document).ready(function($) {
     console.log("Google Reviews Slider: Initializing...");
-    
-    // Check if mobile
+
+    // Better mobile detection including touch devices
     var isMobile = window.innerWidth <= 768;
-    
+    var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+    var isRealMobile = isMobile && isTouchDevice;
+
+    console.log('Device detection:', {
+        windowWidth: window.innerWidth,
+        isMobile: isMobile,
+        isTouchDevice: isTouchDevice,
+        isRealMobile: isRealMobile
+    });
+
     // Initialize all sliders
     function initializeSliders() {
         $('.grs-direct-slider').each(function() {
             var $slider = $(this);
-            
+
             // Skip if already initialized
             if ($slider.hasClass('slick-initialized')) {
                 console.log('Slider already initialized, refreshing...');
                 $slider.slick('refresh');
                 return;
             }
-            
+
             // Get settings
             var autoplay = $slider.data('autoplay') !== 'false';
             var autoplaySpeed = parseInt($slider.data('autoplay-speed')) || 4000;
@@ -24,13 +33,20 @@ jQuery(document).ready(function($) {
             var slidesTablet = parseInt($slider.data('slides-tablet')) || 2;
             var slidesMobile = parseInt($slider.data('slides-mobile')) || 1;
             var arrows = $slider.data('arrows') !== 'false';
-            
+
+            // Force autoplay on real mobile devices
+            if (isRealMobile) {
+                autoplay = true;
+                autoplaySpeed = 5000;
+            }
+
             console.log('Initializing slider with settings:', {
                 slidesToShow: isMobile ? slidesMobile : slidesDesktop,
                 autoplay: autoplay,
                 autoplaySpeed: autoplaySpeed,
                 arrows: arrows,
-                isMobile: isMobile
+                isMobile: isMobile,
+                isRealMobile: isRealMobile
             });
 
             // Initialize Slick with horizontal settings
@@ -92,12 +108,41 @@ jQuery(document).ready(function($) {
                 ]
             });
 
-            // Ensure autoplay starts without interaction
-            if (autoplay) {
-                $slider.slick('slickPlay');
-                $slider.on('afterChange', function() {
+            // Force autoplay to start - especially important on mobile devices
+            if (autoplay || isRealMobile) {
+                console.log('Starting autoplay...');
+
+                // Initial start after a small delay to ensure DOM is ready
+                setTimeout(function() {
+                    $slider.slick('slickPlay');
+                    console.log('Autoplay started');
+                }, 200);
+
+                // Restart autoplay after each slide change
+                $slider.on('afterChange', function(event, slick, currentSlide) {
+                    console.log('Slide changed to:', currentSlide);
                     $slider.slick('slickPlay');
                 });
+
+                // On mobile, restart autoplay after any touch interaction
+                if (isRealMobile) {
+                    $slider.on('touchend', function() {
+                        console.log('Touch interaction detected, restarting autoplay...');
+                        setTimeout(function() {
+                            $slider.slick('slickPlay');
+                        }, 1000); // Wait 1 second after touch
+                    });
+
+                    // Also start on first user interaction (iOS requirement)
+                    var autoplayStarted = false;
+                    $slider.one('touchstart swipe', function() {
+                        if (!autoplayStarted) {
+                            console.log('First user interaction, starting autoplay...');
+                            $slider.slick('slickPlay');
+                            autoplayStarted = true;
+                        }
+                    });
+                }
             }
 
             // Ensure container width is correct on mobile
@@ -119,6 +164,12 @@ jQuery(document).ready(function($) {
 
                     // Refresh Slick positioning
                     $slider.slick('setPosition');
+
+                    // Start autoplay after positioning is set
+                    if (autoplay || isRealMobile) {
+                        $slider.slick('slickPlay');
+                        console.log('Autoplay restarted after setPosition');
+                    }
                 }, 100);
             }
             
