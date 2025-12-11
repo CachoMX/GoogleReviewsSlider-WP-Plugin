@@ -445,14 +445,14 @@
         overflow-x: hidden !important;
     }
 
-    /* Mobile slider container - wider cards */
+    /* Mobile slider container - NO padding here */
     .grs-direct-slider-container {
-        padding: 0 15px !important;
+        padding: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 20px !important;
     }
-    
+
     /* Ensure slider is visible */
     .grs-direct-slider {
         opacity: 1 !important;
@@ -460,21 +460,34 @@
         display: block !important;
         min-height: 320px !important;
     }
-    
-    /* Mobile slides */
+
+    /* Slick list has the 15px padding for breathing room */
+    .grs-direct-slider .slick-list {
+        padding: 0 15px !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Mobile slides - full width */
     .grs-direct-slider .slick-slide {
-        padding: 0 5px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
         opacity: 1 !important;
         visibility: visible !important;
     }
-    
+
     /* Ensure track displays properly */
     .grs-direct-slider .slick-track {
-        display: block !important;
+        display: flex !important;
+        align-items: stretch !important;
     }
-    
-    /* Mobile review cards - same width as summary box */
-    .grs-direct-review {
+
+    /* Mobile review cards - SAME width as summary box */
+    .grs-direct-slider .grs-direct-review {
+        width: calc(100% - 30px) !important;
+        max-width: 500px !important;
         margin: 0 auto !important;
         padding: 25px 20px !important;
         min-height: 250px !important;
@@ -487,8 +500,6 @@
         border-radius: 12px !important;
         opacity: 1 !important;
         visibility: visible !important;
-        width: calc(100% - 30px) !important;
-        max-width: 500px !important;
     }
     
     /* Ensure all content is visible */
@@ -556,48 +567,6 @@
     .grs-direct-slider .grs-slider-dots {
         display: none !important;
     }
-
-    /* Mobile wrapper adjustments */
-    .grs-direct-wrapper {
-        padding: 15px 0 !important;
-    }
-
-    .grs-direct-slider-container {
-        margin-bottom: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-    }
-
-    /* Slides take full width on mobile */
-    .grs-direct-slider .slick-slide {
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-    }
-
-    /* Review cards - full width within slider on mobile */
-    .grs-direct-slider .grs-direct-review {
-        width: 100% !important;
-        max-width: 500px !important;
-        margin: 0 auto !important;
-        padding: 25px 20px !important;
-        box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
-        border-radius: 12px !important;
-    }
-
-    /* Force horizontal scrolling on mobile with 15px side padding */
-    .grs-direct-slider .slick-list {
-        overflow-x: hidden !important;
-        overflow-y: visible !important;
-        -webkit-overflow-scrolling: touch !important;
-        padding: 0 15px !important;
-    }
-
-    /* Ensure proper track display */
-    .grs-direct-slider .slick-track {
-        display: flex !important;
-        align-items: stretch !important;
-    }
 }
 
 /* iOS Safari specific fixes */
@@ -628,9 +597,6 @@
 }
 
 @media (max-width: 480px) {
-    .grs-direct-review {
-        padding: 15px !important;
-    }
     .grs-direct-text.truncated {
         -webkit-line-clamp: 6 !important;
     }
