@@ -71,8 +71,9 @@ class GRS_Plugin_Updater {
         // Enable automatic background updates
         add_filter('auto_update_plugin', array($this, 'enable_auto_update'), 10, 2);
 
-        // Keep plugin active after update
-        add_action('upgrader_process_complete', array($this, 'reactivate_plugin'), 10, 2);
+        // Save and restore activation state during updates
+        add_filter('upgrader_pre_install', array($this, 'save_activation_state'), 10, 2);
+        add_action('upgrader_process_complete', array($this, 'restore_activation_state'), 10, 2);
     }
 
     /**
@@ -324,12 +325,31 @@ class GRS_Plugin_Updater {
     }
 
     /**
-     * Reactivate plugin after update to prevent deactivation
+     * Save plugin activation state before update
+     *
+     * @param bool $response
+     * @param array $hook_extra
+     * @return bool
+     */
+    public function save_activation_state($response, $hook_extra) {
+        // Check if this is a plugin update
+        if (isset($hook_extra['plugin']) && $hook_extra['plugin'] === $this->basename) {
+            // Save current activation state
+            $is_active = is_plugin_active($this->basename);
+            update_option('grs_was_active_before_update', $is_active ? '1' : '0');
+            error_log('Google Reviews Slider: Saved activation state before update - ' . ($is_active ? 'active' : 'inactive'));
+        }
+
+        return $response;
+    }
+
+    /**
+     * Restore plugin activation state after update
      *
      * @param WP_Upgrader $upgrader_object
      * @param array $options
      */
-    public function reactivate_plugin($upgrader_object, $options) {
+    public function restore_activation_state($upgrader_object, $options) {
         // Only run for plugin updates
         if (!isset($options['action']) || $options['action'] !== 'update') {
             return;
@@ -350,18 +370,27 @@ class GRS_Plugin_Updater {
 
         // Check if our plugin is in the updated list
         if (in_array($this->basename, $updated_plugins)) {
-            // Use WordPress activate_plugin function for proper activation
-            if (!is_plugin_active($this->basename)) {
-                // Activate silently (suppress errors to avoid breaking the update process)
+            // Get saved activation state
+            $was_active = get_option('grs_was_active_before_update', '0');
+
+            // If it was active before update, reactivate it now
+            if ($was_active === '1') {
+                // Small delay to ensure files are fully in place
+                usleep(100000); // 0.1 seconds
+
+                // Activate plugin
                 $result = activate_plugin($this->basename, '', false, true);
 
-                // Log for debugging if needed
+                // Log result
                 if (!is_wp_error($result)) {
                     error_log('Google Reviews Slider: Plugin reactivated successfully after update');
                 } else {
                     error_log('Google Reviews Slider: Failed to reactivate - ' . $result->get_error_message());
                 }
             }
+
+            // Clean up the saved state
+            delete_option('grs_was_active_before_update');
         }
     }
 

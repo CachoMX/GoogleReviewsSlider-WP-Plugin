@@ -575,9 +575,9 @@
         width: 100% !important;
     }
 
-    /* Review cards - same width as summary box on mobile */
+    /* Review cards - full width within slider on mobile */
     .grs-direct-slider .grs-direct-review {
-        width: calc(100% - 30px) !important;
+        width: 100% !important;
         max-width: 500px !important;
         margin: 0 auto !important;
         padding: 25px 20px !important;
@@ -585,7 +585,7 @@
         border-radius: 12px !important;
     }
 
-    /* Force horizontal scrolling on mobile */
+    /* Force horizontal scrolling on mobile with 15px side padding */
     .grs-direct-slider .slick-list {
         overflow-x: hidden !important;
         overflow-y: visible !important;
