@@ -401,30 +401,56 @@
         gap: 20px !important;
     }
     
-    /* Summary box for mobile */
+    /* Summary box for mobile - Full width and prominent */
     .grs-direct-summary {
         flex: none !important;
-        width: 100% !important;
+        width: calc(100% - 30px) !important;
+        max-width: 500px !important;
         position: static !important;
-        margin: 0 auto 20px auto !important;
+        margin: 0 auto 25px auto !important;
         box-sizing: border-box !important;
-        padding: 20px !important;
+        padding: 25px 20px !important;
         min-height: auto !important;
         background: #ffffff !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1) !important;
+        border-radius: 12px !important;
+    }
+
+    /* Mobile summary rating */
+    .grs-direct-summary .grs-direct-rating-large {
+        font-size: 32px !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Mobile summary stars - bigger */
+    .grs-direct-summary .grs-direct-stars {
+        margin-bottom: 12px !important;
+    }
+
+    .grs-direct-summary .dashicons-star-filled {
+        font-size: 24px !important;
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    /* Mobile summary text */
+    .grs-direct-summary .grs-direct-rating-text {
+        font-size: 16px !important;
+        margin: 10px 0 !important;
     }
     
     /* Wrapper padding */
     .grs-direct-wrapper {
-        padding: 0 !important;
+        padding: 20px 0 !important;
         overflow-x: hidden !important;
     }
-    
-    /* Mobile slider container */
+
+    /* Mobile slider container - wider cards */
     .grs-direct-slider-container {
         padding: 0 15px !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        margin-bottom: 40px !important;
+        margin-bottom: 20px !important;
     }
     
     /* Ensure slider is visible */
@@ -447,18 +473,22 @@
         display: block !important;
     }
     
-    /* Mobile review cards */
+    /* Mobile review cards - wider and more prominent */
     .grs-direct-review {
-        margin: 0 !important;
-        padding: 20px !important;
-        min-height: 280px !important;
+        margin: 0 auto !important;
+        padding: 25px 20px !important;
+        min-height: 250px !important;
         height: auto !important;
         display: flex !important;
         flex-direction: column !important;
         background: white !important;
-        border: 1px solid #e8e8e8 !important;
+        border: none !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+        border-radius: 12px !important;
         opacity: 1 !important;
         visibility: visible !important;
+        width: calc(100% - 10px) !important;
+        max-width: 500px !important;
     }
     
     /* Ensure all content is visible */
