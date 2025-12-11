@@ -243,30 +243,45 @@ class GRS_Plugin_Updater {
     public function after_install($response, $hook_extra, $result) {
         global $wp_filesystem;
 
-        // Get the destination directory
-        $install_directory = plugin_dir_path(dirname(__FILE__));
-        $plugin_directory = dirname($install_directory);
+        // Only run for our plugin
+        if (!isset($hook_extra['plugin']) || $hook_extra['plugin'] !== $this->basename) {
+            return $result;
+        }
 
-        // Move files from GitHub's default folder structure
+        // Get the correct paths
+        $plugin_folder = WP_PLUGIN_DIR . '/' . dirname($this->basename);
+
+        // GitHub zipball creates a folder like "CachoMX-GoogleReviewsSlider-WP-Plugin-a1b2c3d"
+        // WordPress extracts this to wp-content/plugins/google-reviews-slider-tmp/CachoMX-GoogleReviewsSlider-WP-Plugin-a1b2c3d/
         $source = $result['destination'];
 
-        // GitHub creates a folder like "username-repository-commithash"
-        // We need to move its contents to our plugin folder
+        // List contents of the extracted folder
         if ($wp_filesystem->is_dir($source)) {
             $source_files = $wp_filesystem->dirlist($source);
 
-            if ($source_files) {
-                // GitHub puts everything in a subfolder, get the first directory
-                foreach ($source_files as $file => $file_data) {
-                    if ($file_data['type'] === 'd') {
-                        $actual_source = trailingslashit($source) . trailingslashit($file);
+            if ($source_files && count($source_files) === 1) {
+                // Get the first (and only) directory
+                $github_folder = array_keys($source_files)[0];
+                $github_folder_path = trailingslashit($source) . $github_folder;
 
-                        // Move to proper location
-                        $result['destination'] = $install_directory;
-                        $result['destination_name'] = basename($install_directory);
+                // This is the actual plugin content
+                // We need to move it to the correct plugin folder
 
-                        break;
-                    }
+                // Remove old plugin files first
+                if ($wp_filesystem->is_dir($plugin_folder)) {
+                    $wp_filesystem->delete($plugin_folder, true);
+                }
+
+                // Move GitHub folder to correct location
+                $moved = $wp_filesystem->move($github_folder_path, $plugin_folder);
+
+                if ($moved) {
+                    // Update result with correct destination
+                    $result['destination'] = $plugin_folder;
+                    $result['destination_name'] = dirname($this->basename);
+
+                    // Clean up the temp directory
+                    $wp_filesystem->delete($source, true);
                 }
             }
         }
