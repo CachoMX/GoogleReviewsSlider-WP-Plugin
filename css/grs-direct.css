@@ -245,35 +245,44 @@
     margin-top: 10px !important;
 }
 
-/* Navigation arrows */
+/* Navigation arrows - Clean modern style */
 .grs-direct-slider .slick-prev,
 .grs-direct-slider .slick-next {
     position: absolute !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
     margin-top: -20px !important; /* Adjust for dots below - centers on cards only */
-    width: 35px !important;
-    height: 35px !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 2px solid #e0e0e0 !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    width: 40px !important;
+    height: 40px !important;
+    background-color: #ffffff !important;
+    outline: 1px solid #d9d9d9 !important;
+    outline-offset: 0 !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
     z-index: 2 !important;
     cursor: pointer !important;
-    transition: all 0.3s ease !important;
+    transition: all 200ms ease-out !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     text-indent: 0 !important;
     font-size: 0 !important;
     line-height: 0 !important;
+    opacity: 1 !important;
 }
 
 .grs-direct-slider .slick-prev:hover,
 .grs-direct-slider .slick-next:hover {
-    background: rgba(255, 255, 255, 1) !important;
-    border-color: #0073aa !important;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.15) !important;
+    background-color: #f8f8f8 !important;
+    outline-color: #b8b8b8 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+    transform: translateY(-50%) scale(1.05) !important;
+}
+
+.grs-direct-slider .slick-prev:active,
+.grs-direct-slider .slick-next:active {
+    transform: translateY(-50%) scale(0.95) !important;
 }
 
 .grs-direct-slider .slick-prev:focus,
@@ -290,27 +299,34 @@
     right: -5px !important;
 }
 
-/* Arrow icons */
+/* Arrow icons - Clean modern style */
 .grs-direct-slider .slick-prev:before,
 .grs-direct-slider .slick-next:before {
     font-family: Arial, sans-serif !important;
-    font-size: 18px !important;
+    font-size: 20px !important;
     line-height: 1 !important;
-    color: #333 !important;
+    color: #666 !important;
     opacity: 1 !important;
     display: block !important;
+    font-weight: 300 !important;
+    transition: color 200ms ease-out !important;
+}
+
+.grs-direct-slider .slick-prev:hover:before,
+.grs-direct-slider .slick-next:hover:before {
+    color: #333 !important;
 }
 
 .grs-direct-slider .slick-prev:before {
     content: '‹' !important;
-    font-size: 22px !important;
-    margin-left: -2px !important;
+    font-size: 24px !important;
+    margin-left: -1px !important;
 }
 
 .grs-direct-slider .slick-next:before {
     content: '›' !important;
-    font-size: 22px !important;
-    margin-right: -2px !important;
+    font-size: 24px !important;
+    margin-right: -1px !important;
 }
 
 /* Dots - Fixed for proper pagination display */
@@ -502,11 +518,13 @@
     /* Mobile navigation arrows */
     .grs-direct-slider .slick-prev,
     .grs-direct-slider .slick-next {
-        width: 30px !important;
-        height: 30px !important;
-        background: rgba(255, 255, 255, 0.9) !important;
+        width: 36px !important;
+        height: 36px !important;
+        background-color: #ffffff !important;
         z-index: 3 !important;
         margin-top: -15px !important; /* Adjusted for mobile */
+        border-radius: 18px !important;
+        outline: 1px solid #d9d9d9 !important;
     }
 
     .grs-direct-slider .slick-prev {
@@ -519,8 +537,13 @@
 
     .grs-direct-slider .slick-prev:before,
     .grs-direct-slider .slick-next:before {
+        color: #666 !important;
+        font-size: 22px !important;
+    }
+
+    .grs-direct-slider .slick-prev:hover:before,
+    .grs-direct-slider .slick-next:hover:before {
         color: #333 !important;
-        font-size: 20px !important;
     }
     
     /* Dots position on mobile */
