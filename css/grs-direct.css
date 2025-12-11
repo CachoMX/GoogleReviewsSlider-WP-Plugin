@@ -515,38 +515,10 @@
         display: block !important;
     }
     
-    /* Mobile navigation arrows - Larger and more visible */
+    /* Hide arrows on mobile - autoplay + swipe is cleaner */
     .grs-direct-slider .slick-prev,
     .grs-direct-slider .slick-next {
-        width: 44px !important;
-        height: 44px !important;
-        background-color: #ffffff !important;
-        z-index: 100 !important;
-        margin-top: 0 !important; /* Center on visible cards */
-        border-radius: 22px !important;
-        outline: 2px solid #d9d9d9 !important;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
-    }
-
-    .grs-direct-slider .slick-prev {
-        left: 5px !important;
-    }
-
-    .grs-direct-slider .slick-next {
-        right: 5px !important;
-    }
-
-    .grs-direct-slider .slick-prev:before,
-    .grs-direct-slider .slick-next:before {
-        color: #333 !important;
-        font-size: 28px !important;
-        font-weight: bold !important;
-    }
-
-    .grs-direct-slider .slick-prev:active,
-    .grs-direct-slider .slick-next:active {
-        background-color: #f0f0f0 !important;
-        transform: translateY(-50%) scale(0.9) !important;
+        display: none !important;
     }
     
     /* Hide dots on mobile - too many for small screen */
@@ -555,14 +527,28 @@
         display: none !important;
     }
 
-    /* Mobile wrapper adjustments */
+    /* Mobile wrapper adjustments - Full width reviews */
     .grs-direct-wrapper {
-        padding: 10px 0 !important;
+        padding: 15px 0 !important;
     }
 
     .grs-direct-slider-container {
         margin-bottom: 0 !important;
-        padding: 0 10px !important;
+        padding: 0 15px !important;
+        width: 100% !important;
+    }
+
+    /* Full width slides on mobile */
+    .grs-direct-slider .slick-slide {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Full width review cards on mobile */
+    .grs-direct-review {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
     }
     
     /* Force horizontal scrolling on mobile */

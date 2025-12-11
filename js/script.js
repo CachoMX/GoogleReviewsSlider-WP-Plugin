@@ -72,15 +72,19 @@ jQuery(document).ready(function($) {
                     {
                         breakpoint: 768,
                         settings: {
-                            slidesToShow: slidesMobile,
-                            slidesToScroll: 1, // Scroll one at a time on mobile
-                            arrows: true,
-                            dots: false, // Hide dots on mobile - too many slides
+                            slidesToShow: 1,
+                            slidesToScroll: 1,
+                            arrows: false, // No arrows on mobile - cleaner look
+                            dots: false, // No dots on mobile - too many slides
                             infinite: true,
+                            autoplay: true, // Auto-rotate on mobile
+                            autoplaySpeed: 5000, // 5 seconds per review
                             centerMode: false,
                             centerPadding: '0px',
                             swipe: true,
-                            touchMove: true
+                            touchMove: true,
+                            pauseOnHover: true,
+                            pauseOnFocus: true
                         }
                     }
                 ]
