@@ -251,6 +251,7 @@
     position: absolute !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
+    margin-top: -20px !important; /* Adjust for dots below - centers on cards only */
     width: 35px !important;
     height: 35px !important;
     background: rgba(255, 255, 255, 0.95) !important;
@@ -266,6 +267,13 @@
     text-indent: 0 !important;
     font-size: 0 !important;
     line-height: 0 !important;
+}
+
+.grs-direct-slider .slick-prev:hover,
+.grs-direct-slider .slick-next:hover {
+    background: rgba(255, 255, 255, 1) !important;
+    border-color: #0073aa !important;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.15) !important;
 }
 
 .grs-direct-slider .slick-prev:focus,
@@ -498,6 +506,7 @@
         height: 30px !important;
         background: rgba(255, 255, 255, 0.9) !important;
         z-index: 3 !important;
+        margin-top: -15px !important; /* Adjusted for mobile */
     }
 
     .grs-direct-slider .slick-prev {
