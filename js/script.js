@@ -73,9 +73,9 @@ jQuery(document).ready(function($) {
                         breakpoint: 768,
                         settings: {
                             slidesToShow: slidesMobile,
-                            slidesToScroll: slidesMobile, // Match scroll to slides shown
+                            slidesToScroll: 1, // Scroll one at a time on mobile
                             arrows: true,
-                            dots: true,
+                            dots: false, // Hide dots on mobile - too many slides
                             infinite: true,
                             centerMode: false,
                             centerPadding: '0px',
