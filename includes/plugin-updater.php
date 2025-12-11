@@ -67,6 +67,9 @@ class GRS_Plugin_Updater {
 
         // Add custom update message
         add_action('in_plugin_update_message-' . $this->basename, array($this, 'update_message'), 10, 2);
+
+        // Enable automatic background updates
+        add_filter('auto_update_plugin', array($this, 'enable_auto_update'), 10, 2);
     }
 
     /**
@@ -299,6 +302,22 @@ class GRS_Plugin_Updater {
         if (empty($response->package)) {
             echo '<br><strong>Note:</strong> Automatic update available from GitHub.';
         }
+    }
+
+    /**
+     * Enable automatic updates for this plugin
+     *
+     * @param bool $update Whether to update
+     * @param object $item The update item
+     * @return bool
+     */
+    public function enable_auto_update($update, $item) {
+        // Only enable auto-update for our plugin
+        if (isset($item->slug) && $item->slug === $this->slug) {
+            return true;
+        }
+
+        return $update;
     }
 
     /**
