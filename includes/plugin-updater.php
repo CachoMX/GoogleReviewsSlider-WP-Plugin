@@ -331,22 +331,35 @@ class GRS_Plugin_Updater {
      */
     public function reactivate_plugin($upgrader_object, $options) {
         // Only run for plugin updates
-        if ($options['action'] !== 'update' || $options['type'] !== 'plugin') {
+        if (!isset($options['action']) || $options['action'] !== 'update') {
             return;
         }
 
-        // Check if our plugin was updated
-        if (isset($options['plugins'])) {
-            foreach ($options['plugins'] as $plugin) {
-                if ($plugin === $this->basename) {
-                    // Plugin was updated, reactivate it
-                    $current = get_option('active_plugins', array());
+        if (!isset($options['type']) || $options['type'] !== 'plugin') {
+            return;
+        }
 
-                    // Check if it's not already active
-                    if (!in_array($this->basename, $current)) {
-                        $current[] = $this->basename;
-                        update_option('active_plugins', $current);
-                    }
+        // Check if our plugin was updated (handles both single and bulk updates)
+        $updated_plugins = array();
+
+        if (isset($options['plugins'])) {
+            $updated_plugins = $options['plugins'];
+        } elseif (isset($options['plugin'])) {
+            $updated_plugins = array($options['plugin']);
+        }
+
+        // Check if our plugin is in the updated list
+        if (in_array($this->basename, $updated_plugins)) {
+            // Use WordPress activate_plugin function for proper activation
+            if (!is_plugin_active($this->basename)) {
+                // Activate silently (suppress errors to avoid breaking the update process)
+                $result = activate_plugin($this->basename, '', false, true);
+
+                // Log for debugging if needed
+                if (!is_wp_error($result)) {
+                    error_log('Google Reviews Slider: Plugin reactivated successfully after update');
+                } else {
+                    error_log('Google Reviews Slider: Failed to reactivate - ' . $result->get_error_message());
                 }
             }
         }

@@ -557,41 +557,46 @@
         display: none !important;
     }
 
-    /* Mobile wrapper adjustments - Full width reviews */
+    /* Mobile wrapper adjustments */
     .grs-direct-wrapper {
         padding: 15px 0 !important;
     }
 
     .grs-direct-slider-container {
         margin-bottom: 0 !important;
-        padding: 0 15px !important;
+        padding: 0 !important;
         width: 100% !important;
     }
 
-    /* Full width slides on mobile */
+    /* Slides take full width on mobile */
     .grs-direct-slider .slick-slide {
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
     }
 
-    /* Review cards match summary width on mobile */
+    /* Review cards - same width as summary box on mobile */
     .grs-direct-slider .grs-direct-review {
         width: calc(100% - 30px) !important;
         max-width: 500px !important;
         margin: 0 auto !important;
+        padding: 25px 20px !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+        border-radius: 12px !important;
     }
-    
+
     /* Force horizontal scrolling on mobile */
     .grs-direct-slider .slick-list {
         overflow-x: hidden !important;
         overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
+        padding: 0 15px !important;
     }
-    
-    /* Ensure proper slide width on mobile */
-    .grs-direct-slider .slick-slide {
-        width: 100% !important;
-        max-width: 100% !important;
+
+    /* Ensure proper track display */
+    .grs-direct-slider .slick-track {
+        display: flex !important;
+        align-items: stretch !important;
     }
 }
 
