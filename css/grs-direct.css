@@ -305,29 +305,67 @@
     margin-right: -2px !important;
 }
 
-/* Dots */
-.grs-direct-slider .slick-dots {
-    position: absolute !important;
-    bottom: -35px !important;
+/* Dots - Fixed for proper pagination display */
+.grs-direct-slider .slick-dots,
+.grs-direct-slider .grs-slider-dots {
+    position: relative !important;
+    bottom: auto !important;
     width: 100% !important;
     list-style: none !important;
     text-align: center !important;
+    margin: 20px 0 10px 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.grs-direct-slider .slick-dots li,
+.grs-direct-slider .grs-slider-dots li {
+    display: inline-block !important;
     margin: 0 !important;
     padding: 0 !important;
+    line-height: 1 !important;
 }
 
-.grs-direct-slider .slick-dots li {
-    display: inline-block !important;
-    margin: 0 5px !important;
+.grs-direct-slider .slick-dots li button,
+.grs-direct-slider .grs-slider-dots li button {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
 }
 
-.grs-direct-slider .slick-dots li button:before {
+.grs-direct-slider .slick-dots li button:before,
+.grs-direct-slider .grs-slider-dots li button:before {
+    content: '•' !important;
     color: #ccc !important;
-    font-size: 10px !important;
+    font-size: 16px !important;
+    line-height: 20px !important;
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    text-align: center !important;
+    opacity: 1 !important;
+    transition: all 0.3s ease !important;
 }
 
-.grs-direct-slider .slick-dots li.slick-active button:before {
+.grs-direct-slider .slick-dots li.slick-active button:before,
+.grs-direct-slider .grs-slider-dots li.slick-active button:before {
     color: #333 !important;
+    transform: scale(1.3) !important;
+}
+
+.grs-direct-slider .slick-dots li button:hover:before,
+.grs-direct-slider .grs-slider-dots li button:hover:before {
+    color: #666 !important;
 }
 
 /* ENHANCED MOBILE RESPONSIVE STYLES */
@@ -477,10 +515,12 @@
     }
     
     /* Dots position on mobile */
-    .grs-direct-slider .slick-dots {
-        bottom: -30px !important;
+    .grs-direct-slider .slick-dots,
+    .grs-direct-slider .grs-slider-dots {
         position: relative !important;
+        bottom: auto !important;
         margin-top: 20px !important;
+        margin-bottom: 10px !important;
     }
     
     /* Force horizontal scrolling on mobile */
@@ -538,4 +578,61 @@
     opacity: 1 !important;
     visibility: visible !important;
     display: flex !important;
+}
+
+/* Theme Compatibility Fixes */
+
+/* Avada Theme Compatibility */
+.fusion-body .grs-direct-slider .slick-dots,
+.fusion-body .grs-direct-slider .grs-slider-dots,
+body.fusion-body .grs-direct-slider .slick-dots,
+body.fusion-body .grs-direct-slider .grs-slider-dots {
+    position: relative !important;
+    bottom: auto !important;
+    margin: 20px 0 10px 0 !important;
+}
+
+.fusion-body .grs-direct-slider .slick-dots li,
+body.fusion-body .grs-direct-slider .slick-dots li {
+    vertical-align: middle !important;
+}
+
+/* Elementor Compatibility */
+.elementor-widget-container .grs-direct-slider .slick-dots,
+.elementor-widget-container .grs-direct-slider .grs-slider-dots,
+.elementor .grs-direct-slider .slick-dots,
+.elementor .grs-direct-slider .grs-slider-dots {
+    position: relative !important;
+    bottom: auto !important;
+    margin: 20px auto 10px auto !important;
+    max-width: 100% !important;
+}
+
+.elementor-widget-container .grs-direct-slider .slick-dots li button:before,
+.elementor .grs-direct-slider .slick-dots li button:before {
+    opacity: 1 !important;
+}
+
+/* Divi Theme Compatibility */
+.et_pb_module .grs-direct-slider .slick-dots,
+.et_pb_module .grs-direct-slider .grs-slider-dots,
+#et-main-area .grs-direct-slider .slick-dots,
+#et-main-area .grs-direct-slider .grs-slider-dots {
+    position: relative !important;
+    bottom: auto !important;
+    margin: 20px 0 10px 0 !important;
+}
+
+.et_pb_module .grs-direct-slider .slick-dots li,
+#et-main-area .grs-direct-slider .slick-dots li {
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+
+/* General Page Builder Compatibility */
+.vc_row .grs-direct-slider .slick-dots,
+.wp-block .grs-direct-slider .slick-dots,
+[class*="builder"] .grs-direct-slider .slick-dots {
+    position: relative !important;
+    bottom: auto !important;
 }

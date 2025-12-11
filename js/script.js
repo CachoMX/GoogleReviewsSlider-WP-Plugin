@@ -36,7 +36,7 @@ jQuery(document).ready(function($) {
             // Initialize Slick with horizontal settings
             $slider.slick({
                 slidesToShow: isMobile ? slidesMobile : slidesDesktop,
-                slidesToScroll: 1,
+                slidesToScroll: isMobile ? slidesMobile : slidesDesktop, // Scroll same amount as shown
                 infinite: true,
                 dots: true,
                 arrows: arrows,
@@ -56,6 +56,7 @@ jQuery(document).ready(function($) {
                 swipe: true,
                 touchMove: true,
                 touchThreshold: 5,
+                dotsClass: 'slick-dots grs-slider-dots', // Custom class for better control
                 prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><span>Previous</span></button>',
                 nextArrow: '<button type="button" class="slick-next" aria-label="Next"><span>Next</span></button>',
                 responsive: [
@@ -63,7 +64,7 @@ jQuery(document).ready(function($) {
                         breakpoint: 1024,
                         settings: {
                             slidesToShow: slidesTablet,
-                            slidesToScroll: 1,
+                            slidesToScroll: slidesTablet, // Match scroll to slides shown
                             arrows: true,
                             dots: true
                         }
@@ -72,8 +73,8 @@ jQuery(document).ready(function($) {
                         breakpoint: 768,
                         settings: {
                             slidesToShow: slidesMobile,
-                            slidesToScroll: 1,
-                            arrows: true, // Keep arrows on mobile
+                            slidesToScroll: slidesMobile, // Match scroll to slides shown
+                            arrows: true,
                             dots: true,
                             infinite: true,
                             centerMode: false,
