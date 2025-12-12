@@ -48,12 +48,19 @@ class GRS_Outscraper_API {
             'language' => 'en',
             'fields' => 'query,name,reviews_data,reviews_per_rating,reviews_link,website,verified,phone,address,postal_code,opening_hours,current_opening_status'
         );
-        
+
         $params = wp_parse_args($params, $default_params);
-        
+
         // Build the API URL
         $url = self::API_BASE_URL . '/maps/reviews-v3?' . http_build_query($params);
-        
+
+        // Debug logging
+        error_log('GRS: Extracting reviews from Outscraper');
+        error_log('GRS: Place ID: ' . $place_id);
+        error_log('GRS: Reviews Limit: ' . $reviews_limit);
+        error_log('GRS: API URL: ' . $url);
+        error_log('GRS: API Token (first 10 chars): ' . substr($this->api_token, 0, 10) . '...');
+
         // Make the API request
         $response = wp_remote_get($url, array(
             'timeout' => 60,
@@ -62,32 +69,47 @@ class GRS_Outscraper_API {
                 'Accept' => 'application/json'
             )
         ));
-        
+
         if (is_wp_error($response)) {
+            error_log('GRS: WordPress HTTP error: ' . $response->get_error_message());
             return $response;
         }
-        
+
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
-        
+
+        error_log('GRS: Response code: ' . $response_code);
+        error_log('GRS: Response body (first 500 chars): ' . substr($response_body, 0, 500));
+
         if ($response_code !== 200) {
+            error_log('GRS: API error - code ' . $response_code . ', body: ' . $response_body);
             return new WP_Error(
                 'api_error',
-                sprintf('API returned error code: %d', $response_code),
+                sprintf('API returned error code: %d. Response: %s', $response_code, $response_body),
                 array('body' => $response_body)
             );
         }
-        
+
         $data = json_decode($response_body, true);
-        
-        if (!$data || !isset($data['status'])) {
-            return new WP_Error('parse_error', 'Failed to parse API response');
+
+        if (!$data) {
+            error_log('GRS: JSON decode failed. Response: ' . $response_body);
+            return new WP_Error('parse_error', 'Failed to parse API response: ' . json_last_error_msg());
         }
-        
+
+        if (!isset($data['status'])) {
+            error_log('GRS: No status field in response. Keys: ' . json_encode(array_keys($data)));
+            return new WP_Error('parse_error', 'No status field in API response. Keys: ' . implode(', ', array_keys($data)));
+        }
+
         if ($data['status'] !== 'Success') {
-            return new WP_Error('api_status_error', 'API request failed', $data);
+            error_log('GRS: API status not Success: ' . $data['status']);
+            error_log('GRS: Full error response: ' . json_encode($data));
+            return new WP_Error('api_status_error', 'API request failed with status: ' . $data['status'], $data);
         }
-        
+
+        error_log('GRS: Successfully received API response');
+
         return $data;
     }
     
@@ -170,13 +192,19 @@ class GRS_Outscraper_API {
             'place_info' => null,
             'error' => null
         );
-        
+
         try {
+            // Debug logging
+            error_log('GRS: Processing API response for place_id: ' . $place_id);
+            error_log('GRS: API response keys: ' . json_encode(array_keys($api_response)));
+
             if (!isset($api_response['data']) || !is_array($api_response['data']) || empty($api_response['data'])) {
-                throw new Exception('No data found in API response');
+                error_log('GRS: No data found in API response. Full response: ' . json_encode($api_response));
+                throw new Exception('No data found in API response. Response keys: ' . implode(', ', array_keys($api_response)));
             }
-            
+
             $place_data = $api_response['data'][0];
+            error_log('GRS: Place data keys: ' . json_encode(array_keys($place_data)));
             
             // Extract place information
             $results['place_info'] = array(
