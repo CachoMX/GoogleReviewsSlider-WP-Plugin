@@ -2,7 +2,7 @@
 
 Display Google Reviews in an attractive, responsive slider on your WordPress website with advanced review extraction and management capabilities.
 
-![Version](https://img.shields.io/badge/version-2.2.4-blue.svg)
+![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
 ![WordPress](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/php-7.4%2B-purple.svg)
 
@@ -275,6 +275,22 @@ The debug console will show:
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
 ## 📝 Changelog
+
+### Version 2.5.0 (2026-01-25) - Custom Slick Implementation & Mobile Fix
+- 🎉 **MAJOR UPDATE**: Implemented custom GRS-Slick carousel to replace standard Slick
+- **Fixed**: Mobile slider movement issues completely resolved
+- **Added**: Custom `grs-slick.js` and `grs-slick.css` to avoid theme conflicts
+- **Changed**: All slider classes renamed from `.slick-*` to `.grs-slick-*`
+- **Improved**: Slider CSS now embedded inline to prevent theme override
+- **Removed**: Temporary debug code (cleaner codebase)
+- **Result**: Slider works perfectly on all devices including iPhone/iPad
+- **Based on**: Analysis of successful WP Review Slider Pro plugin architecture
+- **Breaking Change**: Old Slick references removed, using GRS-Slick exclusively
+
+**Why This Matters**: By using our own carousel implementation, we eliminate conflicts with:
+- Theme CSS that uses flexbox on `.slick-track`
+- Other plugins that load different Slick versions
+- WordPress caching issues with external CDN resources
 
 ### Version 2.2.4 (2026-01-25) - Auto-Updater FINAL FIX + Mobile Debug
 - 🎉 **FINAL FIX**: Auto-updates now work perfectly with custom build system

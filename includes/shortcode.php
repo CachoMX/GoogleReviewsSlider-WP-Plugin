@@ -34,10 +34,10 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_style('dashicons');
     wp_enqueue_script('jquery');
     
-    // Slick carousel from CDN
-    wp_enqueue_style('grs-slick', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', array(), '1.8.1');
+    // Our custom GRS-Slick carousel (renamed to avoid conflicts)
+    wp_enqueue_style('grs-slick', plugins_url('assets/slick/grs-slick.css', dirname(__FILE__)), array(), '2.5.0');
     wp_enqueue_style('grs-slick-theme', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', array(), '1.8.1');
-    wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.8.1', true);
+    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/grs-slick.min.js', dirname(__FILE__)), array('jquery'), '2.5.0', true);
     
     // Custom styles and scripts with cache busting
     $version = get_option('grs_version', '2.0') . '.' . time();
@@ -798,8 +798,115 @@ function grs_footer_script() {
     })();
     </script>
 
-    <!-- CRITICAL OVERRIDE: Kill flexbox that breaks Slick carousel -->
-    <style id="grs-slick-nuclear-fix">
+    <!-- SLICK CORE CSS - Embedded inline to prevent theme override -->
+    <style id="grs-slick-core-css">
+        /* Slick Slider - Core Functionality */
+        .grs-direct-slider.slick-slider {
+            position: relative;
+            display: block;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -khtml-user-select: none;
+            -ms-touch-action: pan-y;
+            touch-action: pan-y;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .grs-direct-slider .slick-list {
+            position: relative;
+            display: block !important;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .grs-direct-slider .slick-list:focus {
+            outline: none;
+        }
+
+        .grs-direct-slider .slick-list.dragging {
+            cursor: pointer;
+            cursor: hand;
+        }
+
+        .grs-direct-slider .slick-slider .slick-track,
+        .grs-direct-slider .slick-slider .slick-list {
+            -webkit-transform: translate3d(0, 0, 0);
+            -moz-transform: translate3d(0, 0, 0);
+            -ms-transform: translate3d(0, 0, 0);
+            -o-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
+
+        .grs-direct-slider .slick-track {
+            position: relative;
+            top: 0;
+            left: 0;
+            display: block !important;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .grs-direct-slider .slick-track:before,
+        .grs-direct-slider .slick-track:after {
+            display: table;
+            content: '';
+        }
+
+        .grs-direct-slider .slick-track:after {
+            clear: both;
+        }
+
+        .grs-direct-slider.slick-loading .slick-track {
+            visibility: hidden;
+        }
+
+        .grs-direct-slider .slick-slide {
+            display: none;
+            float: left !important;
+            height: 100%;
+            min-height: 1px;
+        }
+
+        [dir='rtl'] .grs-direct-slider .slick-slide {
+            float: right !important;
+        }
+
+        .grs-direct-slider .slick-slide img {
+            display: block;
+        }
+
+        .grs-direct-slider .slick-slide.slick-loading img {
+            display: none;
+        }
+
+        .grs-direct-slider .slick-slide.dragging img {
+            pointer-events: none;
+        }
+
+        .grs-direct-slider.slick-initialized .slick-slide {
+            display: block !important;
+        }
+
+        .grs-direct-slider.slick-loading .slick-slide {
+            visibility: hidden;
+        }
+
+        .grs-direct-slider.slick-vertical .slick-slide {
+            display: block !important;
+            height: auto;
+            border: 1px solid transparent;
+        }
+
+        .grs-direct-slider .slick-arrow.slick-hidden {
+            display: none;
+        }
+
+        /* CRITICAL: Force overrides for mobile */
         @media (max-width: 768px) {
             .grs-direct-slider .slick-track {
                 display: block !important;
@@ -811,6 +918,7 @@ function grs_footer_script() {
             }
             .grs-direct-slider .slick-list {
                 overflow: hidden !important;
+                display: block !important;
             }
         }
     </style>
