@@ -797,5 +797,24 @@ function grs_footer_script() {
         }
     })();
     </script>
+
+    <!-- CRITICAL OVERRIDE: Kill flexbox that breaks Slick carousel -->
+    <style id="grs-slick-nuclear-fix">
+        @media (max-width: 768px) {
+            .grs-direct-slider .slick-track {
+                display: block !important;
+                position: relative !important;
+            }
+            .grs-direct-slider .slick-slide {
+                float: left !important;
+                display: block !important;
+            }
+            .grs-direct-slider .slick-list {
+                overflow: hidden !important;
+            }
+        }
+    </style>
     <?php
+
+    echo $output;
 }
