@@ -45,8 +45,9 @@ class GRS_Outscraper_API {
             'sort' => 'newest',
             'ignoreEmpty' => 'false',
             'async' => 'false', // We'll use synchronous for now
-            'language' => 'en',
-            'fields' => 'query,name,reviews_data,reviews_per_rating,reviews_link,website,verified,phone,address,postal_code,opening_hours,current_opening_status'
+            'language' => 'en'
+            // NOTE: Do NOT include 'fields' parameter - it causes the API to switch to async mode
+            // The API returns all fields by default when fields is omitted
         );
 
         $params = wp_parse_args($params, $default_params);
@@ -236,16 +237,17 @@ class GRS_Outscraper_API {
             foreach ($reviews as $review) {
                 // Map Outscraper fields to our expected structure
                 $processed_review = array(
-                    'review_id' => isset($review['review_id']) ? $review['review_id'] : 
+                    'review_id' => isset($review['review_id']) ? $review['review_id'] :
                                 (isset($review['id']) ? $review['id'] : uniqid()),
-                    'author_name' => isset($review['author_title']) ? $review['author_title'] : 
-                                    (isset($review['name']) ? $review['name'] : 
+                    'author_name' => isset($review['author_title']) ? $review['author_title'] :
+                                    (isset($review['name']) ? $review['name'] :
                                     (isset($review['author_name']) ? $review['author_name'] : 'Anonymous')),
-                    'author_url' => isset($review['author_link']) ? $review['author_link'] : 
+                    'author_url' => isset($review['author_link']) ? $review['author_link'] :
                                 (isset($review['author_url']) ? $review['author_url'] : null),
-                    'profile_photo_url' => isset($review['author_image']) ? $review['author_image'] : 
+                    'profile_photo_url' => isset($review['author_image']) ? $review['author_image'] :
                                         (isset($review['profile_photo_url']) ? $review['profile_photo_url'] : null),
-                    'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
+                    'rating' => isset($review['review_rating']) ? intval($review['review_rating']) :
+                               (isset($review['rating']) ? intval($review['rating']) : 5),
                     'text' => isset($review['review_text']) ? $review['review_text'] : 
                             (isset($review['text']) ? $review['text'] : ''),
                     'time' => isset($review['review_timestamp']) ? $review['review_timestamp'] : 
