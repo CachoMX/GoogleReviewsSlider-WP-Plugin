@@ -34,10 +34,10 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_style('dashicons');
     wp_enqueue_script('jquery');
     
-    // Slick carousel from CDN
-    wp_enqueue_style('grs-slick', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css', array(), '1.8.1');
-    wp_enqueue_style('grs-slick-theme', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css', array(), '1.8.1');
-    wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), '1.8.1', true);
+    // Slick carousel from local files (more reliable than CDN)
+    wp_enqueue_style('grs-slick', plugins_url('assets/slick/slick.css', dirname(__FILE__)), array(), '1.8.1');
+    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '1.8.1');
+    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/slick.min.js', dirname(__FILE__)), array('jquery'), '1.8.1', true);
     
     // Custom styles and scripts with cache busting
     $version = get_option('grs_version', '2.0') . '.' . time();
@@ -798,20 +798,65 @@ function grs_footer_script() {
     })();
     </script>
 
-    <!-- CRITICAL OVERRIDE: Kill flexbox that breaks Slick carousel -->
-    <style id="grs-slick-nuclear-fix">
-        @media (max-width: 768px) {
-            .grs-direct-slider .slick-track {
-                display: block !important;
-                position: relative !important;
-            }
-            .grs-direct-slider .slick-slide {
-                float: left !important;
-                display: block !important;
-            }
-            .grs-direct-slider .slick-list {
-                overflow: hidden !important;
-            }
+    <!-- SLICK CORE CSS - Embedded to guarantee loading -->
+    <style id="grs-slick-core">
+        /* Slick Core */
+        .grs-direct-slider.slick-slider {
+            position: relative;
+            display: block;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -ms-touch-action: pan-y;
+            touch-action: pan-y;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .grs-direct-slider .slick-list {
+            position: relative !important;
+            display: block !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .grs-direct-slider .slick-list:focus {
+            outline: none;
+        }
+        .grs-direct-slider .slick-list.dragging {
+            cursor: pointer;
+        }
+        .grs-direct-slider .slick-track {
+            position: relative !important;
+            top: 0 !important;
+            left: 0 !important;
+            display: block !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
+        .grs-direct-slider .slick-track:before,
+        .grs-direct-slider .slick-track:after {
+            display: table !important;
+            content: '' !important;
+        }
+        .grs-direct-slider .slick-track:after {
+            clear: both !important;
+        }
+        .grs-direct-slider .slick-slide {
+            display: none !important;
+            float: left !important;
+            height: 100% !important;
+            min-height: 1px !important;
+        }
+        .grs-direct-slider.slick-initialized .slick-slide {
+            display: block !important;
+        }
+        .grs-direct-slider .slick-loading .slick-slide {
+            visibility: hidden;
+        }
+        .grs-direct-slider .slick-arrow.slick-hidden {
+            display: none;
         }
     </style>
     <?php
