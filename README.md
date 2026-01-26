@@ -2,7 +2,7 @@
 
 Display Google Reviews in an attractive, responsive slider on your WordPress website with advanced review extraction and management capabilities.
 
-![Version](https://img.shields.io/badge/version-2.2.3-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.4-blue.svg)
 ![WordPress](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/php-7.4%2B-purple.svg)
 
@@ -169,10 +169,14 @@ google-reviews-slider/
 │   ├── grs-direct.css            # Frontend slider styles
 │   └── style.css                 # General styles
 ├── js/
-│   └── script.js                 # Frontend JavaScript
+│   ├── script.js                 # Frontend JavaScript
+│   └── mobile-debug.js           # Mobile debugging tools
 ├── assets/
 │   ├── google-logo.svg           # Google logo
 │   └── default-avatar.png        # Default profile image
+├── build-release.ps1              # PowerShell build script
+├── build-release.sh               # Bash build script
+├── build-exclude.txt              # Build exclusion patterns
 ├── readme.txt                     # WordPress.org readme
 ├── README.md                      # This file
 └── DEPLOYMENT.md                  # Deployment guide
@@ -230,10 +234,29 @@ google-reviews-slider/
 4. Check version number matches release tag
 
 ### Mobile Display Issues
-1. Clear browser cache
-2. Check theme CSS conflicts
-3. Disable other slider plugins temporarily
-4. Review browser console for errors
+1. **Enable debug mode**: Add `?grs_debug=1` to your URL
+2. Check the debug console at the bottom of the screen
+3. Look for initialization errors or arrow click events
+4. Share debug log output for support
+5. Clear browser cache
+6. Check theme CSS conflicts
+7. Disable other slider plugins temporarily
+
+**Debug Mode**:
+```
+# Enable debug console
+https://yoursite.com/page-with-slider/?grs_debug=1
+
+# Or add to wp-config.php
+define('WP_DEBUG', true);
+```
+
+The debug console will show:
+- Device information (iOS/Android, screen size)
+- Slider initialization status
+- Arrow visibility and click events
+- Autoplay status
+- Real-time event tracking
 
 ## 🔒 Security
 
@@ -253,7 +276,29 @@ google-reviews-slider/
 
 ## 📝 Changelog
 
-### Version 2.2.3 (2026-01-25) - Auto-Updater Fixed
+### Version 2.2.4 (2026-01-25) - Auto-Updater FINAL FIX + Mobile Debug
+- 🎉 **FINAL FIX**: Auto-updates now work perfectly with custom build system
+- **Fixed**: Plugin folder always named `GoogleReviewsSlider-WP-Plugin` (no version suffix)
+- **Added**: Build scripts (PowerShell, Bash) to create properly structured release ZIPs
+- **Added**: Mobile debug system with visual console and comprehensive logging
+- **Added**: Debug mode activation via `?grs_debug=1` or `WP_DEBUG`
+- **Improved**: Updater checks for release asset ZIPs before falling back to archive
+- **Result**: No more duplicate folders, updates work automatically!
+- **Deployment**: Maintainers must now use build scripts and upload ZIP as release asset
+- **Mobile Debug**: Troubleshoot mobile issues with real-time device info and event tracking
+
+**Build Script Usage**:
+```powershell
+# Windows PowerShell
+.\build-release.ps1 2.2.4
+
+# Linux/Mac
+./build-release.sh 2.2.4
+```
+
+**For Developers**: The build script creates `releases/google-reviews-slider-{version}.zip` with correct folder structure. Upload this ZIP as a release asset on GitHub for auto-updates to work.
+
+### Version 2.2.3 (2026-01-25) - Auto-Updater Fixed (Deprecated)
 - 🔧 **CRITICAL FIX**: Auto-updates now work without creating duplicate plugin folders
 - **Fixed**: Download URL changed from `zipball_url` to `archive/tags/{tag}.zip` for predictable folder names
 - **Fixed**: Enhanced `after_install` hook with comprehensive logging for debugging

@@ -108,7 +108,15 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 # Create ZIP with files at root level (no parent folder inside ZIP)
 # WordPress will extract this into a folder named after the ZIP file
-[System.IO.Compression.ZipFile]::CreateFromDirectory($buildFullPath, $zipPath)
+# IMPORTANT: Use forward slashes for Linux compatibility
+$zip = [System.IO.Compression.ZipFile]::Open($zipPath, 'Create')
+Get-ChildItem -Path $buildFullPath -Recurse -File | ForEach-Object {
+    $relativePath = $_.FullName.Substring($buildFullPath.Length + 1)
+    # Replace backslashes with forward slashes for Linux compatibility
+    $entryName = $relativePath -replace '\\', '/'
+    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $_.FullName, $entryName) | Out-Null
+}
+$zip.Dispose()
 
 # Verify ZIP structure
 Write-Host "`nVerifying ZIP structure..." -ForegroundColor Yellow
