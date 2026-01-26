@@ -2,7 +2,7 @@
 
 Display Google Reviews in an attractive, responsive slider on your WordPress website with advanced review extraction and management capabilities.
 
-![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.2-blue.svg)
 ![WordPress](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/php-7.4%2B-purple.svg)
 
@@ -252,6 +252,18 @@ google-reviews-slider/
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
 ## 📝 Changelog
+
+### Version 2.2.2 (2026-01-25) - iOS/iPhone Critical Fixes
+- 🔴 **CRITICAL FIX**: Arrow buttons now properly aligned/centered on mobile devices
+- 🔴 **CRITICAL FIX**: Autoplay now works on real iPhone/iOS devices
+- 🔴 **CRITICAL FIX**: Arrow buttons now respond to taps on iPhone/iOS
+- **Fixed**: Added `position: absolute` + `top: 50%` + `transform` for mobile arrows
+- **Fixed**: iOS-specific autoplay initialization with user interaction trigger
+- **Fixed**: Touch event handlers (`touchend`) for iOS arrow buttons
+- **Added**: iOS-specific CSS optimizations (`-webkit-tap-highlight`, `pointer-events`)
+- **Added**: Better error handling for autoplay with try-catch blocks
+- **Improved**: Longer initialization delays for iOS (500ms vs 200ms)
+- **Note**: Always test on real iOS device, not just desktop responsive view
 
 ### Version 2.2.1 (2026-01-25) - CRITICAL HOTFIX
 - 🔴 **CRITICAL FIX**: Star ratings now save correctly from Outscraper API
