@@ -197,21 +197,21 @@ jQuery(document).ready(function($) {
             }
             
             console.log('Slider initialized successfully');
-            
+
             // Ensure visibility immediately after initialization
             $slider.css({
                 'opacity': '1',
                 'visibility': 'visible',
                 'display': 'block'
             });
-            
+
             // Force all reviews to be visible
             $slider.find('.grs-direct-review').css({
                 'opacity': '1',
                 'visibility': 'visible',
                 'display': 'flex'
             });
-            
+
             // Ensure text is visible
             $slider.find('.grs-direct-text').css({
                 'opacity': '1',
@@ -219,11 +219,11 @@ jQuery(document).ready(function($) {
                 'display': 'block',
                 'color': '#333'
             });
-            
+
             // Force position update
             setTimeout(function() {
                 $slider.slick('setPosition');
-                
+
                 // Additional mobile-specific fixes
                 if (isMobile) {
                     // Ensure proper height on mobile
@@ -231,58 +231,83 @@ jQuery(document).ready(function($) {
                         'height': 'auto',
                         'min-height': '280px'
                     });
-                    
+
                     // Force track to display properly
                     $slider.find('.slick-track').css({
                         'display': 'flex',
                         'align-items': 'stretch'
                     });
-                    
+
                     console.log('Applied mobile-specific fixes');
                 }
             }, 100);
-            
+
             // Additional position update for stubborn mobile browsers
             if (isMobile) {
                 setTimeout(function() {
                     $slider.slick('setPosition');
                 }, 500);
             }
+
+            // iOS-specific: Fix for arrow button clicks not working
+            // CRITICAL: This must be inside the .each() loop to have access to $slider
+            if (isRealMobile || isTouchDevice) {
+                setTimeout(function() {
+                    // Find arrow buttons (created by Slick)
+                    var $prevArrow = $slider.find('.slick-prev');
+                    var $nextArrow = $slider.find('.slick-next');
+
+                    console.log('Found arrows for this slider:', {
+                        prev: $prevArrow.length,
+                        next: $nextArrow.length
+                    });
+
+                    if ($prevArrow.length > 0 && $nextArrow.length > 0) {
+                        // Remove any existing handlers first
+                        $prevArrow.off('touchend touchstart click');
+                        $nextArrow.off('touchend touchstart click');
+
+                        // Add touch event handlers for iOS - using touchstart for better responsiveness
+                        $prevArrow.on('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('iOS: Previous arrow touched (touchstart)');
+                            $slider.slick('slickPrev');
+                            return false;
+                        });
+
+                        $nextArrow.on('touchstart', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('iOS: Next arrow touched (touchstart)');
+                            $slider.slick('slickNext');
+                            return false;
+                        });
+
+                        // Also add click handlers as fallback
+                        $prevArrow.on('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Previous arrow clicked');
+                            $slider.slick('slickPrev');
+                            return false;
+                        });
+
+                        $nextArrow.on('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Next arrow clicked');
+                            $slider.slick('slickNext');
+                            return false;
+                        });
+
+                        console.log('iOS/Mobile arrow touch handlers attached successfully');
+                    } else {
+                        console.error('Arrows not found! Cannot attach handlers');
+                    }
+                }, 200);
+            }
         });
-
-        // iOS-specific: Fix for arrow button clicks not working
-        // Must be done AFTER slider initialization, so arrows exist
-        if (isRealMobile || isTouchDevice) {
-            setTimeout(function() {
-                // Find arrow buttons (created by Slick)
-                var $prevArrow = $slider.find('.slick-prev');
-                var $nextArrow = $slider.find('.slick-next');
-
-                console.log('Found arrows:', {
-                    prev: $prevArrow.length,
-                    next: $nextArrow.length
-                });
-
-                // Add touch event handlers for iOS
-                $prevArrow.on('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('iOS: Previous arrow touched');
-                    $slider.slick('slickPrev');
-                    return false;
-                });
-
-                $nextArrow.on('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('iOS: Next arrow touched');
-                    $slider.slick('slickNext');
-                    return false;
-                });
-
-                console.log('iOS/Mobile arrow touch handlers attached');
-            }, 100);
-        }
     }
 
     // Read more/less functionality
