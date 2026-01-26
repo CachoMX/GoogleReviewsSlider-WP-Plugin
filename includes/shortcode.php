@@ -800,5 +800,21 @@ function grs_footer_script() {
 
     <?php
 
+    <!-- CRITICAL: Override theme CSS with maximum specificity -->
+    <style>
+        /* Ultra-specific selectors to beat ANY theme CSS */
+        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider .slick-slide {
+            float: left !important;
+            display: block !important;
+        }
+        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider.slick-initialized .slick-slide {
+            float: left !important;
+            display: block !important;
+        }
+        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider .slick-track {
+            display: block !important;
+        }
+    </style>
+    <?php
     echo $output;
 }
