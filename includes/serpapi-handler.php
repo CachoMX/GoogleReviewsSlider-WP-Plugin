@@ -23,6 +23,11 @@ class GRS_SerpAPI {
     const DEFAULT_API_KEY = 'e16931eb218fa770300a195b81ae0a6e6a879f3fadd02a3b626d19668386677c';
 
     /**
+     * Default Data ID (fallback)
+     */
+    const DEFAULT_DATA_ID = '0x54900e7f03c61d25:0x7c4f9e77b261868f';
+
+    /**
      * Constructor
      */
     public function __construct($api_key = null) {
