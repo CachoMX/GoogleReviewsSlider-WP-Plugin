@@ -31,7 +31,8 @@ echo "========================================="
 # Define paths
 BUILD_DIR="build"
 PLUGIN_FOLDER="GoogleReviewsSlider-WP-Plugin"
-ZIP_NAME="google-reviews-slider-${VERSION}.zip"
+# ZIP name MUST match the folder name WordPress should create
+ZIP_NAME="${PLUGIN_FOLDER}.zip"
 RELEASE_DIR="releases"
 
 # Clean previous builds
@@ -40,12 +41,8 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 mkdir -p "${RELEASE_DIR}"
 
-# Create plugin folder with CORRECT name (no version suffix!)
-echo "Creating plugin folder: ${PLUGIN_FOLDER}"
-mkdir -p "${BUILD_DIR}/${PLUGIN_FOLDER}"
-
-# Copy plugin files
-echo "Copying plugin files..."
+# Copy plugin files directly to build directory (no subfolder)
+echo "Copying plugin files to build directory..."
 rsync -av --progress \
     --exclude='.git' \
     --exclude='.gitignore' \
@@ -53,7 +50,10 @@ rsync -av --progress \
     --exclude='build' \
     --exclude='releases' \
     --exclude='*.sh' \
+    --exclude='*.bat' \
+    --exclude='*.ps1' \
     --exclude='*.md' \
+    --exclude='RELEASE-*.md' \
     --exclude='test-*.php' \
     --exclude='cleanup-old-folders.php' \
     --exclude='check-updates.php' \
@@ -61,12 +61,13 @@ rsync -av --progress \
     --exclude='.vscode' \
     --exclude='.idea' \
     --exclude='*.log' \
-    ./ "${BUILD_DIR}/${PLUGIN_FOLDER}/"
+    --exclude='build-exclude.txt' \
+    ./ "${BUILD_DIR}/"
 
-# Create ZIP
+# Create ZIP with files at root (WordPress will create the folder)
 echo "Creating ZIP: ${ZIP_NAME}"
 cd "${BUILD_DIR}"
-zip -r "../${RELEASE_DIR}/${ZIP_NAME}" "${PLUGIN_FOLDER}" -q
+zip -r "../${RELEASE_DIR}/${ZIP_NAME}" . -q
 
 # Go back to root
 cd ..
@@ -85,11 +86,15 @@ echo "✓ Build Complete!"
 echo "========================================="
 echo "ZIP file: ${RELEASE_DIR}/${ZIP_NAME}"
 echo "File size: ${FILE_SIZE}"
-echo "Folder name in ZIP: ${PLUGIN_FOLDER}"
+echo "WordPress will extract to: ${PLUGIN_FOLDER}/"
 echo ""
 echo "Next steps:"
 echo "1. Test the ZIP file locally"
-echo "2. Create GitHub release v${VERSION}"
-echo "3. Upload ${ZIP_NAME} as release asset"
-echo "4. Auto-updates will use this ZIP"
+echo "2. Update version in google-reviews-slider.php to ${VERSION}"
+echo "3. Commit changes"
+echo "4. Create GitHub release v${VERSION}"
+echo "5. Upload ${ZIP_NAME} as release asset"
+echo "6. Auto-updates will use this ZIP ✓"
+echo ""
+echo "IMPORTANT: ZIP is named ${ZIP_NAME} so WordPress extracts to correct folder!"
 echo "========================================="

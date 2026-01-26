@@ -22,7 +22,8 @@ Write-Host "=========================================" -ForegroundColor Cyan
 # Define paths
 $BUILD_DIR = "build"
 $PLUGIN_FOLDER = "GoogleReviewsSlider-WP-Plugin"
-$ZIP_NAME = "google-reviews-slider-$Version.zip"
+# ZIP name MUST match the folder name WordPress should create
+$ZIP_NAME = "$PLUGIN_FOLDER.zip"
 $RELEASE_DIR = "releases"
 
 # Clean previous builds
@@ -35,10 +36,9 @@ if (!(Test-Path $RELEASE_DIR)) {
 }
 New-Item -ItemType Directory -Path $BUILD_DIR | Out-Null
 
-# Create plugin folder with CORRECT name (no version suffix!)
-Write-Host "Creating plugin folder: $PLUGIN_FOLDER" -ForegroundColor Yellow
-$pluginPath = Join-Path $BUILD_DIR $PLUGIN_FOLDER
-New-Item -ItemType Directory -Path $pluginPath | Out-Null
+# Create build directory - files will go directly in build/ folder
+Write-Host "Preparing build directory..." -ForegroundColor Yellow
+$pluginPath = $BUILD_DIR
 
 # Files and folders to exclude
 $excludePatterns = @(
@@ -95,7 +95,7 @@ foreach ($file in $filesToCopy) {
     }
 }
 
-# Create ZIP from build directory (includes the plugin folder)
+# Create ZIP with files at root (WordPress will create the folder from the ZIP name)
 Write-Host "`nCreating ZIP: $ZIP_NAME" -ForegroundColor Yellow
 $zipPath = Join-Path (Get-Location).Path (Join-Path $RELEASE_DIR $ZIP_NAME)
 $buildFullPath = Join-Path (Get-Location).Path $BUILD_DIR
@@ -106,7 +106,8 @@ if (Test-Path $zipPath) {
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-# Create ZIP from build directory so it includes GoogleReviewsSlider-WP-Plugin folder
+# Create ZIP with files at root level (no parent folder inside ZIP)
+# WordPress will extract this into a folder named after the ZIP file
 [System.IO.Compression.ZipFile]::CreateFromDirectory($buildFullPath, $zipPath)
 
 # Verify ZIP structure
@@ -126,7 +127,7 @@ Write-Host "✓ Build Complete!" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
 Write-Host "ZIP file: $zipPath" -ForegroundColor White
 Write-Host "File size: $fileSizeStr" -ForegroundColor White
-Write-Host "Folder name in ZIP: $PLUGIN_FOLDER" -ForegroundColor White
+Write-Host "WordPress will extract to: $PLUGIN_FOLDER/" -ForegroundColor White
 Write-Host "`nNext steps:" -ForegroundColor Cyan
 Write-Host "1. Test the ZIP file locally" -ForegroundColor White
 Write-Host "2. Update version in google-reviews-slider.php to $Version" -ForegroundColor White
@@ -134,4 +135,5 @@ Write-Host "3. Commit changes" -ForegroundColor White
 Write-Host "4. Create GitHub release v$Version" -ForegroundColor White
 Write-Host "5. Upload $ZIP_NAME as release asset" -ForegroundColor White
 Write-Host "6. Auto-updates will use this ZIP ✓" -ForegroundColor White
+Write-Host "`nIMPORTANT: ZIP is named $ZIP_NAME so WordPress extracts to correct folder!" -ForegroundColor Yellow
 Write-Host "=========================================" -ForegroundColor Green
