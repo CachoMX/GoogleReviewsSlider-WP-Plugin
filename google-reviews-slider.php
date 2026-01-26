@@ -40,8 +40,8 @@ function grs_activation_hook() {
         'grs_min_rating' => '1',
         // SerpAPI key for reviews extraction
         'grs_serpapi_key' => 'e16931eb218fa770300a195b81ae0a6e6a879f3fadd02a3b626d19668386677c',
-        // SerpAPI Data ID
-        'grs_data_id' => '0x54900e7f03c61d25:0x7c4f9e77b261868f',
+        // SerpAPI Data ID - empty by default, gets populated from Place ID
+        'grs_data_id' => '',
     );
 
     $existing_options = get_option('grs_settings', array());
