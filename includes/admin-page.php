@@ -131,12 +131,12 @@ function grs_data_id_render() {
     $options = get_option('grs_settings');
     $current_id = isset($options['grs_data_id']) ? $options['grs_data_id'] : '';
     ?>
-    <input type='text' name='grs_settings[grs_data_id]' style="width: 400px;"
+    <input type='text' name='grs_settings[grs_data_id]' style="width: 400px; background: #f0f0f0;"
            value='<?php echo esc_attr($current_id); ?>'
-           placeholder="0x89c259af336b3341:0xa4969e07ce3108de">
+           readonly
+           placeholder="Auto-generated from Place ID">
     <p class="description">
-        <strong>Required for reviews extraction.</strong> Format: <code>0x....:0x....</code><br>
-        Find it by searching your business on <a href="https://serpapi.com/playground?engine=google_maps&q=your+business+name" target="_blank">SerpAPI Playground</a> and copy the <code>data_id</code> from the results.
+        <em>Auto-calculated from Place ID.</em> You don't need to edit this field.
     </p>
     <?php
 }
