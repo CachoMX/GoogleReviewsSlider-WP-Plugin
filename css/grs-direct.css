@@ -222,6 +222,7 @@
     transition: all 200ms ease-out;
     padding: 0;
     color: #666;
+    margin-bottom: 50px; /* Offset for pagination area - aligns with review cards */
 }
 
 .grs-nav-button:hover {
@@ -313,6 +314,7 @@
         width: 32px;
         height: 32px;
         min-width: 32px;
+        margin-bottom: 40px; /* Match mobile pagination padding */
     }
 
     .grs-nav-button svg {

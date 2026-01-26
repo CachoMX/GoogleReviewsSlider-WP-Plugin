@@ -31,7 +31,8 @@
                 max-height: '200px',
                 overflow: 'auto',
                 z-index: '99999',
-                border-top: '2px solid #0f0'
+                border-top: '2px solid #0f0',
+                display: 'none'
             })
             .appendTo('body');
 
@@ -48,7 +49,8 @@
                 border: 'none',
                 'border-radius': '5px',
                 'z-index': '100000',
-                'font-weight': 'bold'
+                'font-weight': 'bold',
+                display: 'none'
             })
             .on('click', function() {
                 debugElement.toggle();
