@@ -14,6 +14,25 @@ require_once('wp-load.php');
 // Force mobile debug mode
 define('GRS_MOBILE_DEBUG', true);
 
+// CRITICAL: Force enqueue GRS scripts since this is a standalone PHP file
+add_action('wp_head', function() {
+    // Load Slick from CDN
+    echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css" />';
+    echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css" />';
+
+    // Load GRS styles
+    echo '<link rel="stylesheet" href="' . plugins_url('GoogleReviewsSlider-WP-Plugin/css/grs-direct.css') . '?v=' . time() . '" />';
+}, 5);
+
+add_action('wp_footer', function() {
+    // Load Slick JS
+    echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>';
+
+    // Load GRS scripts
+    echo '<script src="' . plugins_url('GoogleReviewsSlider-WP-Plugin/js/script.js') . '?v=' . time() . '"></script>';
+    echo '<script src="' . plugins_url('GoogleReviewsSlider-WP-Plugin/js/mobile-debug.js') . '?v=' . time() . '"></script>';
+}, 5);
+
 ?>
 <!DOCTYPE html>
 <html>
