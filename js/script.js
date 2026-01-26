@@ -90,7 +90,7 @@ jQuery(document).ready(function($) {
                         settings: {
                             slidesToShow: 1,
                             slidesToScroll: 1,
-                            arrows: false, // No arrows on mobile - cleaner look
+                            arrows: true, // Show arrows on mobile for better navigation
                             dots: false, // No dots on mobile - too many slides
                             infinite: true,
                             autoplay: true, // Auto-rotate on mobile

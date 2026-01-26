@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.1.9
+ * Version: 2.2.0
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.1.9');
+define('GRS_VERSION', '2.2.0');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -189,11 +189,7 @@ function grs_mobile_inline_styles() {
         
         /* Summary box mobile */
         .grs-direct-summary {
-<<<<<<< HEAD
-            background: #ffffffff !important;
-=======
-            background: #FFF9C4 !important;
->>>>>>> 2998ed01a3d308cd73b0a89055f4df70d677bbf8
+            background: #ffffff !important;
             padding: 20px !important;
             margin: 0 auto 20px auto !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
