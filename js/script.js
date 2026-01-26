@@ -273,9 +273,69 @@ jQuery(document).ready(function($) {
 
                 console.log('🚨 INJECTED CRITICAL CSS for ' + sliderId);
 
-                // Force Slick to recalculate
-                $slider.slick('setPosition');
-                $slider.slick('refresh');
+                // CRITICAL: Must unslick and reinitialize for CSS to take effect
+                setTimeout(function() {
+                    // Store current slide
+                    var currentSlide = $slider.slick('slickCurrentSlide');
+
+                    // Destroy Slick instance
+                    $slider.slick('unslick');
+
+                    console.log('♻️ REINITIALIZING Slick with new CSS...');
+
+                    // Reinitialize with same options
+                    $slider.slick({
+                        slidesToShow: isMobile ? slidesMobile : slidesDesktop,
+                        slidesToScroll: isMobile ? slidesMobile : slidesDesktop,
+                        infinite: true,
+                        dots: true,
+                        arrows: arrows,
+                        autoplay: autoplay,
+                        autoplaySpeed: parseInt(autoplaySpeed),
+                        pauseOnHover: true,
+                        pauseOnFocus: true,
+                        swipe: true,
+                        touchMove: true,
+                        touchThreshold: 5,
+                        dotsClass: 'slick-dots grs-slider-dots',
+                        prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><span>Previous</span></button>',
+                        nextArrow: '<button type="button" class="slick-next" aria-label="Next"><span>Next</span></button>',
+                        responsive: [
+                            {
+                                breakpoint: 1024,
+                                settings: {
+                                    slidesToShow: slidesDesktop > 2 ? slidesDesktop - 1 : slidesDesktop,
+                                    slidesToScroll: 1
+                                }
+                            },
+                            {
+                                breakpoint: 768,
+                                settings: {
+                                    slidesToShow: slidesMobile,
+                                    slidesToScroll: 1,
+                                    arrows: true,
+                                    dots: true
+                                }
+                            },
+                            {
+                                breakpoint: 480,
+                                settings: {
+                                    slidesToShow: 1,
+                                    slidesToScroll: 1,
+                                    arrows: true,
+                                    dots: true
+                                }
+                            }
+                        ]
+                    });
+
+                    // Go back to the slide we were on
+                    if (currentSlide > 0) {
+                        $slider.slick('slickGoTo', currentSlide, true);
+                    }
+
+                    console.log('✅ Slick REINITIALIZED with correct CSS');
+                }, 100);
             }, 500);
 
             // iOS-specific: Fix for arrow button clicks not working
