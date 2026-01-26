@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.3.1
+ * Version: 2.3.2
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.3.1');
+define('GRS_VERSION', '2.3.2');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -410,6 +410,26 @@ function grs_force_mobile_debug() {
                             var transform = $track.css('transform');
                             log('Transform now: ' + transform, '#0ff');
                         });
+
+                        // FORCE FIX IMMEDIATELY
+                        setTimeout(function() {
+                            log('🔧 FORCING CSS FIX...', '#f0f');
+                            $slider.find('.slick-slide').css({
+                                'float': 'left',
+                                'display': 'block'
+                            });
+                            $slider.find('.slick-track').css({
+                                'display': 'block',
+                                'position': 'relative'
+                            });
+                            $slider.slick('setPosition');
+
+                            // Re-check
+                            var newFloat = $slider.find('.slick-slide').first().css('float');
+                            var newDisplay = $slider.find('.slick-track').css('display');
+                            log('✅ After fix - Slide float: ' + newFloat, '#0f0');
+                            log('✅ After fix - Track display: ' + newDisplay, '#0f0');
+                        }, 100);
 
                     } else if (checkCount > 50) {
                         clearInterval(checkInit);
