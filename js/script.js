@@ -72,8 +72,6 @@ jQuery(document).ready(function($) {
                 swipe: true,
                 touchMove: true,
                 touchThreshold: 5,
-                useCSS: true,  // Use CSS transitions
-                useTransform: false,  // CRITICAL for iOS: Don't use translate3d, use left positioning
                 dotsClass: 'slick-dots grs-slider-dots', // Custom class for better control
                 prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><span>Previous</span></button>',
                 nextArrow: '<button type="button" class="slick-next" aria-label="Next"><span>Next</span></button>',

@@ -58,7 +58,7 @@ class GRS_Database {
             review_translated_by_google boolean DEFAULT 0,
             response_from_owner_translated_by_google boolean DEFAULT 0,
             extracted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            source varchar(50) DEFAULT 'outscraper',
+            source varchar(50) DEFAULT 'serpapi',
             PRIMARY KEY (id),
             UNIQUE KEY unique_review (place_id, review_id),
             KEY idx_place_rating (place_id, rating),
@@ -120,7 +120,7 @@ class GRS_Database {
                 'is_local_guide' => isset($review['is_local_guide']) ? (bool)$review['is_local_guide'] : false,
                 'review_translated_by_google' => isset($review['review_translated_by_google']) ? (bool)$review['review_translated_by_google'] : false,
                 'response_from_owner_translated_by_google' => isset($review['response_from_owner_translated_by_google']) ? (bool)$review['response_from_owner_translated_by_google'] : false,
-                'source' => 'outscraper'
+                'source' => isset($review['source']) ? $review['source'] : 'serpapi'
             );
             
             // Check if review already exists
@@ -144,8 +144,11 @@ class GRS_Database {
                 // Insert new review
                 $result = $wpdb->insert($table_name, $data);
             }
-            
-            if ($result !== false) {
+
+            if ($result === false) {
+                error_log('GRS DB Error: ' . $wpdb->last_error);
+                error_log('GRS DB Data: ' . json_encode($data));
+            } else {
                 $saved_count++;
             }
         }
@@ -301,7 +304,26 @@ class GRS_Database {
         
         return $wpdb->get_results($query, ARRAY_A);
     }
-    
+
+    /**
+     * Get last successful extraction date
+     *
+     * @param string $place_id
+     * @return string|null
+     */
+    public static function get_last_extraction($place_id) {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'grs_extraction_history';
+
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT extraction_date FROM $table_name
+            WHERE place_id = %s AND status = 'success'
+            ORDER BY extraction_date DESC LIMIT 1",
+            $place_id
+        ));
+    }
+
     /**
      * Delete old reviews
      * 

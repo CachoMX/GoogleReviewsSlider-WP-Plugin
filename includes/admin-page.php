@@ -59,10 +59,18 @@ function grs_settings_init() {
     );
 
     add_settings_field(
-        'grs_outscraper_token', 
-        __('Outscraper API Token', 'grs'), 
-        'grs_outscraper_token_render', 
-        'pluginPage', 
+        'grs_serpapi_key',
+        __('SerpAPI Key', 'grs'),
+        'grs_serpapi_key_render',
+        'pluginPage',
+        'grs_pluginPage_section'
+    );
+
+    add_settings_field(
+        'grs_data_id',
+        __('SerpAPI Data ID', 'grs'),
+        'grs_data_id_render',
+        'pluginPage',
         'grs_pluginPage_section'
     );
 }
@@ -109,14 +117,27 @@ function grs_min_rating_render() {
     <?php
 }
 
-function grs_outscraper_token_render() {
+function grs_serpapi_key_render() {
     $options = get_option('grs_settings');
-    $default_token = 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg';
-    $current_token = isset($options['grs_outscraper_token']) ? $options['grs_outscraper_token'] : $default_token;
+    $current_key = isset($options['grs_serpapi_key']) ? $options['grs_serpapi_key'] : '';
     ?>
-    <input type='text' name='grs_settings[grs_outscraper_token]' style="width: 400px;" 
-           value='<?php echo esc_attr($current_token); ?>'>
-    <p class="description">Outscraper API token for extracting more reviews. Default token is pre-filled.</p>
+    <input type='text' name='grs_settings[grs_serpapi_key]' style="width: 400px;"
+           value='<?php echo esc_attr($current_key); ?>'>
+    <p class="description">SerpAPI key for extracting Google reviews. <a href="https://serpapi.com/manage-api-key" target="_blank">Get your API key</a></p>
+    <?php
+}
+
+function grs_data_id_render() {
+    $options = get_option('grs_settings');
+    $current_id = isset($options['grs_data_id']) ? $options['grs_data_id'] : '';
+    ?>
+    <input type='text' name='grs_settings[grs_data_id]' style="width: 400px;"
+           value='<?php echo esc_attr($current_id); ?>'
+           placeholder="0x89c259af336b3341:0xa4969e07ce3108de">
+    <p class="description">
+        <strong>Required for reviews extraction.</strong> Format: <code>0x....:0x....</code><br>
+        Find it by searching your business on <a href="https://serpapi.com/playground?engine=google_maps&q=your+business+name" target="_blank">SerpAPI Playground</a> and copy the <code>data_id</code> from the results.
+    </p>
     <?php
 }
 
@@ -259,13 +280,13 @@ function grs_options_page() {
         <div class="grs-changelog">
             <h3>🎉 What's New in Version 2.0</h3>
             <ul>
-                <li>✅ <strong>Outscraper Integration</strong> - Extract up to 500 reviews from Google!</li>
+                <li>✅ <strong>SerpAPI Integration</strong> - Fast and reliable Google reviews extraction!</li>
                 <li>✅ <strong>Review Database</strong> - All reviews stored locally for instant access</li>
                 <li>✅ <strong>Review Manager</strong> - View, filter, and manage all your reviews</li>
                 <li>✅ <strong>Statistics Dashboard</strong> - See review counts by rating breakdown</li>
                 <li>✅ <strong>Extraction History</strong> - Track when and how many reviews were extracted</li>
                 <li>✅ <strong>Enhanced Filtering</strong> - Show only 5-star reviews with plenty to display</li>
-                <li>✅ <strong>API Usage Tracking</strong> - Monitor your Outscraper API usage</li>
+                <li>✅ <strong>API Usage Tracking</strong> - Monitor your SerpAPI usage</li>
                 <li>✅ <strong>Performance Boost</strong> - Database caching for lightning-fast loading</li>
             </ul>
         </div>

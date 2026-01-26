@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.7.4
+ * Version: 2.7.3
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.7.4');
+define('GRS_VERSION', '2.7.3');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -38,8 +38,8 @@ function grs_activation_hook() {
         'grs_api_key' => '',
         'grs_place_id' => '',
         'grs_min_rating' => '1',
-        // Pre-populate Outscraper token so API requests work out of the box
-        'grs_outscraper_token' => 'ODJhYTBmZjFkMmY5NGQ1Nzk0MGYwZmI0Y2JhMWZhYWZ8ODhmZDYxYmI3Yg',
+        // SerpAPI key for reviews extraction
+        'grs_serpapi_key' => 'e16931eb218fa770300a195b81ae0a6e6a879f3fadd02a3b626d19668386677c',
     );
 
     $existing_options = get_option('grs_settings', array());
@@ -56,12 +56,73 @@ function grs_activation_hook() {
     // Initialize database tables
     require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
     GRS_Database::init();
+
+    // Schedule cron job for auto-refresh every 30 days
+    if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
+        wp_schedule_event(time(), 'monthly', 'grs_auto_refresh_reviews');
+    }
 }
 
 // Plugin deactivation hook
 register_deactivation_hook(__FILE__, 'grs_deactivation_hook');
 function grs_deactivation_hook() {
     // Clear cached reviews on deactivation
+    delete_transient('grs_reviews');
+    delete_transient('grs_total_review_count');
+
+    // Remove scheduled cron
+    wp_clear_scheduled_hook('grs_auto_refresh_reviews');
+}
+
+// Add custom cron schedule for monthly (30 days)
+add_filter('cron_schedules', 'grs_add_cron_schedules');
+function grs_add_cron_schedules($schedules) {
+    $schedules['monthly'] = array(
+        'interval' => 30 * DAY_IN_SECONDS,
+        'display' => __('Every 30 Days')
+    );
+    return $schedules;
+}
+
+// Cron handler - auto refresh reviews
+add_action('grs_auto_refresh_reviews', 'grs_cron_refresh_reviews');
+function grs_cron_refresh_reviews() {
+    $options = get_option('grs_settings');
+    $place_id = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';
+    $data_id = isset($options['grs_data_id']) ? $options['grs_data_id'] : '';
+
+    if (empty($place_id) && empty($data_id)) {
+        return;
+    }
+
+    require_once(GRS_PLUGIN_PATH . 'includes/serpapi-handler.php');
+    require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+
+    $api = new GRS_SerpAPI();
+
+    // Get data_id if not set
+    if (empty($data_id) && !empty($place_id)) {
+        $data_id = $api->get_data_id_from_place_id($place_id);
+        if (is_wp_error($data_id)) {
+            error_log('GRS Cron: Failed to get data_id - ' . $data_id->get_error_message());
+            return;
+        }
+    }
+
+    // Delete old reviews first
+    GRS_Database::delete_all_reviews($place_id);
+
+    // Extract fresh reviews (only 5 stars, max 15)
+    $response = $api->extract_all_reviews($data_id, 15);
+
+    if (!is_wp_error($response)) {
+        $api->process_reviews_response($response, $place_id);
+        error_log('GRS Cron: Successfully refreshed reviews for ' . $place_id);
+    } else {
+        error_log('GRS Cron: Failed to extract reviews - ' . $response->get_error_message());
+    }
+
+    // Clear transients
     delete_transient('grs_reviews');
     delete_transient('grs_total_review_count');
 }
@@ -284,7 +345,7 @@ function grs_add_settings_link($links) {
 
 // Include necessary files
 include(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-include(GRS_PLUGIN_PATH . 'includes/outscraper-api.php');
+include(GRS_PLUGIN_PATH . 'includes/serpapi-handler.php');
 include(GRS_PLUGIN_PATH . 'includes/admin-page.php');
 include(GRS_PLUGIN_PATH . 'includes/shortcode.php');
 include(GRS_PLUGIN_PATH . 'includes/api-handler.php');
@@ -519,32 +580,23 @@ function grs_check_api_usage_handler() {
         return;
     }
     
-    // Get API usage
-    $api = new GRS_Outscraper_API();
-    $usage = $api->get_usage_info();
-    
+    // Get API usage from SerpAPI
+    $api = new GRS_SerpAPI();
+    $usage = $api->get_account_info();
+
     if (is_wp_error($usage)) {
         wp_send_json_error('Unable to retrieve usage information');
         return;
     }
-    
-    // Format the usage data
-    $formatted = array();
-    if (isset($usage['credits_left'])) {
-        $formatted['Credits Remaining'] = $usage['credits_left'];
-    }
-    if (isset($usage['requests_left'])) {
-        $formatted['Requests Remaining'] = $usage['requests_left'];
-    }
-    if (isset($usage['plan'])) {
-        $formatted['Plan'] = $usage['plan'];
-    }
-    
-    // If no specific fields found, return all data
-    if (empty($formatted)) {
-        $formatted = $usage;
-    }
-    
+
+    // Format the usage data for SerpAPI
+    $formatted = array(
+        'Plan' => $usage['plan_name'] ?? 'N/A',
+        'Searches Left (Monthly)' => $usage['plan_searches_left'] ?? 'N/A',
+        'Total Searches Left' => $usage['total_searches_left'] ?? 'N/A',
+        'Account' => $usage['account_email'] ?? 'N/A'
+    );
+
     wp_send_json_success($formatted);
 }
 

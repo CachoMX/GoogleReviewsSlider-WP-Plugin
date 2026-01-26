@@ -48,22 +48,37 @@ class GRS_Reviews_Manager {
             
             <!-- Extract Reviews Section -->
             <div class="grs-extract-section">
-                <h4>Extract New Reviews</h4>
+                <h4>Extract New Reviews <span style="font-size:12px;color:#666;font-weight:normal;">(Only 5-star reviews are saved)</span></h4>
+
+                <?php
+                $next_cron = wp_next_scheduled('grs_auto_refresh_reviews');
+                $last_extraction = GRS_Database::get_last_extraction($place_id);
+                ?>
+                <div style="background:#f0f8ff;padding:10px;border-radius:4px;margin-bottom:15px;border-left:4px solid #0073aa;">
+                    <strong>Auto-refresh:</strong> Every 30 days<br>
+                    <strong>Next refresh:</strong> <?php echo $next_cron ? date('Y-m-d H:i', $next_cron) : 'Not scheduled'; ?><br>
+                    <strong>Last extraction:</strong> <?php echo $last_extraction ? date('Y-m-d H:i', strtotime($last_extraction)) : 'Never'; ?>
+                </div>
+
                 <div class="grs-extract-controls">
-                    <label for="reviews_limit">Number of reviews to extract:</label>
+                    <label for="reviews_limit">Number of reviews to fetch:</label>
                     <select id="reviews_limit" name="reviews_limit">
                         <option value="10">10 Reviews</option>
                         <option value="15" selected>15 Reviews</option>
                     </select>
-                    
+
                     <button type="button" id="extract-reviews-btn" class="button button-primary">
-                        <span class="dashicons dashicons-download"></span> Extract Reviews
+                        <span class="dashicons dashicons-download"></span> Extract 5-Star Reviews
                     </button>
-                    
+
+                    <button type="button" id="refresh-now-btn" class="button" style="background:#28a745;color:white;border-color:#28a745;">
+                        <span class="dashicons dashicons-update"></span> Delete & Refresh All
+                    </button>
+
                     <button type="button" id="check-usage-btn" class="button button-secondary">
-                        <span class="dashicons dashicons-info"></span> Check API Usage
+                        <span class="dashicons dashicons-info"></span> API Usage
                     </button>
-                    
+
                     <div id="extraction-status" class="grs-status-message" style="display:none;"></div>
                 </div>
                 
@@ -290,6 +305,11 @@ class GRS_Reviews_Manager {
         <script>
         jQuery(document).ready(function($) {
             var placeId = '<?php echo esc_js($place_id); ?>';
+            <?php
+            $options = get_option('grs_settings');
+            $data_id = isset($options['grs_data_id']) ? $options['grs_data_id'] : '';
+            ?>
+            var dataId = '<?php echo esc_js($data_id); ?>';
             
             // Extract reviews
             var isExtracting = false; // Flag to prevent multiple clicks
@@ -321,6 +341,7 @@ class GRS_Reviews_Manager {
                     data: {
                         action: 'grs_extract_reviews',
                         place_id: placeId,
+                        data_id: dataId,
                         reviews_limit: reviewsLimit,
                         nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                     },
@@ -328,10 +349,11 @@ class GRS_Reviews_Manager {
                         console.log('Success response:', response);
                         if (response.success) {
                             var data = response.data;
-                            status.removeClass('loading error').addClass('success').html(
-                                '<span class="dashicons dashicons-yes"></span> Successfully extracted ' + 
-                                data.reviews_saved + ' reviews out of ' + data.reviews_found + ' found.'
-                            );
+                            var msg = '<span class="dashicons dashicons-yes"></span> Success! ';
+                            msg += 'Found ' + data.reviews_found + ' total reviews, ';
+                            msg += (data.five_star_count || data.reviews_saved) + ' are 5-star. ';
+                            msg += 'Saved ' + data.reviews_saved + ' reviews.';
+                            status.removeClass('loading error').addClass('success').html(msg);
                             
                             // Reload the page after 2 seconds to show new data
                             setTimeout(function() {
@@ -358,6 +380,69 @@ class GRS_Reviews_Manager {
                 });
             });
             
+            // Delete & Refresh All
+            $('#refresh-now-btn').on('click', function() {
+                if (!confirm('This will DELETE all existing reviews and fetch fresh 5-star reviews.\n\nContinue?')) {
+                    return;
+                }
+
+                var button = $(this);
+                var status = $('#extraction-status');
+                var reviewsLimit = $('#reviews_limit').val();
+
+                button.prop('disabled', true);
+                status.removeClass('success error').addClass('loading').html(
+                    '<span class="dashicons dashicons-update spinning"></span> Deleting old reviews and fetching new ones...'
+                ).show();
+
+                // First delete all reviews
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'grs_delete_all_reviews',
+                        place_id: placeId,
+                        nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+                    },
+                    success: function() {
+                        // Then extract new reviews
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'grs_extract_reviews',
+                                place_id: placeId,
+                                data_id: dataId,
+                                reviews_limit: reviewsLimit,
+                                nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    var data = response.data;
+                                    status.removeClass('loading error').addClass('success').html(
+                                        '<span class="dashicons dashicons-yes"></span> Refreshed! Saved ' +
+                                        data.reviews_saved + ' five-star reviews.'
+                                    );
+                                    setTimeout(function() { location.reload(); }, 2000);
+                                } else {
+                                    status.removeClass('loading').addClass('error').html(
+                                        '<span class="dashicons dashicons-warning"></span> Error: ' + response.data
+                                    );
+                                }
+                            },
+                            error: function() {
+                                status.removeClass('loading').addClass('error').html(
+                                    '<span class="dashicons dashicons-warning"></span> Error fetching reviews'
+                                );
+                            },
+                            complete: function() {
+                                button.prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+            });
+
             // Check API usage
             $('#check-usage-btn').on('click', function() {
                 var button = $(this);

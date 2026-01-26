@@ -32,28 +32,15 @@ function grs_direct_enqueue_assets() {
     
     // Enqueue required WordPress assets
     wp_enqueue_style('dashicons');
-    wp_enqueue_script('jquery');
-    
-    // Slick carousel - standard version
-    wp_enqueue_style('grs-slick', plugins_url('assets/slick/slick.css', dirname(__FILE__)), array(), '1.8.1');
-    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '1.8.1');
-    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/slick.min.js', dirname(__FILE__)), array('jquery'), '1.8.1', true);
-    
+
+    // Swiper.js from CDN (iOS/Safari optimized)
+    wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css', array(), '11.0.0');
+    wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true);
+
     // Custom styles and scripts with cache busting
     $version = get_option('grs_version', '2.0') . '.' . time();
-    wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('grs-slick', 'grs-slick-theme'), $version);
-    wp_enqueue_script('grs-direct-script', plugins_url('js/script.js', dirname(__FILE__)), array('jquery', 'grs-slick-js'), $version, true);
-
-    // Localize script with enhanced data
-    wp_localize_script('grs-direct-script', 'grsData', array(
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('grs_nonce'),
-        'pluginUrl' => plugins_url('', dirname(__FILE__)),
-        'isDebug' => defined('WP_DEBUG') && WP_DEBUG,
-        'isMobile' => wp_is_mobile(),
-        'isAvada' => function_exists('fusion_builder_container'),
-        'version' => $version
-    ));
+    wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('swiper-css'), $version);
+    wp_enqueue_script('grs-swiper-init', plugins_url('js/swiper-init.js', dirname(__FILE__)), array('swiper-js'), $version, true);
 }
 
 function grs_direct_display($atts) {
@@ -257,9 +244,14 @@ function grs_direct_display($atts) {
          data-device="<?php echo $is_mobile ? 'mobile' : 'desktop'; ?>">
         
         <div class="grs-direct-container">
-            <?php if ($atts['show_summary'] === 'true') : ?>
+            <?php if ($atts['show_summary'] === 'true') :
+                $business_name = isset($options['grs_business_name']) ? $options['grs_business_name'] : '';
+            ?>
             <div class="grs-direct-summary">
                 <div class="grs-direct-rating-large">EXCELLENT</div>
+                <?php if (!empty($business_name)) : ?>
+                <div class="grs-direct-business-name"><?php echo esc_html($business_name); ?></div>
+                <?php endif; ?>
                 <div class="grs-direct-stars">
                     <?php for ($i = 0; $i < 5; $i++) : ?>
                         <span class="dashicons dashicons-star-filled"></span>
@@ -277,32 +269,32 @@ function grs_direct_display($atts) {
             <?php endif; ?>
             
             <div class="grs-direct-slider-container">
-                <div id="<?php echo esc_attr($unique_id); ?>" 
-                     class="grs-direct-slider" 
-                     data-slides="<?php echo count($reviews); ?>"
+                <!-- Swiper Container -->
+                <div id="<?php echo esc_attr($unique_id); ?>"
+                     class="swiper grs-swiper"
                      data-autoplay="<?php echo esc_attr($atts['autoplay']); ?>"
                      data-autoplay-speed="<?php echo esc_attr($atts['autoplay_speed']); ?>"
                      data-slides-desktop="<?php echo esc_attr($atts['slides_desktop']); ?>"
                      data-slides-tablet="<?php echo esc_attr($atts['slides_tablet']); ?>"
                      data-slides-mobile="<?php echo esc_attr($atts['slides_mobile']); ?>"
-                     data-arrows="<?php echo esc_attr($atts['arrows']); ?>"
                      role="region"
                      aria-label="Customer Reviews Slider">
-                    
-                    <?php foreach ($reviews as $index => $review) : 
+
+                    <div class="swiper-wrapper">
+                    <?php foreach ($reviews as $index => $review) :
                         $review_text = !empty($review['text']) ? $review['text'] : '(No review text provided)';
-                        $needs_truncation = strlen($review_text) > 150;
+                        $needs_truncation = strlen($review_text) > 120; // Truncate reviews over 120 chars
                         $author_name = esc_html($review['author_name']);
-                        $time_description = !empty($review['relative_time_description']) ? 
-                            esc_html($review['relative_time_description']) : 
+                        $time_description = !empty($review['relative_time_description']) ?
+                            esc_html($review['relative_time_description']) :
                             date('F Y', $review['time']);
-                        $profile_photo = !empty($review['profile_photo_url']) ? 
-                            esc_url($review['profile_photo_url']) : 
+                        $profile_photo = !empty($review['profile_photo_url']) ?
+                            esc_url($review['profile_photo_url']) :
                             plugins_url('assets/default-avatar.png', dirname(__FILE__));
                         $rating = intval($review['rating']);
                     ?>
-                        <div class="grs-direct-slide">
-                            <div class="grs-direct-review" 
+                        <div class="swiper-slide grs-direct-slide">
+                            <div class="grs-direct-review"
                                  data-review-index="<?php echo esc_attr($index); ?>"
                                  role="article"
                                  aria-label="Review by <?php echo $author_name; ?>">
@@ -349,104 +341,27 @@ function grs_direct_display($atts) {
                             </div>
                         </div>
                     <?php endforeach; ?>
-                </div>
+                    </div><!-- /.swiper-wrapper -->
+
+                    <!-- Swiper Navigation -->
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
+
+                    <!-- Swiper Pagination -->
+                    <div class="swiper-pagination"></div>
+                </div><!-- /.grs-swiper -->
             </div>
         </div>
     </div>
     
-    <!-- Initialization script for immediate execution -->
+    <!-- Visibility fix script -->
     <script type="text/javascript">
     (function() {
-        'use strict';
-        
-        var sliderId = '<?php echo esc_js($unique_id); ?>';
-        var isMobile = window.innerWidth <= 768;
-        
-        // Immediate visibility fix
-        function forceVisibility() {
-            var wrapper = document.getElementById(sliderId + '-wrapper');
-            if (wrapper) {
-                wrapper.style.opacity = '1';
-                wrapper.style.visibility = 'visible';
-                wrapper.style.display = 'block';
-                
-                var reviews = wrapper.querySelectorAll('.grs-direct-review');
-                for (var i = 0; i < reviews.length; i++) {
-                    reviews[i].style.opacity = '1';
-                    reviews[i].style.visibility = 'visible';
-                    reviews[i].style.display = 'flex';
-                    reviews[i].style.flexDirection = 'column';
-                }
-                
-                var texts = wrapper.querySelectorAll('.grs-direct-text');
-                for (var j = 0; j < texts.length; j++) {
-                    texts[j].style.color = '#333';
-                    texts[j].style.opacity = '1';
-                    texts[j].style.visibility = 'visible';
-                    texts[j].style.display = 'block';
-                }
-                
-                var slider = document.getElementById(sliderId);
-                if (slider) {
-                    slider.style.minHeight = isMobile ? '320px' : '250px';
-                    slider.style.opacity = '1';
-                    slider.style.visibility = 'visible';
-                    slider.style.display = 'block';
-                }
-            }
+        var wrapper = document.getElementById('<?php echo esc_js($unique_id); ?>-wrapper');
+        if (wrapper) {
+            wrapper.style.opacity = '1';
+            wrapper.style.visibility = 'visible';
         }
-        
-        // Apply fixes immediately
-        forceVisibility();
-        
-        // Enhanced DOM ready detection
-        function ready(fn) {
-            if (document.readyState !== 'loading') {
-                fn();
-            } else {
-                document.addEventListener('DOMContentLoaded', fn);
-            }
-        }
-        
-        // Re-apply visibility fixes when DOM is ready
-        ready(function() {
-            forceVisibility();
-            
-            // Additional mobile fixes
-            if (isMobile) {
-                setTimeout(forceVisibility, 100);
-                setTimeout(forceVisibility, 500);
-                setTimeout(forceVisibility, 1000);
-            }
-        });
-        
-        // Mobile-specific initialization
-        if (isMobile) {
-            // Set interval to keep enforcing visibility
-            var visibilityInterval = setInterval(function() {
-                var slider = document.getElementById(sliderId);
-                if (slider && slider.classList.contains('slick-initialized')) {
-                    clearInterval(visibilityInterval);
-                } else {
-                    forceVisibility();
-                }
-            }, 200);
-            
-            // Clear interval after 5 seconds
-            setTimeout(function() {
-                clearInterval(visibilityInterval);
-            }, 5000);
-        }
-        
-        <?php if ($is_avada): ?>
-        // Avada live builder compatibility
-        if (window.FusionEvents) {
-            window.FusionEvents.on('fusion-element-render-fusion_text', function() {
-                setTimeout(forceVisibility, 100);
-            });
-        }
-        <?php endif; ?>
-        
     })();
     </script>
     
