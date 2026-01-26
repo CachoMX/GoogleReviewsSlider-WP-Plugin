@@ -53,10 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 dynamicBullets: true
             },
 
-            // Navigation
+            // Navigation (buttons are outside swiper, in parent container)
             navigation: {
-                nextEl: el.querySelector('.swiper-button-next'),
-                prevEl: el.querySelector('.swiper-button-prev')
+                nextEl: el.closest('.grs-direct-slider-container').querySelector('.grs-nav-next'),
+                prevEl: el.closest('.grs-direct-slider-container').querySelector('.grs-nav-prev')
             },
 
             // Responsive breakpoints

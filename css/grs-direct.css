@@ -65,17 +65,21 @@
     margin: 0 auto;
 }
 
-/* Slider container */
+/* Slider container - flexbox layout for [prev] [slider] [next] */
 .grs-direct-slider-container {
     flex: 1;
     min-width: 0;
     overflow: visible;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 /* Swiper container */
 .grs-swiper {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     padding-bottom: 50px;
 }
 
@@ -202,35 +206,38 @@
     text-decoration: underline;
 }
 
-/* Swiper Navigation Arrows */
-.grs-swiper .swiper-button-prev,
-.grs-swiper .swiper-button-next {
-    width: 40px;
-    height: 40px;
+/* Navigation Buttons - Outside Swiper */
+.grs-nav-button {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
     background-color: #ffffff;
     border: 1px solid #d9d9d9;
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 200ms ease-out;
-}
-
-.grs-swiper .swiper-button-prev:hover,
-.grs-swiper .swiper-button-next:hover {
-    background-color: #f8f8f8;
-    border-color: #b8b8b8;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-}
-
-.grs-swiper .swiper-button-prev:after,
-.grs-swiper .swiper-button-next:after {
-    font-size: 18px;
+    padding: 0;
     color: #666;
-    font-weight: bold;
 }
 
-.grs-swiper .swiper-button-prev:hover:after,
-.grs-swiper .swiper-button-next:hover:after {
-    color: #333;
+.grs-nav-button:hover {
+    background-color: #f0f0f0 !important;
+    border-color: #b8b8b8 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+    color: #555 !important;
+}
+
+.grs-nav-button:active {
+    transform: scale(0.95);
+}
+
+.grs-nav-button svg {
+    width: 24px;
+    height: 24px;
 }
 
 /* Swiper Pagination */
@@ -296,8 +303,21 @@
     }
 
     .grs-direct-slider-container {
-        padding: 0 15px;
+        padding: 0 5px;
         width: 100%;
+        gap: 5px;
+    }
+
+    /* Smaller nav buttons on mobile */
+    .grs-nav-button {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+    }
+
+    .grs-nav-button svg {
+        width: 18px;
+        height: 18px;
     }
 
     .grs-swiper {
@@ -305,16 +325,16 @@
     }
 
     .grs-swiper .swiper-slide {
-        padding: 0 5px;
+        padding: 0 2px;
     }
 
     .grs-direct-review {
         width: 100%;
-        max-width: 500px;
-        margin: 0 auto;
-        padding: 25px 20px;
-        min-height: 250px;
-        border-radius: 12px;
+        max-width: none; /* Remove max-width limit on mobile */
+        margin: 0;
+        padding: 20px 15px;
+        min-height: 220px;
+        border-radius: 10px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
 
@@ -337,31 +357,6 @@
     .grs-direct-profile-img img {
         width: 40px;
         height: 40px;
-    }
-
-    /* Mobile navigation arrows */
-    .grs-swiper .swiper-button-prev,
-    .grs-swiper .swiper-button-next {
-        width: 36px;
-        height: 36px;
-        background-color: rgba(255, 255, 255, 0.98);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        touch-action: manipulation;
-        -webkit-user-select: none;
-        user-select: none;
-    }
-
-    .grs-swiper .swiper-button-prev:after,
-    .grs-swiper .swiper-button-next:after {
-        font-size: 16px;
-        color: #333;
-    }
-
-    .grs-swiper .swiper-button-prev:active,
-    .grs-swiper .swiper-button-next:active {
-        transform: scale(0.9);
-        background-color: rgba(240, 240, 240, 0.98);
     }
 
     /* Mobile pagination */
@@ -392,11 +387,10 @@
         backface-visibility: hidden;
     }
 
-    .grs-swiper .swiper-button-prev,
-    .grs-swiper .swiper-button-next {
+    .grs-nav-button {
         cursor: pointer;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
-        pointer-events: auto;
+        touch-action: manipulation;
     }
 }
 

@@ -269,6 +269,11 @@ function grs_direct_display($atts) {
             <?php endif; ?>
             
             <div class="grs-direct-slider-container">
+                <!-- Navigation Prev -->
+                <button class="grs-nav-button grs-nav-prev" aria-label="Previous review">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                </button>
+
                 <!-- Swiper Container -->
                 <div id="<?php echo esc_attr($unique_id); ?>"
                      class="swiper grs-swiper"
@@ -343,13 +348,14 @@ function grs_direct_display($atts) {
                     <?php endforeach; ?>
                     </div><!-- /.swiper-wrapper -->
 
-                    <!-- Swiper Navigation -->
-                    <div class="swiper-button-prev"></div>
-                    <div class="swiper-button-next"></div>
-
                     <!-- Swiper Pagination -->
                     <div class="swiper-pagination"></div>
                 </div><!-- /.grs-swiper -->
+
+                <!-- Navigation Next -->
+                <button class="grs-nav-button grs-nav-next" aria-label="Next review">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                </button>
             </div>
         </div>
     </div>
