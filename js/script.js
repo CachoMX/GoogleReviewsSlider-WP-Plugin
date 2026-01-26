@@ -109,38 +109,61 @@ jQuery(document).ready(function($) {
             });
 
             // Force autoplay to start - especially important on mobile devices
+            // iOS Safari requires special handling for autoplay
             if (autoplay || isRealMobile) {
-                console.log('Starting autoplay...');
+                console.log('Setting up autoplay for mobile...');
 
-                // Initial start after a small delay to ensure DOM is ready
+                // For iOS/Mobile: Start autoplay after slider is fully initialized
                 setTimeout(function() {
-                    $slider.slick('slickPlay');
-                    console.log('Autoplay started');
-                }, 200);
+                    try {
+                        $slider.slick('slickPlay');
+                        console.log('Mobile autoplay started');
+                    } catch(e) {
+                        console.error('Error starting autoplay:', e);
+                    }
+                }, 500);
 
-                // Restart autoplay after each slide change
+                // Ensure autoplay continues after any interaction
                 $slider.on('afterChange', function(event, slick, currentSlide) {
                     console.log('Slide changed to:', currentSlide);
-                    $slider.slick('slickPlay');
+                    // Re-enable autoplay after each change
+                    setTimeout(function() {
+                        try {
+                            $slider.slick('slickPlay');
+                        } catch(e) {
+                            console.error('Error restarting autoplay:', e);
+                        }
+                    }, 100);
                 });
 
-                // On mobile, restart autoplay after any touch interaction
+                // iOS-specific: Start autoplay on first touch/scroll
                 if (isRealMobile) {
-                    $slider.on('touchend', function() {
-                        console.log('Touch interaction detected, restarting autoplay...');
-                        setTimeout(function() {
-                            $slider.slick('slickPlay');
-                        }, 1000); // Wait 1 second after touch
+                    var iosAutoplayStarted = false;
+
+                    // Listen for any user interaction to start autoplay
+                    $slider.one('touchstart click', function() {
+                        if (!iosAutoplayStarted) {
+                            console.log('iOS: User interaction detected, starting autoplay...');
+                            setTimeout(function() {
+                                try {
+                                    $slider.slick('slickPlay');
+                                    iosAutoplayStarted = true;
+                                } catch(e) {
+                                    console.error('Error starting iOS autoplay:', e);
+                                }
+                            }, 300);
+                        }
                     });
 
-                    // Also start on first user interaction (iOS requirement)
-                    var autoplayStarted = false;
-                    $slider.one('touchstart swipe', function() {
-                        if (!autoplayStarted) {
-                            console.log('First user interaction, starting autoplay...');
-                            $slider.slick('slickPlay');
-                            autoplayStarted = true;
-                        }
+                    // Also restart autoplay after swipe/drag
+                    $slider.on('swipe afterChange', function() {
+                        setTimeout(function() {
+                            try {
+                                $slider.slick('slickPlay');
+                            } catch(e) {
+                                console.error('Error restarting after swipe:', e);
+                            }
+                        }, 1000); // Wait 1 second after swipe
                     });
                 }
             }
@@ -226,8 +249,42 @@ jQuery(document).ready(function($) {
                 }, 500);
             }
         });
+
+        // iOS-specific: Fix for arrow button clicks not working
+        // Must be done AFTER slider initialization, so arrows exist
+        if (isRealMobile || isTouchDevice) {
+            setTimeout(function() {
+                // Find arrow buttons (created by Slick)
+                var $prevArrow = $slider.find('.slick-prev');
+                var $nextArrow = $slider.find('.slick-next');
+
+                console.log('Found arrows:', {
+                    prev: $prevArrow.length,
+                    next: $nextArrow.length
+                });
+
+                // Add touch event handlers for iOS
+                $prevArrow.on('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('iOS: Previous arrow touched');
+                    $slider.slick('slickPrev');
+                    return false;
+                });
+
+                $nextArrow.on('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('iOS: Next arrow touched');
+                    $slider.slick('slickNext');
+                    return false;
+                });
+
+                console.log('iOS/Mobile arrow touch handlers attached');
+            }, 100);
+        }
     }
-    
+
     // Read more/less functionality
     $(document).on('click', '.grs-direct-read-more', function(e) {
         e.preventDefault();
