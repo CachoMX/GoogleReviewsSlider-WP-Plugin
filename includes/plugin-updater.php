@@ -155,9 +155,27 @@ class GRS_Plugin_Updater {
         // Parse version from tag (remove 'v' prefix if present)
         $version = ltrim($data['tag_name'], 'v');
 
-        // Get the zip download URL - use archive URL with tag name for consistent folder structure
-        // This creates a folder like: GoogleReviewsSlider-WP-Plugin-2.2.2
-        $download_url = "https://github.com/{$this->username}/{$this->repository}/archive/refs/tags/{$data['tag_name']}.zip";
+        // Get the zip download URL from release assets
+        // Look for the uploaded ZIP file (e.g., google-reviews-slider-2.2.4.zip)
+        // This ensures the ZIP contains the correct folder name: GoogleReviewsSlider-WP-Plugin
+        $download_url = '';
+
+        if (isset($data['assets']) && is_array($data['assets'])) {
+            foreach ($data['assets'] as $asset) {
+                // Look for .zip file in assets
+                if (isset($asset['name']) && strpos($asset['name'], '.zip') !== false) {
+                    $download_url = $asset['browser_download_url'];
+                    error_log('GRS Updater: Found release asset: ' . $asset['name']);
+                    break;
+                }
+            }
+        }
+
+        // Fallback to archive URL if no asset found (for backwards compatibility)
+        if (empty($download_url)) {
+            $download_url = "https://github.com/{$this->username}/{$this->repository}/archive/refs/tags/{$data['tag_name']}.zip";
+            error_log('GRS Updater: No release asset found, using archive URL');
+        }
 
         // Try to get plugin header info from release description
         $description = isset($data['body']) ? $data['body'] : '';

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.2.3
+ * Version: 2.2.4
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.2.3');
+define('GRS_VERSION', '2.2.4');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -74,6 +74,13 @@ function grs_enqueue_assets() {
     wp_enqueue_style('grs-style', GRS_PLUGIN_URL . 'css/style.css', array(), GRS_VERSION);
     
     wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), GRS_VERSION, true);
+
+    // Enable mobile debug mode with ?grs_debug=1 or if WP_DEBUG is true
+    $enable_debug = (defined('WP_DEBUG') && WP_DEBUG) || isset($_GET['grs_debug']);
+    if ($enable_debug) {
+        wp_enqueue_script('grs-mobile-debug', GRS_PLUGIN_URL . 'js/mobile-debug.js', array('jquery'), GRS_VERSION, true);
+    }
+
     wp_enqueue_script('grs-script', GRS_PLUGIN_URL . 'js/script.js', array('jquery', 'grs-slick-js'), GRS_VERSION, true);
     
     // Localize script for AJAX and other data

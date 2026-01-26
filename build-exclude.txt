@@ -1,0 +1,16 @@
+.git
+.gitignore
+node_modules
+build
+releases
+*.sh
+*.bat
+*.md
+test-*.php
+cleanup-old-folders.php
+check-updates.php
+force-update-check.php
+.vscode
+.idea
+*.log
+build-exclude.txt
