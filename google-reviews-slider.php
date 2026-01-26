@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.6.2
+ * Version: 2.7.0
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.6.2');
+define('GRS_VERSION', '2.7.0');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -347,7 +347,7 @@ function grs_force_mobile_debug() {
             log('✅ jQuery loaded: v' + jQuery.fn.jquery, '#0f0');
 
             // Check GRSSlick
-            if (typeof jQuery.fn.grsslick === 'undefined') {
+            if (typeof jQuery.fn.slick === 'undefined') {
                 log('❌ GRSSlick NOT LOADED!', '#f00');
             } else {
                 log('✅ GRSSlick loaded', '#0f0');
@@ -359,28 +359,28 @@ function grs_force_mobile_debug() {
             log('Sliders found: ' + sliders.length, sliders.length > 0 ? '#0f0' : '#f00');
 
             if (sliders.length > 0) {
-                var initialized = sliders.hasClass('grsslick-initialized');
+                var initialized = sliders.hasClass('slick-initialized');
                 log('Slider initialized: ' + initialized, initialized ? '#0f0' : '#f00');
 
                 // Monitor initialization
                 var checkCount = 0;
                 var checkInit = setInterval(function() {
                     checkCount++;
-                    if ($('.grs-direct-slider').hasClass('grsslick-initialized')) {
+                    if ($('.grs-direct-slider').hasClass('slick-initialized')) {
                         clearInterval(checkInit);
                         log('✅ Slider NOW initialized!', '#0f0');
 
                         var $slider = $('.grs-direct-slider');
-                        var prevArrow = $slider.find('.grsslick-prev');
-                        var nextArrow = $slider.find('.grsslick-next');
+                        var prevArrow = $slider.find('.slick-prev');
+                        var nextArrow = $slider.find('.slick-next');
 
                         log('Prev arrow: ' + prevArrow.length + ' (visible: ' + prevArrow.is(':visible') + ')');
                         log('Next arrow: ' + nextArrow.length + ' (visible: ' + nextArrow.is(':visible') + ')');
 
                         // Check CSS values
-                        var $track = $slider.find('.grsslick-track');
-                        var $list = $slider.find('.grsslick-list');
-                        var $slides = $slider.find('.grsslick-slide');
+                        var $track = $slider.find('.slick-track');
+                        var $list = $slider.find('.slick-list');
+                        var $slides = $slider.find('.slick-slide');
 
                         log('🔍 CSS DEBUG:', '#fff');
                         log('Track display: ' + $track.css('display'));
@@ -416,24 +416,24 @@ function grs_force_mobile_debug() {
                             log('🔧 FORCING CSS FIX (NUCLEAR)...', '#f0f');
 
                             // Use setAttribute to bypass jQuery and CSS cascade
-                            $slider.find('.grsslick-slide').each(function() {
+                            $slider.find('.slick-slide').each(function() {
                                 var currentStyle = this.getAttribute('style') || '';
                                 this.setAttribute('style', currentStyle + '; float: left !important; display: block !important;');
                             });
 
-                            var trackEl = $slider.find('.grsslick-track')[0];
+                            var trackEl = $slider.find('.slick-track')[0];
                             if (trackEl) {
                                 var trackStyle = trackEl.getAttribute('style') || '';
                                 trackEl.setAttribute('style', trackStyle + '; display: block !important; position: relative !important;');
                             }
 
                             // Force GRSSlick to recalculate EVERYTHING
-                            $slider.grsslick('setPosition');
-                            $slider.grsslick('refresh');
+                            $slider.slick('setPosition');
+                            $slider.slick('refresh');
 
                             // Re-check after a moment
                             setTimeout(function() {
-                                var newFloat = window.getComputedStyle($slider.find('.grsslick-slide')[0]).float;
+                                var newFloat = window.getComputedStyle($slider.find('.slick-slide')[0]).float;
                                 var newTrackDisplay = window.getComputedStyle(trackEl).display;
 
                                 log('✅ NUCLEAR - Slide float: ' + newFloat, newFloat === 'left' ? '#0f0' : '#f00');
@@ -455,7 +455,7 @@ function grs_force_mobile_debug() {
             }
 
             // Monitor touch events on arrows
-            $(document).on('touchstart', '.grsslick-arrow', function(e) {
+            $(document).on('touchstart', '.slick-arrow', function(e) {
                 log('👆 Touch on: ' + $(this).attr('class'), '#ff0');
             });
 

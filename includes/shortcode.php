@@ -34,10 +34,10 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_style('dashicons');
     wp_enqueue_script('jquery');
     
-    // Custom Slick carousel with renamed classes to avoid theme conflicts
-    wp_enqueue_style('grs-slick', plugins_url('assets/slick/grs-slick.css', dirname(__FILE__)), array(), '2.6.1');
-    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '2.6.1');
-    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/grs-slick.min.js', dirname(__FILE__)), array('jquery'), '2.6.1', true);
+    // Slick carousel - standard version
+    wp_enqueue_style('grs-slick', plugins_url('assets/slick/slick.css', dirname(__FILE__)), array(), '1.8.1');
+    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '1.8.1');
+    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/slick.min.js', dirname(__FILE__)), array('jquery'), '1.8.1', true);
     
     // Custom styles and scripts with cache busting
     $version = get_option('grs_version', '2.0') . '.' . time();

@@ -20,9 +20,9 @@ jQuery(document).ready(function($) {
             var $slider = $(this);
 
             // Skip if already initialized
-            if ($slider.hasClass('grsslick-initialized')) {
+            if ($slider.hasClass('slick-initialized')) {
                 console.log('Slider already initialized, refreshing...');
-                $slider.grsslick('refresh');
+                $slider.slick('refresh');
                 return;
             }
 
@@ -50,7 +50,7 @@ jQuery(document).ready(function($) {
             });
 
             // Initialize Slick with horizontal settings
-            $slider.grsslick({
+            $slider.slick({
                 slidesToShow: isMobile ? slidesMobile : slidesDesktop,
                 slidesToScroll: isMobile ? slidesMobile : slidesDesktop, // Scroll same amount as shown
                 infinite: true,
@@ -72,9 +72,9 @@ jQuery(document).ready(function($) {
                 swipe: true,
                 touchMove: true,
                 touchThreshold: 5,
-                dotsClass: 'grsslick-dots grs-slider-dots', // Custom class for better control
-                prevArrow: '<button type="button" class="grsslick-prev" aria-label="Previous"><span>Previous</span></button>',
-                nextArrow: '<button type="button" class="grsslick-next" aria-label="Next"><span>Next</span></button>',
+                dotsClass: 'slick-dots grs-slider-dots', // Custom class for better control
+                prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><span>Previous</span></button>',
+                nextArrow: '<button type="button" class="slick-next" aria-label="Next"><span>Next</span></button>',
                 responsive: [
                     {
                         breakpoint: 1024,
@@ -116,7 +116,7 @@ jQuery(document).ready(function($) {
                 // For iOS/Mobile: Start autoplay after slider is fully initialized
                 setTimeout(function() {
                     try {
-                        $slider.grsslick('slickPlay');
+                        $slider.slick('slickPlay');
                         console.log('Mobile autoplay started');
                     } catch(e) {
                         console.error('Error starting autoplay:', e);
@@ -129,7 +129,7 @@ jQuery(document).ready(function($) {
                     // Re-enable autoplay after each change
                     setTimeout(function() {
                         try {
-                            $slider.grsslick('slickPlay');
+                            $slider.slick('slickPlay');
                         } catch(e) {
                             console.error('Error restarting autoplay:', e);
                         }
@@ -146,7 +146,7 @@ jQuery(document).ready(function($) {
                             console.log('iOS: User interaction detected, starting autoplay...');
                             setTimeout(function() {
                                 try {
-                                    $slider.grsslick('slickPlay');
+                                    $slider.slick('slickPlay');
                                     iosAutoplayStarted = true;
                                 } catch(e) {
                                     console.error('Error starting iOS autoplay:', e);
@@ -159,7 +159,7 @@ jQuery(document).ready(function($) {
                     $slider.on('swipe afterChange', function() {
                         setTimeout(function() {
                             try {
-                                $slider.grsslick('slickPlay');
+                                $slider.slick('slickPlay');
                             } catch(e) {
                                 console.error('Error restarting after swipe:', e);
                             }
@@ -172,7 +172,7 @@ jQuery(document).ready(function($) {
             if (isMobile) {
                 setTimeout(function() {
                     var $container = $slider.closest('.grs-direct-slider-container');
-                    var $list = $slider.find('.grsslick-list');
+                    var $list = $slider.find('.slick-list');
 
                     // Ensure list and container use full width
                     $container.css({
@@ -186,11 +186,11 @@ jQuery(document).ready(function($) {
                     });
 
                     // Refresh Slick positioning
-                    $slider.grsslick('setPosition');
+                    $slider.slick('setPosition');
 
                     // Start autoplay after positioning is set
                     if (autoplay || isRealMobile) {
-                        $slider.grsslick('slickPlay');
+                        $slider.slick('slickPlay');
                         console.log('Autoplay restarted after setPosition');
                     }
                 }, 100);
@@ -222,18 +222,18 @@ jQuery(document).ready(function($) {
 
             // Force position update
             setTimeout(function() {
-                $slider.grsslick('setPosition');
+                $slider.slick('setPosition');
 
                 // Additional mobile-specific fixes
                 if (isMobile) {
                     // Ensure proper height on mobile
-                    $slider.find('.grsslick-slide').css({
+                    $slider.find('.slick-slide').css({
                         'height': 'auto',
                         'min-height': '280px'
                     });
 
                     // Force track to display properly
-                    $slider.find('.grsslick-track').css({
+                    $slider.find('.slick-track').css({
                         'display': 'flex',
                         'align-items': 'stretch'
                     });
@@ -245,20 +245,20 @@ jQuery(document).ready(function($) {
             // Additional position update for stubborn mobile browsers
             if (isMobile) {
                 setTimeout(function() {
-                    $slider.grsslick('setPosition');
+                    $slider.slick('setPosition');
 
                     // CRITICAL FIX: Force float:left on slides if CSS didn't load properly
-                    $slider.find('.grsslick-slide').css({
+                    $slider.find('.slick-slide').css({
                         'float': 'left',
                         'display': 'block'
                     });
-                    $slider.find('.grsslick-track').css({
+                    $slider.find('.slick-track').css({
                         'display': 'block',
                         'position': 'relative'
                     });
 
                     console.log('FORCED mobile CSS via JavaScript');
-                    $slider.grsslick('setPosition'); // Refresh after CSS changes
+                    $slider.slick('setPosition'); // Refresh after CSS changes
                 }, 500);
             }
 
@@ -267,8 +267,8 @@ jQuery(document).ready(function($) {
             if (isRealMobile || isTouchDevice) {
                 setTimeout(function() {
                     // Find arrow buttons (created by Slick)
-                    var $prevArrow = $slider.find('.grsslick-prev');
-                    var $nextArrow = $slider.find('.grsslick-next');
+                    var $prevArrow = $slider.find('.slick-prev');
+                    var $nextArrow = $slider.find('.slick-next');
 
                     console.log('Found arrows for this slider:', {
                         prev: $prevArrow.length,
@@ -285,7 +285,7 @@ jQuery(document).ready(function($) {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('iOS: Previous arrow touched (touchstart)');
-                            $slider.grsslick('slickPrev');
+                            $slider.slick('slickPrev');
                             return false;
                         });
 
@@ -293,7 +293,7 @@ jQuery(document).ready(function($) {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('iOS: Next arrow touched (touchstart)');
-                            $slider.grsslick('slickNext');
+                            $slider.slick('slickNext');
                             return false;
                         });
 
@@ -302,7 +302,7 @@ jQuery(document).ready(function($) {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Previous arrow clicked');
-                            $slider.grsslick('slickPrev');
+                            $slider.slick('slickPrev');
                             return false;
                         });
 
@@ -310,7 +310,7 @@ jQuery(document).ready(function($) {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Next arrow clicked');
-                            $slider.grsslick('slickNext');
+                            $slider.slick('slickNext');
                             return false;
                         });
 
@@ -337,9 +337,9 @@ jQuery(document).ready(function($) {
         
         // Update slider position after text expansion
         var $slider = $this.closest('.grs-direct-slider');
-        if ($slider.hasClass('grsslick-initialized')) {
+        if ($slider.hasClass('slick-initialized')) {
             setTimeout(function() {
-                $slider.grsslick('setPosition');
+                $slider.slick('setPosition');
             }, 50);
         }
     });
@@ -357,9 +357,9 @@ jQuery(document).ready(function($) {
         
         // Update slider position after text collapse
         var $slider = $this.closest('.grs-direct-slider');
-        if ($slider.hasClass('grsslick-initialized')) {
+        if ($slider.hasClass('slick-initialized')) {
             setTimeout(function() {
-                $slider.grsslick('setPosition');
+                $slider.slick('setPosition');
             }, 50);
         }
     });
@@ -398,15 +398,15 @@ jQuery(document).ready(function($) {
         }
     }
     
-    // Check if GRSSlick is loaded
-    if (typeof $.fn.grsslick === 'undefined') {
-        console.error('GRSSlick is not loaded, waiting...');
+    // Check if Slick is loaded
+    if (typeof $.fn.slick === 'undefined') {
+        console.error('Slick is not loaded, waiting...');
 
-        // Wait for GRSSlick to load
+        // Wait for Slick to load
         var checkSlick = setInterval(function() {
-            if (typeof $.fn.grsslick !== 'undefined') {
+            if (typeof $.fn.slick !== 'undefined') {
                 clearInterval(checkSlick);
-                console.log('GRSSlick loaded, initializing sliders...');
+                console.log('Slick loaded, initializing sliders...');
                 initializeSliders();
                 enforceMobileVisibility();
             }
@@ -426,7 +426,7 @@ jQuery(document).ready(function($) {
             
             // Force refresh on mobile after load
             if (isMobile) {
-                $('.grs-direct-slider.grsslick-initialized').grsslick('refresh');
+                $('.grs-direct-slider.slick-initialized').slick('refresh');
             }
         }, 100);
     });
@@ -441,10 +441,10 @@ jQuery(document).ready(function($) {
             
             if (wasDesktop !== !isMobile) {
                 console.log('Device type changed, refreshing sliders...');
-                $('.grs-direct-slider.grsslick-initialized').grsslick('refresh');
+                $('.grs-direct-slider.slick-initialized').slick('refresh');
                 enforceMobileVisibility();
             } else {
-                $('.grs-direct-slider.grsslick-initialized').grsslick('setPosition');
+                $('.grs-direct-slider.slick-initialized').slick('setPosition');
             }
         }, 250);
     });
@@ -456,7 +456,7 @@ jQuery(document).ready(function($) {
         // Ensure reviews are visible after a delay
         setTimeout(function() {
             enforceMobileVisibility();
-            $('.grs-direct-slider.grsslick-initialized').grsslick('refresh');
+            $('.grs-direct-slider.slick-initialized').slick('refresh');
         }, 500);
         
         // Additional check after 1 second
@@ -467,7 +467,7 @@ jQuery(document).ready(function($) {
     
     // Debug: Log slider state
     setTimeout(function() {
-        var sliderCount = $('.grs-direct-slider.grsslick-initialized').length;
+        var sliderCount = $('.grs-direct-slider.slick-initialized').length;
         var visibleReviews = $('.grs-direct-review:visible').length;
         console.log('GRS Debug - Initialized sliders:', sliderCount);
         console.log('GRS Debug - Visible reviews:', visibleReviews);
