@@ -548,7 +548,7 @@ function grs_theme_compatibility_css() {
         
         .grs-direct-summary {
             margin: 0 auto 20px auto !important;
-            width: auto !important;
+            
             box-sizing: border-box !important;
             background: #ffffff !important;
             text-align: center !important;
