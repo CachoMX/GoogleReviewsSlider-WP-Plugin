@@ -242,100 +242,33 @@ jQuery(document).ready(function($) {
                 }
             }, 100);
 
-            // NUCLEAR OPTION: Inject inline <style> with maximum specificity
+            // CRITICAL FIX: Force slide widths BEFORE Slick calculates
             setTimeout(function() {
                 var sliderId = $slider.attr('id');
-                var styleId = 'grs-force-float-' + sliderId;
+                var $list = $slider.find('.slick-list');
+                var $slides = $slider.find('.slick-slide');
+                var listWidth = $list.width();
 
-                // Remove existing style if any
-                $('#' + styleId).remove();
+                // Calculate correct slide width based on slidesToShow
+                var slideWidth = listWidth / (isMobile ? slidesMobile : slidesDesktop);
 
-                // Create ultra-specific CSS that MUST win
-                var forceCSS = '<style id="' + styleId + '" type="text/css">' +
-                    '/* CRITICAL: Override ALL theme CSS */' +
-                    '#' + sliderId + '.grs-direct-slider .slick-slide { ' +
-                    '  float: left !important; ' +
-                    '  display: block !important; ' +
-                    '  box-sizing: border-box !important; ' +
-                    '}' +
-                    '#' + sliderId + '.grs-direct-slider .slick-track { ' +
-                    '  display: block !important; ' +
-                    '  position: relative !important; ' +
-                    '}' +
-                    '#' + sliderId + '.grs-direct-slider.slick-initialized .slick-slide { ' +
-                    '  float: left !important; ' +
-                    '  display: block !important; ' +
-                    '}' +
-                    '</style>';
+                console.log('🔧 FORCING SLIDE WIDTHS:', {
+                    listWidth: listWidth,
+                    slidesToShow: isMobile ? slidesMobile : slidesDesktop,
+                    calculatedWidth: slideWidth
+                });
 
-                // Inject into <head> AFTER all other styles
-                $('head').append(forceCSS);
+                // Force width on EVERY slide using setAttribute
+                $slides.each(function() {
+                    this.style.setProperty('width', slideWidth + 'px', 'important');
+                    this.style.setProperty('float', 'left', 'important');
+                    this.style.setProperty('display', 'block', 'important');
+                });
 
-                console.log('🚨 INJECTED CRITICAL CSS for ' + sliderId);
+                // Force Slick to recalculate positions
+                $slider.slick('setPosition');
 
-                // CRITICAL: Must unslick and reinitialize for CSS to take effect
-                setTimeout(function() {
-                    // Store current slide
-                    var currentSlide = $slider.slick('slickCurrentSlide');
-
-                    // Destroy Slick instance
-                    $slider.slick('unslick');
-
-                    console.log('♻️ REINITIALIZING Slick with new CSS...');
-
-                    // Reinitialize with same options
-                    $slider.slick({
-                        slidesToShow: isMobile ? slidesMobile : slidesDesktop,
-                        slidesToScroll: isMobile ? slidesMobile : slidesDesktop,
-                        infinite: true,
-                        dots: true,
-                        arrows: arrows,
-                        autoplay: autoplay,
-                        autoplaySpeed: parseInt(autoplaySpeed),
-                        pauseOnHover: true,
-                        pauseOnFocus: true,
-                        swipe: true,
-                        touchMove: true,
-                        touchThreshold: 5,
-                        dotsClass: 'slick-dots grs-slider-dots',
-                        prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><span>Previous</span></button>',
-                        nextArrow: '<button type="button" class="slick-next" aria-label="Next"><span>Next</span></button>',
-                        responsive: [
-                            {
-                                breakpoint: 1024,
-                                settings: {
-                                    slidesToShow: slidesDesktop > 2 ? slidesDesktop - 1 : slidesDesktop,
-                                    slidesToScroll: 1
-                                }
-                            },
-                            {
-                                breakpoint: 768,
-                                settings: {
-                                    slidesToShow: slidesMobile,
-                                    slidesToScroll: 1,
-                                    arrows: true,
-                                    dots: true
-                                }
-                            },
-                            {
-                                breakpoint: 480,
-                                settings: {
-                                    slidesToShow: 1,
-                                    slidesToScroll: 1,
-                                    arrows: true,
-                                    dots: true
-                                }
-                            }
-                        ]
-                    });
-
-                    // Go back to the slide we were on
-                    if (currentSlide > 0) {
-                        $slider.slick('slickGoTo', currentSlide, true);
-                    }
-
-                    console.log('✅ Slick REINITIALIZED with correct CSS');
-                }, 100);
+                console.log('✅ Slide widths forced to ' + slideWidth + 'px');
             }, 500);
 
             // iOS-specific: Fix for arrow button clicks not working
