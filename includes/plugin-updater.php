@@ -155,8 +155,9 @@ class GRS_Plugin_Updater {
         // Parse version from tag (remove 'v' prefix if present)
         $version = ltrim($data['tag_name'], 'v');
 
-        // Get the zip download URL
-        $download_url = isset($data['zipball_url']) ? $data['zipball_url'] : '';
+        // Get the zip download URL - use archive URL with tag name for consistent folder structure
+        // This creates a folder like: GoogleReviewsSlider-WP-Plugin-2.2.2
+        $download_url = "https://github.com/{$this->username}/{$this->repository}/archive/refs/tags/{$data['tag_name']}.zip";
 
         // Try to get plugin header info from release description
         $description = isset($data['body']) ? $data['body'] : '';
@@ -255,42 +256,69 @@ class GRS_Plugin_Updater {
             return $result;
         }
 
-        // Get the correct paths
-        $plugin_folder = WP_PLUGIN_DIR . '/' . dirname($this->basename);
+        error_log('GRS Updater: Running after_install hook');
+        error_log('GRS Updater: Plugin basename: ' . $this->basename);
+        error_log('GRS Updater: Destination: ' . $result['destination']);
 
-        // GitHub zipball creates a folder like "CachoMX-GoogleReviewsSlider-WP-Plugin-a1b2c3d"
-        // WordPress extracts this to wp-content/plugins/google-reviews-slider-tmp/CachoMX-GoogleReviewsSlider-WP-Plugin-a1b2c3d/
+        // Get the correct destination path (where plugin should be)
+        $plugin_folder = WP_PLUGIN_DIR . '/' . dirname($this->basename);
+        error_log('GRS Updater: Target plugin folder: ' . $plugin_folder);
+
+        // Source is where WordPress extracted the ZIP
         $source = $result['destination'];
 
-        // List contents of the extracted folder
+        // GitHub creates folders like: GoogleReviewsSlider-WP-Plugin-2.2.2
+        // We need to rename it to: google-reviews-slider (or whatever dirname($this->basename) is)
+
         if ($wp_filesystem->is_dir($source)) {
+            // List contents of extracted folder
             $source_files = $wp_filesystem->dirlist($source);
+            error_log('GRS Updater: Source files count: ' . count($source_files));
 
             if ($source_files && count($source_files) === 1) {
-                // Get the first (and only) directory
-                $github_folder = array_keys($source_files)[0];
-                $github_folder_path = trailingslashit($source) . $github_folder;
+                // Get the GitHub folder name (e.g., "GoogleReviewsSlider-WP-Plugin-2.2.2")
+                $github_folder_name = array_keys($source_files)[0];
+                $github_folder_path = trailingslashit($source) . $github_folder_name;
 
-                // This is the actual plugin content
-                // We need to move it to the correct plugin folder
+                error_log('GRS Updater: GitHub folder name: ' . $github_folder_name);
+                error_log('GRS Updater: GitHub folder path: ' . $github_folder_path);
 
-                // Remove old plugin files first
+                // Remove existing plugin folder if it exists
                 if ($wp_filesystem->is_dir($plugin_folder)) {
-                    $wp_filesystem->delete($plugin_folder, true);
+                    error_log('GRS Updater: Removing old plugin folder...');
+                    $deleted = $wp_filesystem->delete($plugin_folder, true);
+                    error_log('GRS Updater: Old folder deleted: ' . ($deleted ? 'yes' : 'no'));
                 }
 
                 // Move GitHub folder to correct location
+                error_log('GRS Updater: Moving from ' . $github_folder_path . ' to ' . $plugin_folder);
                 $moved = $wp_filesystem->move($github_folder_path, $plugin_folder);
 
                 if ($moved) {
-                    // Update result with correct destination
+                    error_log('GRS Updater: Move successful!');
+
+                    // Update result to point to correct destination
                     $result['destination'] = $plugin_folder;
                     $result['destination_name'] = dirname($this->basename);
 
-                    // Clean up the temp directory
-                    $wp_filesystem->delete($source, true);
+                    error_log('GRS Updater: Updated result destination: ' . $result['destination']);
+
+                    // Clean up temp directory
+                    if ($wp_filesystem->is_dir($source)) {
+                        $wp_filesystem->delete($source, true);
+                        error_log('GRS Updater: Cleaned up temp directory');
+                    }
+
+                    // Clean up old version folders
+                    $this->cleanup_old_folders();
+                } else {
+                    error_log('GRS Updater: ERROR - Move failed!');
                 }
+            } else {
+                error_log('GRS Updater: ERROR - Expected 1 folder, found: ' . count($source_files));
             }
+        } else {
+            error_log('GRS Updater: ERROR - Source is not a directory: ' . $source);
         }
 
         return $result;
@@ -404,5 +432,37 @@ class GRS_Plugin_Updater {
 
         // Delete update transient to force recheck
         delete_site_transient('update_plugins');
+    }
+
+    /**
+     * Clean up old plugin folders from previous versions
+     * This removes folders like GoogleReviewsSlider-WP-Plugin-2.2.1, etc.
+     */
+    public function cleanup_old_folders() {
+        $plugin_dir = WP_PLUGIN_DIR;
+        $current_folder = dirname($this->basename);
+
+        // Pattern to match: GoogleReviewsSlider-WP-Plugin-x.x.x
+        $pattern = 'GoogleReviewsSlider-WP-Plugin-*';
+
+        $folders = glob($plugin_dir . '/' . $pattern, GLOB_ONLYDIR);
+
+        foreach ($folders as $folder) {
+            $folder_name = basename($folder);
+
+            // Don't delete the current active folder
+            if ($folder_name === $current_folder) {
+                continue;
+            }
+
+            error_log('GRS Updater: Cleaning up old folder: ' . $folder_name);
+
+            // Delete the old folder
+            global $wp_filesystem;
+            if (WP_Filesystem()) {
+                $wp_filesystem->delete($folder, true);
+                error_log('GRS Updater: Deleted old folder: ' . $folder_name);
+            }
+        }
     }
 }
