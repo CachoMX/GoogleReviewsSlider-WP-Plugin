@@ -2,7 +2,7 @@
 
 Display Google Reviews in an attractive, responsive slider on your WordPress website with advanced review extraction and management capabilities.
 
-![Version](https://img.shields.io/badge/version-2.2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.3-blue.svg)
 ![WordPress](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/php-7.4%2B-purple.svg)
 
@@ -252,6 +252,15 @@ google-reviews-slider/
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
 ## 📝 Changelog
+
+### Version 2.2.3 (2026-01-25) - Auto-Updater Fixed
+- 🔧 **CRITICAL FIX**: Auto-updates now work without creating duplicate plugin folders
+- **Fixed**: Download URL changed from `zipball_url` to `archive/tags/{tag}.zip` for predictable folder names
+- **Fixed**: Enhanced `after_install` hook with comprehensive logging for debugging
+- **Added**: Automatic cleanup of old version folders after updates (`cleanup_old_folders()`)
+- **Added**: Manual cleanup script (`cleanup-old-folders.php`) for existing duplicate folders
+- **Result**: Future updates work automatically, no more duplicate folders!
+- **Note**: If you have multiple folders, run the cleanup script once or wait for automatic cleanup
 
 ### Version 2.2.2 (2026-01-25) - iOS/iPhone Critical Fixes
 - 🔴 **CRITICAL FIX**: Arrow buttons now properly aligned/centered on mobile devices
