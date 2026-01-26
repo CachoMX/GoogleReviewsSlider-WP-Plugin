@@ -798,8 +798,6 @@ function grs_footer_script() {
     })();
     </script>
 
-    <?php
-
     <!-- CRITICAL: Override theme CSS with maximum specificity -->
     <style>
         /* Ultra-specific selectors to beat ANY theme CSS */
@@ -816,5 +814,6 @@ function grs_footer_script() {
         }
     </style>
     <?php
+
     echo $output;
 }
