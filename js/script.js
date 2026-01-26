@@ -246,6 +246,19 @@ jQuery(document).ready(function($) {
             if (isMobile) {
                 setTimeout(function() {
                     $slider.slick('setPosition');
+
+                    // CRITICAL FIX: Force float:left on slides if CSS didn't load properly
+                    $slider.find('.slick-slide').css({
+                        'float': 'left',
+                        'display': 'block'
+                    });
+                    $slider.find('.slick-track').css({
+                        'display': 'block',
+                        'position': 'relative'
+                    });
+
+                    console.log('FORCED mobile CSS via JavaScript');
+                    $slider.slick('setPosition'); // Refresh after CSS changes
                 }, 500);
             }
 

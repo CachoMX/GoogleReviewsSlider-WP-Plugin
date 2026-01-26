@@ -43,6 +43,23 @@ function grs_direct_enqueue_assets() {
     $version = get_option('grs_version', '2.0') . '.' . time();
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('grs-slick', 'grs-slick-theme'), $version);
     wp_enqueue_script('grs-direct-script', plugins_url('js/script.js', dirname(__FILE__)), array('jquery', 'grs-slick-js'), $version, true);
+
+    // CRITICAL: Force mobile CSS inline to override any cached CSS
+    if (wp_is_mobile()) {
+        $mobile_critical_css = "
+            @media (max-width: 768px) {
+                .grs-direct-slider .slick-track {
+                    display: block !important;
+                    position: relative !important;
+                }
+                .grs-direct-slider .slick-slide {
+                    float: left !important;
+                    display: block !important;
+                }
+            }
+        ";
+        wp_add_inline_style('grs-direct-styles', $mobile_critical_css);
+    }
     
     // Localize script with enhanced data
     wp_localize_script('grs-direct-script', 'grsData', array(
