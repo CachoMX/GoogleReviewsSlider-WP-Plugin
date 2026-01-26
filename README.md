@@ -2,7 +2,7 @@
 
 Display Google Reviews in an attractive, responsive slider on your WordPress website with advanced review extraction and management capabilities.
 
-![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.2.1-blue.svg)
 ![WordPress](https://img.shields.io/badge/wordpress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/php-7.4%2B-purple.svg)
 
@@ -252,6 +252,14 @@ google-reviews-slider/
 - Mobile browsers (iOS Safari, Chrome Mobile)
 
 ## 📝 Changelog
+
+### Version 2.2.1 (2026-01-25) - CRITICAL HOTFIX
+- 🔴 **CRITICAL FIX**: Star ratings now save correctly from Outscraper API
+- **Fixed**: Field mapping changed from `rating` to `review_rating` (Outscraper's actual field name)
+- **Fixed**: Removed `fields` parameter that was causing async mode issues
+- **Added**: Test script to verify rating mapping (`test-outscraper-mapping.php`)
+- **Impact**: ALL reviews were saving as 5 stars - now saves actual ratings (1-5)
+- **Action Required**: Re-extract reviews to update existing data with correct ratings
 
 ### Version 2.2.0 (2026-01-25)
 - **Added**: Navigation arrows now visible on mobile devices for better UX
