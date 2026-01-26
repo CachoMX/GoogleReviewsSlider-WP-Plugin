@@ -472,7 +472,7 @@
         -webkit-overflow-scrolling: touch !important;
     }
 
-    /* Mobile slides - NO padding, let review cards handle their own spacing */
+    /* Mobile slides - MUST float for Slick transform to work */
     .grs-direct-slider .slick-slide,
     .grs-direct-slider .slick-track .slick-slide,
     .grs-direct-slider.slick-initialized .slick-slide {
@@ -480,14 +480,16 @@
         margin: 0 !important;
         opacity: 1 !important;
         visibility: visible !important;
-        float: none !important;
+        float: left !important; /* CRITICAL: Slick needs float:left for horizontal movement */
+        display: block !important;
         box-sizing: border-box !important;
     }
 
-    /* Ensure track displays properly */
+    /* CRITICAL: Slick track MUST use block + transform for animations */
     .grs-direct-slider .slick-track {
-        display: flex !important;
-        align-items: stretch !important;
+        display: block !important;
+        position: relative !important;
+        /* Remove any flex that breaks Slick's transform animations */
     }
 
     /* Mobile review cards - SAME width formula as summary box */
