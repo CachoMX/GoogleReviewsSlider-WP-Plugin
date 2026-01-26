@@ -34,33 +34,16 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_style('dashicons');
     wp_enqueue_script('jquery');
     
-    // Slick carousel from local files (more reliable than CDN)
-    wp_enqueue_style('grs-slick', plugins_url('assets/slick/slick.css', dirname(__FILE__)), array(), '1.8.1');
-    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '1.8.1');
-    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/slick.min.js', dirname(__FILE__)), array('jquery'), '1.8.1', true);
+    // Custom Slick carousel with renamed classes to avoid theme conflicts
+    wp_enqueue_style('grs-slick', plugins_url('assets/slick/grs-slick.css', dirname(__FILE__)), array(), '2.6.1');
+    wp_enqueue_style('grs-slick-theme', plugins_url('assets/slick/slick-theme.css', dirname(__FILE__)), array(), '2.6.1');
+    wp_enqueue_script('grs-slick-js', plugins_url('assets/slick/grs-slick.min.js', dirname(__FILE__)), array('jquery'), '2.6.1', true);
     
     // Custom styles and scripts with cache busting
     $version = get_option('grs_version', '2.0') . '.' . time();
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('grs-slick', 'grs-slick-theme'), $version);
     wp_enqueue_script('grs-direct-script', plugins_url('js/script.js', dirname(__FILE__)), array('jquery', 'grs-slick-js'), $version, true);
 
-    // CRITICAL: Force mobile CSS inline to override any cached CSS
-    if (wp_is_mobile()) {
-        $mobile_critical_css = "
-            @media (max-width: 768px) {
-                .grs-direct-slider .slick-track {
-                    display: block !important;
-                    position: relative !important;
-                }
-                .grs-direct-slider .slick-slide {
-                    float: left !important;
-                    display: block !important;
-                }
-            }
-        ";
-        wp_add_inline_style('grs-direct-styles', $mobile_critical_css);
-    }
-    
     // Localize script with enhanced data
     wp_localize_script('grs-direct-script', 'grsData', array(
         'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -797,22 +780,6 @@ function grs_footer_script() {
         }
     })();
     </script>
-
-    <!-- CRITICAL: Override theme CSS with maximum specificity -->
-    <style>
-        /* Ultra-specific selectors to beat ANY theme CSS */
-        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider .slick-slide {
-            float: left !important;
-            display: block !important;
-        }
-        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider.slick-initialized .slick-slide {
-            float: left !important;
-            display: block !important;
-        }
-        #<?php echo esc_attr($slider_id); ?>.grs-direct-slider .slick-track {
-            display: block !important;
-        }
-    </style>
     <?php
 
     echo $output;
