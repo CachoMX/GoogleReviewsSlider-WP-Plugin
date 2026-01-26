@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.2.7
+ * Version: 2.2.8
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.2.7');
+define('GRS_VERSION', '2.2.8');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -289,6 +289,125 @@ include(GRS_PLUGIN_PATH . 'includes/admin-page.php');
 include(GRS_PLUGIN_PATH . 'includes/shortcode.php');
 include(GRS_PLUGIN_PATH . 'includes/api-handler.php');
 include(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
+
+// TEMPORARY: Force load mobile debug on all pages with slider
+add_action('wp_footer', 'grs_force_mobile_debug', 9999);
+function grs_force_mobile_debug() {
+    // Only on mobile devices
+    if (!wp_is_mobile()) {
+        return;
+    }
+
+    // Check if slider is on page
+    global $post;
+    if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'google_reviews_slider')) {
+        return;
+    }
+
+    ?>
+    <div id="grs-live-debug" style="position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.95);color:#0f0;font-family:monospace;font-size:10px;padding:10px;max-height:200px;overflow-y:auto;z-index:999999;border-top:2px solid #0f0;">
+        <div style="color:#ff0;font-weight:bold;margin-bottom:5px;">🔴 LIVE DEBUG - Mobile Slider</div>
+    </div>
+    <script>
+    (function() {
+        var debugEl = document.getElementById('grs-live-debug');
+        var logs = [];
+
+        function log(msg, color) {
+            color = color || '#0f0';
+            var time = new Date().toLocaleTimeString();
+            var line = '<div style="color:' + color + '">[' + time + '] ' + msg + '</div>';
+            logs.push(line);
+            debugEl.innerHTML = '<div style="color:#ff0;font-weight:bold;margin-bottom:5px;">🔴 LIVE DEBUG - Mobile Slider (Tap to hide/show)</div>' + logs.slice(-20).join('');
+            debugEl.scrollTop = debugEl.scrollHeight;
+            console.log('[GRS] ' + msg);
+        }
+
+        // Toggle debug
+        debugEl.addEventListener('click', function() {
+            if (this.style.maxHeight === '30px') {
+                this.style.maxHeight = '200px';
+            } else {
+                this.style.maxHeight = '30px';
+            }
+        });
+
+        log('=== DEBUG STARTED ===', '#fff');
+        log('Device: ' + (navigator.userAgent.includes('iPhone') ? 'iPhone' : navigator.userAgent.includes('Android') ? 'Android' : 'Unknown'));
+        log('Screen: ' + screen.width + 'x' + screen.height);
+        log('Window: ' + window.innerWidth + 'x' + window.innerHeight);
+        log('Touch: ' + ('ontouchstart' in window ? 'YES' : 'NO'));
+
+        // Check jQuery
+        setTimeout(function() {
+            if (typeof jQuery === 'undefined') {
+                log('❌ jQuery NOT LOADED!', '#f00');
+                return;
+            }
+            log('✅ jQuery loaded: v' + jQuery.fn.jquery, '#0f0');
+
+            // Check Slick
+            if (typeof jQuery.fn.slick === 'undefined') {
+                log('❌ Slick NOT LOADED!', '#f00');
+            } else {
+                log('✅ Slick loaded', '#0f0');
+            }
+
+            // Check slider
+            var $ = jQuery;
+            var sliders = $('.grs-direct-slider');
+            log('Sliders found: ' + sliders.length, sliders.length > 0 ? '#0f0' : '#f00');
+
+            if (sliders.length > 0) {
+                var initialized = sliders.hasClass('slick-initialized');
+                log('Slider initialized: ' + initialized, initialized ? '#0f0' : '#f00');
+
+                // Monitor initialization
+                var checkCount = 0;
+                var checkInit = setInterval(function() {
+                    checkCount++;
+                    if ($('.grs-direct-slider').hasClass('slick-initialized')) {
+                        clearInterval(checkInit);
+                        log('✅ Slider NOW initialized!', '#0f0');
+
+                        var $slider = $('.grs-direct-slider');
+                        var prevArrow = $slider.find('.slick-prev');
+                        var nextArrow = $slider.find('.slick-next');
+
+                        log('Prev arrow: ' + prevArrow.length + ' (visible: ' + prevArrow.is(':visible') + ')');
+                        log('Next arrow: ' + nextArrow.length + ' (visible: ' + nextArrow.is(':visible') + ')');
+
+                        // Monitor arrow clicks
+                        prevArrow.on('touchstart click', function(e) {
+                            log('👆 PREV arrow ' + e.type, '#ff0');
+                        });
+
+                        nextArrow.on('touchstart click', function(e) {
+                            log('👆 NEXT arrow ' + e.type, '#ff0');
+                        });
+
+                        // Monitor slide changes
+                        $slider.on('beforeChange', function(e, slick, current, next) {
+                            log('📍 Slide: ' + current + ' → ' + next, '#ff0');
+                        });
+
+                    } else if (checkCount > 50) {
+                        clearInterval(checkInit);
+                        log('❌ Slider NEVER initialized!', '#f00');
+                    }
+                }, 100);
+            }
+
+            // Monitor touch events on arrows
+            $(document).on('touchstart', '.slick-arrow', function(e) {
+                log('👆 Touch on: ' + $(this).attr('class'), '#ff0');
+            });
+
+        }, 1000);
+    })();
+    </script>
+    <?php
+}
 
 // Initialize GitHub-based auto-updater
 require_once(GRS_PLUGIN_PATH . 'includes/plugin-updater.php');
