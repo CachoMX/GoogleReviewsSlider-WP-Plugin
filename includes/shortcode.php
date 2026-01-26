@@ -798,67 +798,6 @@ function grs_footer_script() {
     })();
     </script>
 
-    <!-- SLICK CORE CSS - Embedded to guarantee loading -->
-    <style id="grs-slick-core">
-        /* Slick Core */
-        .grs-direct-slider.slick-slider {
-            position: relative;
-            display: block;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            -ms-touch-action: pan-y;
-            touch-action: pan-y;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .grs-direct-slider .slick-list {
-            position: relative !important;
-            display: block !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        .grs-direct-slider .slick-list:focus {
-            outline: none;
-        }
-        .grs-direct-slider .slick-list.dragging {
-            cursor: pointer;
-        }
-        .grs-direct-slider .slick-track {
-            position: relative !important;
-            top: 0 !important;
-            left: 0 !important;
-            display: block !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
-            -webkit-transform: translate3d(0, 0, 0);
-            transform: translate3d(0, 0, 0);
-        }
-        .grs-direct-slider .slick-track:before,
-        .grs-direct-slider .slick-track:after {
-            display: table !important;
-            content: '' !important;
-        }
-        .grs-direct-slider .slick-track:after {
-            clear: both !important;
-        }
-        .grs-direct-slider .slick-slide {
-            display: none !important;
-            float: left !important;
-            height: 100% !important;
-            min-height: 1px !important;
-        }
-        .grs-direct-slider.slick-initialized .slick-slide {
-            display: block !important;
-        }
-        .grs-direct-slider .slick-loading .slick-slide {
-            visibility: hidden;
-        }
-        .grs-direct-slider .slick-arrow.slick-hidden {
-            display: none;
-        }
-    </style>
     <?php
 
     echo $output;
