@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.3.2
+ * Version: 2.3.3
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.3.2');
+define('GRS_VERSION', '2.3.3');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -411,24 +411,40 @@ function grs_force_mobile_debug() {
                             log('Transform now: ' + transform, '#0ff');
                         });
 
-                        // FORCE FIX IMMEDIATELY
+                        // FORCE FIX IMMEDIATELY - NUCLEAR OPTION
                         setTimeout(function() {
-                            log('🔧 FORCING CSS FIX...', '#f0f');
-                            $slider.find('.slick-slide').css({
-                                'float': 'left',
-                                'display': 'block'
-                            });
-                            $slider.find('.slick-track').css({
-                                'display': 'block',
-                                'position': 'relative'
-                            });
-                            $slider.slick('setPosition');
+                            log('🔧 FORCING CSS FIX (NUCLEAR)...', '#f0f');
 
-                            // Re-check
-                            var newFloat = $slider.find('.slick-slide').first().css('float');
-                            var newDisplay = $slider.find('.slick-track').css('display');
-                            log('✅ After fix - Slide float: ' + newFloat, '#0f0');
-                            log('✅ After fix - Track display: ' + newDisplay, '#0f0');
+                            // Use setAttribute to bypass jQuery and CSS cascade
+                            $slider.find('.slick-slide').each(function() {
+                                var currentStyle = this.getAttribute('style') || '';
+                                this.setAttribute('style', currentStyle + '; float: left !important; display: block !important;');
+                            });
+
+                            var trackEl = $slider.find('.slick-track')[0];
+                            if (trackEl) {
+                                var trackStyle = trackEl.getAttribute('style') || '';
+                                trackEl.setAttribute('style', trackStyle + '; display: block !important; position: relative !important;');
+                            }
+
+                            // Force Slick to recalculate EVERYTHING
+                            $slider.slick('setPosition');
+                            $slider.slick('refresh');
+
+                            // Re-check after a moment
+                            setTimeout(function() {
+                                var newFloat = window.getComputedStyle($slider.find('.slick-slide')[0]).float;
+                                var newTrackDisplay = window.getComputedStyle(trackEl).display;
+
+                                log('✅ NUCLEAR - Slide float: ' + newFloat, newFloat === 'left' ? '#0f0' : '#f00');
+                                log('✅ NUCLEAR - Track display: ' + newTrackDisplay, newTrackDisplay === 'block' ? '#0f0' : '#f00');
+
+                                if (newFloat === 'left' && newTrackDisplay === 'block') {
+                                    log('🎉 SUCCESS! CSS FIXED!', '#0f0');
+                                } else {
+                                    log('❌ FAILED. Styles still overridden.', '#f00');
+                                }
+                            }, 200);
                         }, 100);
 
                     } else if (checkCount > 50) {
