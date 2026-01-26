@@ -242,25 +242,41 @@ jQuery(document).ready(function($) {
                 }
             }, 100);
 
-            // Additional position update for stubborn mobile browsers
-            if (isMobile) {
-                setTimeout(function() {
-                    $slider.slick('setPosition');
+            // NUCLEAR OPTION: Inject inline <style> with maximum specificity
+            setTimeout(function() {
+                var sliderId = $slider.attr('id');
+                var styleId = 'grs-force-float-' + sliderId;
 
-                    // CRITICAL FIX: Force float:left on slides if CSS didn't load properly
-                    $slider.find('.slick-slide').css({
-                        'float': 'left',
-                        'display': 'block'
-                    });
-                    $slider.find('.slick-track').css({
-                        'display': 'block',
-                        'position': 'relative'
-                    });
+                // Remove existing style if any
+                $('#' + styleId).remove();
 
-                    console.log('FORCED mobile CSS via JavaScript');
-                    $slider.slick('setPosition'); // Refresh after CSS changes
-                }, 500);
-            }
+                // Create ultra-specific CSS that MUST win
+                var forceCSS = '<style id="' + styleId + '" type="text/css">' +
+                    '/* CRITICAL: Override ALL theme CSS */' +
+                    '#' + sliderId + '.grs-direct-slider .slick-slide { ' +
+                    '  float: left !important; ' +
+                    '  display: block !important; ' +
+                    '  box-sizing: border-box !important; ' +
+                    '}' +
+                    '#' + sliderId + '.grs-direct-slider .slick-track { ' +
+                    '  display: block !important; ' +
+                    '  position: relative !important; ' +
+                    '}' +
+                    '#' + sliderId + '.grs-direct-slider.slick-initialized .slick-slide { ' +
+                    '  float: left !important; ' +
+                    '  display: block !important; ' +
+                    '}' +
+                    '</style>';
+
+                // Inject into <head> AFTER all other styles
+                $('head').append(forceCSS);
+
+                console.log('🚨 INJECTED CRITICAL CSS for ' + sliderId);
+
+                // Force Slick to recalculate
+                $slider.slick('setPosition');
+                $slider.slick('refresh');
+            }, 500);
 
             // iOS-specific: Fix for arrow button clicks not working
             // CRITICAL: This must be inside the .each() loop to have access to $slider
