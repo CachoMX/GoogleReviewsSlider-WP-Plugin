@@ -21,9 +21,9 @@ Write-Host "=========================================" -ForegroundColor Cyan
 
 # Define paths
 $BUILD_DIR = "build"
-$PLUGIN_FOLDER = "GoogleReviewsSlider-WP-Plugin"
-# ZIP name MUST match the folder name WordPress should create
-$ZIP_NAME = "$PLUGIN_FOLDER.zip"
+$PLUGIN_FOLDER = "google-reviews-slider"
+# ZIP name uses WordPress standard (lowercase, hyphens)
+$ZIP_NAME = "google-reviews-slider.zip"
 $RELEASE_DIR = "releases"
 
 # Clean previous builds
@@ -143,5 +143,7 @@ Write-Host "3. Commit changes" -ForegroundColor White
 Write-Host "4. Create GitHub release v$Version" -ForegroundColor White
 Write-Host "5. Upload $ZIP_NAME as release asset" -ForegroundColor White
 Write-Host "6. Auto-updates will use this ZIP ✓" -ForegroundColor White
-Write-Host "`nIMPORTANT: ZIP is named $ZIP_NAME so WordPress extracts to correct folder!" -ForegroundColor Yellow
+Write-Host "`nIMPORTANT: WordPress standard naming!" -ForegroundColor Yellow
+Write-Host "  - ZIP name: $ZIP_NAME" -ForegroundColor White
+Write-Host "  - Extracts to: $PLUGIN_FOLDER/ (no version, no caps)" -ForegroundColor White
 Write-Host "=========================================" -ForegroundColor Green

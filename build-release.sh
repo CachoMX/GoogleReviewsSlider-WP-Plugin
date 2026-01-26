@@ -30,9 +30,9 @@ echo "========================================="
 
 # Define paths
 BUILD_DIR="build"
-PLUGIN_FOLDER="GoogleReviewsSlider-WP-Plugin"
-# ZIP name MUST match the folder name WordPress should create
-ZIP_NAME="${PLUGIN_FOLDER}.zip"
+PLUGIN_FOLDER="google-reviews-slider"
+# ZIP name uses WordPress standard (lowercase, hyphens)
+ZIP_NAME="google-reviews-slider.zip"
 RELEASE_DIR="releases"
 
 # Clean previous builds

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Slider
  * Description: Displays Google Reviews in a slider format with enhanced features and improved features.
- * Version: 2.2.9
+ * Version: 2.3.0
  * Author: Carlos Aragon
  * Author URI: https://carlosaragon.online
  * Text Domain: google-reviews-slider
@@ -22,7 +22,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('GRS_VERSION', '2.2.9');
+define('GRS_VERSION', '2.3.0');
 define('GRS_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('GRS_PLUGIN_PATH', plugin_dir_path(__FILE__));
 
@@ -377,6 +377,21 @@ function grs_force_mobile_debug() {
                         log('Prev arrow: ' + prevArrow.length + ' (visible: ' + prevArrow.is(':visible') + ')');
                         log('Next arrow: ' + nextArrow.length + ' (visible: ' + nextArrow.is(':visible') + ')');
 
+                        // Check CSS values
+                        var $track = $slider.find('.slick-track');
+                        var $list = $slider.find('.slick-list');
+                        var $slides = $slider.find('.slick-slide');
+
+                        log('🔍 CSS DEBUG:', '#fff');
+                        log('Track display: ' + $track.css('display'));
+                        log('Track width: ' + $track.width() + 'px');
+                        log('Track transform: ' + $track.css('transform'));
+                        log('List width: ' + $list.width() + 'px');
+                        log('Slide count: ' + $slides.length);
+                        log('Slide width: ' + $slides.first().width() + 'px');
+                        log('Slide display: ' + $slides.first().css('display'));
+                        log('Slide float: ' + $slides.first().css('float'));
+
                         // Monitor arrow clicks
                         prevArrow.on('touchstart click', function(e) {
                             log('👆 PREV arrow ' + e.type, '#ff0');
@@ -386,9 +401,14 @@ function grs_force_mobile_debug() {
                             log('👆 NEXT arrow ' + e.type, '#ff0');
                         });
 
-                        // Monitor slide changes
+                        // Monitor slide changes - LOG TRANSFORM
                         $slider.on('beforeChange', function(e, slick, current, next) {
                             log('📍 Slide: ' + current + ' → ' + next, '#ff0');
+                        });
+
+                        $slider.on('afterChange', function(e, slick, current) {
+                            var transform = $track.css('transform');
+                            log('Transform now: ' + transform, '#0ff');
                         });
 
                     } else if (checkCount > 50) {
