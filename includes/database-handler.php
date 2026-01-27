@@ -170,12 +170,10 @@ class GRS_Database {
         $table_name = $wpdb->prefix . 'grs_reviews';
         
         $query = $wpdb->prepare(
-            "SELECT * FROM $table_name 
-            WHERE place_id = %s 
-            AND rating >= %d 
-            AND text != ''
-            AND text IS NOT NULL
-            ORDER BY time DESC 
+            "SELECT * FROM $table_name
+            WHERE place_id = %s
+            AND rating >= %d
+            ORDER BY time DESC
             LIMIT %d",
             $place_id,
             $min_rating,

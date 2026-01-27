@@ -131,8 +131,15 @@ function grs_direct_display($atts) {
         }
     }
 
-    // Use Google total if available, otherwise fall back to database count
-    $total_review_count = $google_total !== false ? $google_total : $stats['total'];
+    // Use Google total > SerpAPI total > database count
+    $serpapi_total = isset($options['grs_total_reviews']) ? intval($options['grs_total_reviews']) : 0;
+    if ($google_total !== false) {
+        $total_review_count = $google_total;
+    } elseif ($serpapi_total > 0) {
+        $total_review_count = $serpapi_total;
+    } else {
+        $total_review_count = $stats['total'];
+    }
     
     // Check if we have reviews to display
     if (empty($reviews)) {

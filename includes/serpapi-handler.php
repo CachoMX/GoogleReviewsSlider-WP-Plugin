@@ -427,11 +427,17 @@ function grs_handle_extract_reviews() {
                 return;
             }
 
-            // Save both to settings
+            // Save both to settings and clear stale cached data
             $options = get_option('grs_settings', array());
             $options['grs_data_id'] = $data_id;
             $options['grs_place_id'] = $place_id;
+            // Clear old business info so it gets refreshed from new place
+            unset($options['grs_business_name']);
+            unset($options['grs_business_rating']);
+            unset($options['grs_total_reviews']);
             update_option('grs_settings', $options);
+            // Clear cached Google review count from previous place
+            delete_transient('grs_google_total_reviews');
         }
     }
 
