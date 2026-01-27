@@ -237,13 +237,21 @@ class GRS_SerpAPI {
             // Process each 5-star review - map SerpAPI fields to our DB structure
             $processed_reviews = array();
             foreach ($five_star_reviews as $review) {
+                // Get review text from various possible fields
+                $review_text = $review['snippet'] ?? $review['extracted_snippet']['original'] ?? '';
+
+                // Skip reviews without text
+                if (empty(trim($review_text))) {
+                    continue;
+                }
+
                 $processed_review = array(
                     'review_id' => $review['review_id'] ?? md5(($review['user']['name'] ?? '') . ($review['iso_date'] ?? '')),
                     'author_name' => $review['user']['name'] ?? 'Anonymous',
                     'author_url' => $review['user']['link'] ?? null,
                     'profile_photo_url' => $review['user']['thumbnail'] ?? null,
                     'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
-                    'text' => $review['snippet'] ?? $review['extracted_snippet']['original'] ?? '',
+                    'text' => $review_text,
                     'time' => $this->convert_to_timestamp($review['iso_date'] ?? null),
                     'relative_time_description' => $review['date'] ?? '',
                     'language' => 'en',
