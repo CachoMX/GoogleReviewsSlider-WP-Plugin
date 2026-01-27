@@ -91,7 +91,7 @@
     text-decoration: underline;
 }
 
-.slick-dots {
+.grs-slider .slick-dots {
     bottom: -45px; /* Move dots 45px below their default position */
 }
 
@@ -180,20 +180,20 @@
 }
 
 /* Container for the slides */
-.slick-track {
+.grs-slider .slick-track {
     display: flex;
     align-items: stretch;
     gap: 20px;
 }
 
 /* Individual slide */
-.slick-slide {
+.grs-slider .slick-slide {
     margin: 0 10px;
-    height: auto; /* Add this */
+    height: auto;
 }
 
-.slick-slide > div {
-    height: 100%; /* Add this */
+.grs-slider .slick-slide > div {
+    height: 100%;
 }
 
 
@@ -222,7 +222,7 @@
 }
 
 /* Increase the slide height to accommodate content */
-.slick-slide {
+.grs-slider .slick-slide {
     height: auto !important;
     min-height: 200px !important;
 }
@@ -284,8 +284,8 @@
 }
 
 /* Ensure slick slider is visible */
-.fusion-text .slick-track,
-.fusion-text .slick-list {
+.fusion-text .grs-slider .slick-track,
+.fusion-text .grs-slider .slick-list {
     display: flex !important;
     overflow: visible !important;
 }
@@ -304,18 +304,6 @@
     position: relative !important;
 }
 
-/* Center and style stars */
-.wprevpro_star_imgs_T1,
-.wprevpro_star_imgs {
-    text-align: center !important;
-    display: block !important;
-    margin: 0 auto !important;
-}
-
-/* Make stars yellow */
-.svgicons.svg-wprsp-star {
-    color: #FFD700 !important;
-}
 
 /* Add these new styles for circular arrow buttons */
 .grs-slider .slick-prev,

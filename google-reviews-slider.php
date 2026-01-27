@@ -132,18 +132,11 @@ function grs_cron_refresh_reviews() {
 // Enqueue styles and scripts
 function grs_enqueue_assets() {
     wp_enqueue_style('dashicons');
-    wp_enqueue_style('grs-slick-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.css', array(), GRS_VERSION);
-    wp_enqueue_style('grs-slick-theme-css', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.css', array(), GRS_VERSION);
-    wp_enqueue_style('grs-style', GRS_PLUGIN_URL . 'css/style.css', array(), GRS_VERSION);
-    
-    wp_enqueue_script('grs-slick-js', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js', array('jquery'), GRS_VERSION, true);
+    // Slick removed — using Swiper only (loaded in shortcode.php)
 
-    // Mobile debug console disabled - use browser DevTools instead
-
-    wp_enqueue_script('grs-script', GRS_PLUGIN_URL . 'js/script.js', array('jquery', 'grs-slick-js'), GRS_VERSION, true);
-    
-    // Localize script for AJAX and other data
-    wp_localize_script('grs-script', 'grs_ajax', array(
+    // Localize script for AJAX
+    wp_enqueue_script('grs-dummy', '', array(), GRS_VERSION, true);
+    wp_localize_script('grs-dummy', 'grs_ajax', array(
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('grs_nonce'),
         'version' => GRS_VERSION
@@ -151,167 +144,7 @@ function grs_enqueue_assets() {
 }
 add_action('wp_enqueue_scripts', 'grs_enqueue_assets');
 
-// Add mobile-specific inline styles
-add_action('wp_head', 'grs_mobile_inline_styles', 999);
-function grs_mobile_inline_styles() {
-    // Only add on pages with the shortcode
-    global $post;
-    if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'google_reviews_slider')) {
-        return;
-    }
-    ?>
-    <style id="grs-mobile-fixes">
-    /* Critical mobile fixes for Google Reviews Slider */
-    @media screen and (max-width: 768px) {
-        .grs-direct-wrapper {
-            display: block !important;
-            width: 100% !important;
-            padding: 0 15px !important;
-        }
-        
-        .grs-direct-slider {
-            opacity: 1 !important;
-            visibility: visible !important;
-            display: block !important;
-            min-height: 300px !important;
-        }
-        
-        .grs-direct-slider .slick-slide {
-            opacity: 1 !important;
-            visibility: visible !important;
-            height: auto !important;
-        }
-        
-        .grs-direct-review {
-            opacity: 1 !important;
-            visibility: visible !important;
-            display: flex !important;
-            min-height: 200px !important;
-            background: white !important;
-            border: 1px solid #e8e8e8 !important;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
-        }
-        
-        .grs-direct-slider .slick-track {
-            display: flex !important;
-        }
-        
-        .grs-direct-slider .slick-initialized .slick-slide {
-            display: block !important;
-        }
-        
-        /* Force review content to show */
-        .grs-direct-header,
-        .grs-direct-profile-img,
-        .grs-direct-profile-details,
-        .grs-direct-name,
-        .grs-direct-date,
-        .grs-direct-stars,
-        .grs-direct-content,
-        .grs-direct-text {
-            opacity: 1 !important;
-            visibility: visible !important;
-            display: block !important;
-        }
-        
-        .grs-direct-header {
-            display: flex !important;
-        }
-        
-        .grs-direct-stars {
-            display: flex !important;
-        }
-        
-        .grs-direct-stars .dashicons-star-filled {
-            color: #FFC107 !important;
-            font-size: 16px !important;
-            width: 16px !important;
-            height: 16px !important;
-        }
-        
-        /* Ensure text is readable */
-        .grs-direct-text {
-            color: #333 !important;
-            font-size: 13px !important;
-            line-height: 1.5 !important;
-        }
-        
-        .grs-direct-name {
-            color: #000 !important;
-            font-weight: 700 !important;
-        }
-        
-        .grs-direct-date {
-            color: #666 !important;
-        }
-        
-        /* Fix truncation on mobile */
-        .grs-direct-text.truncated {
-            display: -webkit-box !important;
-            -webkit-line-clamp: 4 !important;
-            -webkit-box-orient: vertical !important;
-            overflow: hidden !important;
-        }
-        
-        /* Summary box mobile */
-        .grs-direct-summary {
-            background: #ffffff !important;
-            padding: 20px !important;
-            margin: 0 auto 20px auto !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-            text-align: center !important;
-        }
-        
-        /* Profile images */
-        .grs-direct-profile-img img {
-            width: 40px !important;
-            height: 40px !important;
-            border-radius: 50% !important;
-            display: block !important;
-        }
-    }
-    
-    /* Additional fix for iOS Safari */
-    @supports (-webkit-touch-callout: none) {
-        .grs-direct-slider,
-        .grs-direct-slider * {
-            -webkit-transform: translate3d(0, 0, 0);
-        }
-    }
-    </style>
-    
-    <script>
-    // Mobile-specific JavaScript fixes
-    (function() {
-        if (window.innerWidth <= 768) {
-            document.addEventListener('DOMContentLoaded', function() {
-                // Force display of reviews on mobile
-                setTimeout(function() {
-                    var reviews = document.querySelectorAll('.grs-direct-review');
-                    reviews.forEach(function(review) {
-                        review.style.opacity = '1';
-                        review.style.visibility = 'visible';
-                        review.style.display = 'flex';
-                    });
-                    
-                    var sliders = document.querySelectorAll('.grs-direct-slider');
-                    sliders.forEach(function(slider) {
-                        slider.style.opacity = '1';
-                        slider.style.visibility = 'visible';
-                        slider.style.minHeight = '300px';
-                    });
-                    
-                    // Trigger resize event to refresh slider
-                    if (typeof jQuery !== 'undefined' && jQuery('.grs-direct-slider').hasClass('slick-initialized')) {
-                        jQuery('.grs-direct-slider').slick('refresh');
-                    }
-                }, 500);
-            });
-        }
-    })();
-    </script>
-    <?php
-}
+// All styles handled by grs-direct.css — no inline overrides needed
 
 // Add version check and update notice
 add_action('admin_notices', 'grs_update_notice');
