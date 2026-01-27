@@ -33,13 +33,13 @@ function grs_direct_enqueue_assets() {
     // Enqueue required WordPress assets
     wp_enqueue_style('dashicons');
 
-    // Swiper.js from CDN (iOS/Safari optimized)
-    wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css', array(), '11.0.0');
+    // Swiper JS from CDN (safe to load alongside Elementor — just sets window.Swiper)
     wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true);
+    // NO swiper CSS from CDN — it overrides other carousels. All styles are in grs-direct.css scoped to .grs-swiper
 
-    // Custom styles and scripts with cache busting
+    // Custom styles and scripts
     $version = get_option('grs_version', '2.0') . '.' . time();
-    wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array('swiper-css'), $version);
+    wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array(), $version);
     wp_enqueue_script('grs-swiper-init', plugins_url('js/swiper-init.js', dirname(__FILE__)), array('swiper-js'), $version, true);
 }
 

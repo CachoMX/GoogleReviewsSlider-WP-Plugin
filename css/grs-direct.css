@@ -1,6 +1,24 @@
 /* Google Reviews Slider - Swiper.js Styles */
 /* Optimized for iOS/Safari */
 
+/* Swiper core styles scoped to our slider (no CDN CSS loaded to avoid conflicts with Elementor etc.) */
+.grs-swiper {
+    overflow: hidden;
+    position: relative;
+}
+
+.grs-swiper .swiper-wrapper {
+    display: flex;
+    position: relative;
+    width: 100%;
+    transition-property: transform;
+}
+
+.grs-swiper .swiper-slide {
+    flex-shrink: 0;
+    position: relative;
+}
+
 /* Reset */
 .grs-direct-wrapper,
 .grs-direct-wrapper * {
@@ -248,14 +266,23 @@
 
 /* Swiper Pagination */
 .grs-swiper .swiper-pagination {
+    position: absolute;
     bottom: 10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    z-index: 10;
 }
 
 .grs-swiper .swiper-pagination-bullet {
     width: 10px;
     height: 10px;
+    display: inline-block;
+    border-radius: 50%;
     background: #ccc;
     opacity: 1;
+    cursor: pointer;
+    margin: 0 4px;
     transition: all 0.3s ease;
 }
 
