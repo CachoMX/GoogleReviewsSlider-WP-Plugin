@@ -294,7 +294,7 @@ function grs_direct_display($atts) {
 
                     <div class="swiper-wrapper">
                     <?php foreach ($reviews as $index => $review) :
-                        $review_text = !empty($review['text']) ? $review['text'] : '(No review text provided)';
+                        $review_text = !empty($review['text']) ? $review['text'] : '';
                         $needs_truncation = strlen($review_text) > 120; // Truncate reviews over 120 chars
                         $author_name = esc_html($review['author_name']);
                         $time_description = !empty($review['relative_time_description']) ?
