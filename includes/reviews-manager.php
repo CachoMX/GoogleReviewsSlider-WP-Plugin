@@ -335,13 +335,22 @@ class GRS_Reviews_Manager {
                     '<span class="dashicons dashicons-update spinning"></span> Extracting reviews...'
                 ).show();
                 
+                // Always read live values from inputs (map search may have changed them)
+                var livePlace = document.getElementById('grs_place_id');
+                var liveData = document.getElementById('grs_data_id');
+                var currentPlaceId = (livePlace && livePlace.value) ? livePlace.value : placeId;
+                var currentDataId = (liveData && liveData.value) ? liveData.value : '';
+
+                console.log('Live Place ID:', currentPlaceId);
+                console.log('Live Data ID:', currentDataId);
+
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
                     data: {
                         action: 'grs_extract_reviews',
-                        place_id: placeId,
-                        data_id: dataId,
+                        place_id: currentPlaceId,
+                        data_id: currentDataId,
                         reviews_limit: reviewsLimit,
                         nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                     },
@@ -395,13 +404,19 @@ class GRS_Reviews_Manager {
                     '<span class="dashicons dashicons-update spinning"></span> Deleting old reviews and fetching new ones...'
                 ).show();
 
+                // Always read live values from inputs
+                var livePlace = document.getElementById('grs_place_id');
+                var liveData = document.getElementById('grs_data_id');
+                var currentPlaceId = (livePlace && livePlace.value) ? livePlace.value : placeId;
+                var currentDataId = (liveData && liveData.value) ? liveData.value : '';
+
                 // First delete all reviews
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
                     data: {
                         action: 'grs_delete_all_reviews',
-                        place_id: placeId,
+                        place_id: currentPlaceId,
                         nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                     },
                     success: function() {
@@ -411,8 +426,8 @@ class GRS_Reviews_Manager {
                             type: 'POST',
                             data: {
                                 action: 'grs_extract_reviews',
-                                place_id: placeId,
-                                data_id: dataId,
+                                place_id: currentPlaceId,
+                                data_id: currentDataId,
                                 reviews_limit: reviewsLimit,
                                 nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                             },

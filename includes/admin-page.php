@@ -131,7 +131,7 @@ function grs_data_id_render() {
     $options = get_option('grs_settings');
     $current_id = isset($options['grs_data_id']) ? $options['grs_data_id'] : '';
     ?>
-    <input type='text' name='grs_settings[grs_data_id]' style="width: 400px; background: #f0f0f0;"
+    <input type='text' name='grs_settings[grs_data_id]' id='grs_data_id' style="width: 400px; background: #f0f0f0;"
            value='<?php echo esc_attr($current_id); ?>'
            readonly
            placeholder="Auto-generated from Place ID">
@@ -456,9 +456,14 @@ function grs_options_page() {
                     return;
                 }
         
-                const placeIdInput = document.querySelector('input[name="grs_settings[grs_place_id]"]');
+                const placeIdInput = document.getElementById('grs_place_id');
                 if (placeIdInput) {
                     placeIdInput.value = place.place_id;
+                }
+                // Clear stale Data ID so backend re-derives it
+                const dataIdInput = document.getElementById('grs_data_id');
+                if (dataIdInput) {
+                    dataIdInput.value = '';
                 }
         
                 markers.push(

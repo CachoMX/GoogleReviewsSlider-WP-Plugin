@@ -413,13 +413,13 @@ function grs_handle_extract_reviews() {
 
     $api = new GRS_SerpAPI();
 
-    // If no data_id provided, try to get it from place_id
-    if (empty($data_id) && !empty($place_id)) {
-        // Check if place_id looks like a data_id (contains 0x)
+    // Resolve data_id: use what was sent, or derive from place_id
+    if (!empty($place_id) && empty($data_id)) {
         if (strpos($place_id, '0x') === 0) {
+            // place_id is already a data_id
             $data_id = $place_id;
         } else {
-            // Convert Place ID to data_id
+            // Convert Place ID (ChIJ...) -> Data ID (0x...) via SerpAPI
             $data_id = $api->get_data_id_from_place_id($place_id);
 
             if (is_wp_error($data_id)) {
@@ -427,9 +427,10 @@ function grs_handle_extract_reviews() {
                 return;
             }
 
-            // Save the data_id for future use
+            // Save both to settings
             $options = get_option('grs_settings', array());
             $options['grs_data_id'] = $data_id;
+            $options['grs_place_id'] = $place_id;
             update_option('grs_settings', $options);
         }
     }

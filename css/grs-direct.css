@@ -223,6 +223,11 @@
     padding: 0;
     color: #666;
     margin-bottom: 50px; /* Offset for pagination area - aligns with review cards */
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .grs-nav-button:hover {

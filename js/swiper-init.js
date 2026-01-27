@@ -95,6 +95,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // iOS WebKit fix: manual nav handlers as fallback for external buttons
+        var container = el.closest('.grs-direct-slider-container');
+        var prevBtn = container ? container.querySelector('.grs-nav-prev') : null;
+        var nextBtn = container ? container.querySelector('.grs-nav-next') : null;
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                swiper.slidePrev();
+            });
+            prevBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                swiper.slidePrev();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                swiper.slideNext();
+            });
+            nextBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                swiper.slideNext();
+            });
+        }
+
         console.log('GRS: Swiper initialized successfully');
     });
 
