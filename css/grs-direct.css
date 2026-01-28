@@ -268,9 +268,8 @@
 .grs-swiper .swiper-pagination {
     position: absolute;
     bottom: 10px;
-    left: 0;
-    width: 100%;
-    text-align: center;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
 }
 
@@ -289,6 +288,42 @@
 .grs-swiper .swiper-pagination-bullet-active {
     background: #333;
     transform: scale(1.2);
+}
+
+/* Dynamic Bullets - required when dynamicBullets: true is used in Swiper */
+.grs-swiper .swiper-pagination-bullets-dynamic {
+    overflow: hidden;
+    font-size: 0;
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet {
+    transform: scale(0.33);
+    position: relative;
+    transition: transform 0.3s ease, left 0.3s ease;
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active {
+    transform: scale(1);
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-main {
+    transform: scale(1);
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-prev {
+    transform: scale(0.66);
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-prev-prev {
+    transform: scale(0.33);
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-next {
+    transform: scale(0.66);
+}
+
+.grs-swiper .swiper-pagination-bullets-dynamic .swiper-pagination-bullet-active-next-next {
+    transform: scale(0.33);
 }
 
 /* MOBILE RESPONSIVE */
@@ -434,7 +469,9 @@
 .fusion-body .grs-swiper .swiper-pagination {
     position: relative;
     bottom: auto;
-    margin-top: 20px;
+    left: auto;
+    transform: none;
+    margin: 20px auto 0;
 }
 
 /* Elementor */
@@ -442,7 +479,9 @@
 .elementor .grs-swiper .swiper-pagination {
     position: relative;
     bottom: auto;
-    margin-top: 20px;
+    left: auto;
+    transform: none;
+    margin: 20px auto 0;
 }
 
 /* Divi */
@@ -450,5 +489,7 @@
 #et-main-area .grs-swiper .swiper-pagination {
     position: relative;
     bottom: auto;
-    margin-top: 20px;
+    left: auto;
+    transform: none;
+    margin: 20px auto 0;
 }
