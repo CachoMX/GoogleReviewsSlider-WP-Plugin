@@ -83,7 +83,34 @@ class GRS_Database {
         dbDelta($sql_reviews);
         dbDelta($sql_history);
     }
-    
+
+    /**
+     * Ensure required tables exist, recreating them on the fly if missing.
+     *
+     * Self-healing guard. If the reviews table is dropped (e.g. uninstall.php
+     * running during a botched re-install, or a manual DB cleanup), the
+     * front-end would otherwise hit a "Table doesn't exist" error on every
+     * request and fall through to an external API fetch + bulk save on each
+     * page load, exhausting PHP workers and taking the whole account down.
+     * This runs at most one cheap SHOW TABLES per request.
+     */
+    public static function ensure_tables() {
+        static $checked = false;
+
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        global $wpdb;
+        $reviews_table = $wpdb->prefix . 'grs_reviews';
+        $found = $wpdb->get_var("SHOW TABLES LIKE '" . esc_sql($reviews_table) . "'");
+
+        if ($found !== $reviews_table) {
+            self::create_tables();
+        }
+    }
+
     /**
      * Save reviews to database
      * 
@@ -93,7 +120,9 @@ class GRS_Database {
      */
     public static function save_reviews($place_id, $reviews) {
         global $wpdb;
-        
+
+        self::ensure_tables();
+
         $table_name = $wpdb->prefix . 'grs_reviews';
         $saved_count = 0;
         
@@ -166,9 +195,11 @@ class GRS_Database {
      */
     public static function get_reviews($place_id, $min_rating = 1, $limit = 50) {
         global $wpdb;
-        
+
+        self::ensure_tables();
+
         $table_name = $wpdb->prefix . 'grs_reviews';
-        
+
         $query = $wpdb->prepare(
             "SELECT * FROM $table_name
             WHERE place_id = %s
@@ -200,11 +231,13 @@ class GRS_Database {
      */
     public static function get_review_stats($place_id) {
         global $wpdb;
-        
+
+        self::ensure_tables();
+
         $table_name = $wpdb->prefix . 'grs_reviews';
-        
+
         $query = $wpdb->prepare(
-            "SELECT rating, COUNT(*) as count 
+            "SELECT rating, COUNT(*) as count
             FROM $table_name 
             WHERE place_id = %s 
             GROUP BY rating 

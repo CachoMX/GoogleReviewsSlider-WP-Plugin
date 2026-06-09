@@ -4,7 +4,7 @@ Tags: google reviews, reviews slider, testimonials, google places, reviews carou
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.0
+Stable tag: 2.7.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -105,6 +105,11 @@ Yes! The new Review Manager shows you total reviews, average rating, and breakdo
 7. Review filtering options
 
 == Changelog ==
+
+= 2.7.11 =
+* CRITICAL FIX: Self-healing database tables. If the `grs_reviews` table is missing, it is now recreated automatically on the next page load instead of falling into a "Table doesn't exist" loop on every request.
+* CRITICAL FIX: Circuit breaker on the front-end reviews fetch. The plugin now attempts an external API fetch at most once every 15 minutes per place, even on failure, preventing PHP worker exhaustion and server-wide overload when the table or upstream API is unavailable.
+* Corrected the plugin version number, which had been stuck at 2.7.8 across releases.
 
 = 2.0 =
 * Major Update: Outscraper API integration for extracting 10-500 reviews

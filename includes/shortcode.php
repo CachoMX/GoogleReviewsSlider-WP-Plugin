@@ -80,28 +80,39 @@ function grs_direct_display($atts) {
     // Get reviews from database
     $reviews = GRS_Database::get_reviews($place_id, $min_rating, 50);
     
-    // If no reviews in database, try to get from Google API first
+    // If no reviews in database, try to get from cache/API.
     if (empty($reviews)) {
-        // Try cached transient data first
-        $cached_reviews = get_transient('grs_reviews');
-        
-        if ($cached_reviews === false) {
-            // Try to fetch from Google API
-            if (!function_exists('grs_get_reviews')) {
-                include_once(plugin_dir_path(dirname(__FILE__)) . 'includes/api-handler.php');
-            }
-            
-            $result = grs_get_reviews();
-            
-            if (!isset($result['error']) && isset($result['reviews'])) {
-                $reviews = $result['reviews'];
-                // Save to database for future use
+        // Circuit breaker: never attempt an expensive external fetch + bulk save
+        // on every page load. Allow at most one attempt per place every 15 minutes,
+        // even when it fails or returns nothing. This bounds server load if the
+        // reviews table or the upstream API is temporarily unavailable, preventing
+        // a single misconfigured site from exhausting the whole account's PHP workers.
+        $fetch_lock = 'grs_fetch_lock_' . md5($place_id);
+
+        if (get_transient($fetch_lock) === false) {
+            set_transient($fetch_lock, 1, 15 * MINUTE_IN_SECONDS);
+
+            // Try cached transient data first
+            $cached_reviews = get_transient('grs_reviews');
+
+            if ($cached_reviews === false) {
+                // Try to fetch from the reviews API
+                if (!function_exists('grs_get_reviews')) {
+                    include_once(plugin_dir_path(dirname(__FILE__)) . 'includes/api-handler.php');
+                }
+
+                $result = grs_get_reviews();
+
+                if (!isset($result['error']) && isset($result['reviews'])) {
+                    $reviews = $result['reviews'];
+                    // Save to database for future use
+                    GRS_Database::save_reviews($place_id, $reviews);
+                }
+            } else {
+                $reviews = $cached_reviews;
+                // Save cached reviews to database
                 GRS_Database::save_reviews($place_id, $reviews);
             }
-        } else {
-            $reviews = $cached_reviews;
-            // Save cached reviews to database
-            GRS_Database::save_reviews($place_id, $reviews);
         }
     }
     
