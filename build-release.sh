@@ -40,6 +40,8 @@ echo "Cleaning previous builds..."
 rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 mkdir -p "${RELEASE_DIR}"
+# zip -r APPENDS to an existing archive, resurrecting stale entries
+rm -f "${RELEASE_DIR}/${ZIP_NAME}"
 
 # Copy plugin files directly to build directory (no subfolder)
 echo "Copying plugin files to build directory..."
