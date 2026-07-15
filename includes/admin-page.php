@@ -25,7 +25,9 @@ add_action('admin_menu', 'grs_add_admin_menu');
 
 // Register settings
 function grs_settings_init() {
-    register_setting('pluginPage', 'grs_settings');
+    register_setting('pluginPage', 'grs_settings', array(
+        'sanitize_callback' => 'grs_sanitize_settings',
+    ));
 
     add_settings_section(
         'grs_pluginPage_section', 
@@ -76,6 +78,37 @@ function grs_settings_init() {
 }
 add_action('admin_init', 'grs_settings_init');
 
+/**
+ * Sanitize the settings array and reconcile place changes: a new Place ID
+ * invalidates the derived data_id, the stored business identity, and the
+ * previous place's reviews, which would otherwise linger as orphans.
+ */
+function grs_sanitize_settings($input) {
+    $old = get_option('grs_settings', array());
+
+    $clean = array(
+        'grs_api_key' => isset($input['grs_api_key']) ? sanitize_text_field($input['grs_api_key']) : '',
+        'grs_place_id' => isset($input['grs_place_id']) ? sanitize_text_field($input['grs_place_id']) : '',
+        'grs_min_rating' => isset($input['grs_min_rating']) ? (string) max(1, min(5, intval($input['grs_min_rating']))) : '1',
+        'grs_serpapi_key' => isset($input['grs_serpapi_key']) ? sanitize_text_field($input['grs_serpapi_key']) : '',
+        'grs_data_id' => isset($input['grs_data_id']) ? sanitize_text_field($input['grs_data_id']) : '',
+    );
+
+    $old_place = isset($old['grs_place_id']) ? $old['grs_place_id'] : '';
+
+    if ($old_place !== '' && $clean['grs_place_id'] !== $old_place) {
+        if (!empty($old['grs_data_id']) && $clean['grs_data_id'] === $old['grs_data_id']) {
+            $clean['grs_data_id'] = '';
+        }
+        delete_option('grs_business_info');
+
+        require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+        GRS_Database::delete_all_reviews($old_place);
+    }
+
+    return $clean;
+}
+
 // Add these callback functions
 function grs_settings_section_callback() {
     echo __('Configure your Google Reviews Slider settings below.', 'grs');
@@ -113,7 +146,7 @@ function grs_min_rating_render() {
         <option value='4' <?php selected($current, '4'); ?>>4 Stars and above</option>
         <option value='5' <?php selected($current, '5'); ?>>5 Stars only</option>
     </select>
-    <p class="description">Only show reviews with this rating or higher.</p>
+    <p class="description">Applies to sync and display: only reviews with this rating or higher are fetched, stored and shown.</p>
     <?php
 }
 
@@ -144,8 +177,6 @@ function grs_data_id_render() {
 function grs_options_page() {
     $options = get_option('grs_settings');
     $api_key = isset($options['grs_api_key']) ? $options['grs_api_key'] : '';
-    $cached_reviews = get_transient('grs_reviews');
-    $cache_status = $cached_reviews !== false ? 'Active' : 'Empty';
     ?>
     <style>
         .grs-admin-page input[type="text"] {
@@ -199,14 +230,6 @@ function grs_options_page() {
             do_settings_sections('pluginPage');
             ?>
             
-            <div class="grs-cache-section">
-                <h3>Cache Management</h3>
-                <p><strong>Cache Status:</strong> <span id="cache-status"><?php echo $cache_status; ?></span></p>
-                <p>Reviews are cached for 1 month to improve performance and reduce API calls.</p>
-                <button type="button" id="clear-cache-btn" class="button button-secondary">Clear Cache Now</button>
-                <span id="cache-message" style="margin-left: 10px;"></span>
-            </div>
-
             <div class="grs-cache-section" style="margin-top: 20px;">
                 <h3>🔄 Plugin Updates</h3>
                 <p><strong>Current Version:</strong> <?php echo GRS_VERSION; ?></p>
@@ -327,42 +350,7 @@ function grs_options_page() {
     </div>
 
     <script>
-    // Cache clearing functionality
     jQuery(document).ready(function($) {
-        $('#clear-cache-btn').on('click', function() {
-            var button = $(this);
-            var message = $('#cache-message');
-            var status = $('#cache-status');
-
-            button.prop('disabled', true).text('Clearing...');
-
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'grs_clear_cache',
-                    nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        message.html('<span style="color: green;">✓ Cache cleared successfully!</span>');
-                        status.text('Empty');
-                        setTimeout(function() {
-                            message.html('');
-                        }, 3000);
-                    } else {
-                        message.html('<span style="color: red;">✗ Error clearing cache</span>');
-                    }
-                },
-                error: function() {
-                    message.html('<span style="color: red;">✗ Error clearing cache</span>');
-                },
-                complete: function() {
-                    button.prop('disabled', false).text('Clear Cache Now');
-                }
-            });
-        });
-
         // Check for updates functionality
         $('#check-updates-btn').on('click', function() {
             var button = $(this);

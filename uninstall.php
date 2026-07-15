@@ -4,19 +4,24 @@
  * Cleans up all plugin data from the database.
  */
 
-// Exit if not called by WordPress
 if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit;
 }
 
-// Delete plugin options
 delete_option('grs_settings');
+delete_option('grs_version');
+delete_option('grs_db_version');
+delete_option('grs_business_info');
+delete_option('grs_sync_status');
+delete_option('grs_sync_lock');
+delete_option('grs_notice_seen_version');
 
-// Delete transients
 global $wpdb;
 $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_grs_%'");
 $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_grs_%'");
 
-// Drop custom tables
 $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}grs_reviews");
-$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}grs_extraction_log");
+$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}grs_extraction_history");
+$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}grs_api_log");
+
+wp_clear_scheduled_hook('grs_auto_refresh_reviews');

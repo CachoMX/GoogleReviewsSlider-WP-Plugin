@@ -46,33 +46,47 @@ class GRS_Reviews_Manager {
                 </div>
             </div>
             
-            <!-- Extract Reviews Section -->
+            <!-- Sync Section -->
             <div class="grs-extract-section">
-                <h4>Extract New Reviews <span style="font-size:12px;color:#666;font-weight:normal;">(Only 5-star reviews are saved)</span></h4>
+                <?php
+                $options = get_option('grs_settings', array());
+                $min_rating_setting = isset($options['grs_min_rating']) ? intval($options['grs_min_rating']) : 1;
+                ?>
+                <h4>Review Sync <span style="font-size:12px;color:#666;font-weight:normal;">(keeps the <?php echo intval(GRS_Database::MAX_REVIEWS_PER_PLACE); ?> newest reviews rated <?php echo $min_rating_setting; ?>+ stars)</span></h4>
 
                 <?php
-                $next_cron = wp_next_scheduled('grs_auto_refresh_reviews');
-                $last_extraction = GRS_Database::get_last_extraction($place_id);
+                require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+                $sync = GRS_Sync::get_status();
+                $status_labels = array(
+                    'ok' => array('OK', '#155724', '#d4edda'),
+                    'error' => array('Error', '#721c24', '#f8d7da'),
+                    'rate_limited' => array('Rate limited', '#856404', '#fff3cd'),
+                    'locked' => array('Locked', '#856404', '#fff3cd'),
+                    'skipped' => array('Skipped', '#0c5460', '#d1ecf1'),
+                );
+                $badge = isset($status_labels[$sync['status']]) ? $status_labels[$sync['status']] : null;
                 ?>
                 <div style="background:#f0f8ff;padding:10px;border-radius:4px;margin-bottom:15px;border-left:4px solid #0073aa;">
-                    <strong>Auto-refresh:</strong> Every 30 days<br>
-                    <strong>Next refresh:</strong> <?php echo $next_cron ? date('Y-m-d H:i', $next_cron) : 'Not scheduled'; ?><br>
-                    <strong>Last extraction:</strong> <?php echo $last_extraction ? date('Y-m-d H:i', strtotime($last_extraction)) : 'Never'; ?>
+                    <strong>Auto-sync:</strong> once every 30 days<br>
+                    <strong>Next scheduled sync:</strong> <?php echo $sync['next_cron'] ? esc_html(wp_date('Y-m-d H:i', $sync['next_cron'])) : 'Not scheduled'; ?><br>
+                    <strong>Last successful sync:</strong> <?php echo $sync['last_success'] ? esc_html(wp_date('Y-m-d H:i', $sync['last_success'])) : 'Never'; ?><br>
+                    <strong>Last attempt:</strong> <?php echo $sync['last_attempt'] ? esc_html(wp_date('Y-m-d H:i', $sync['last_attempt'])) . ' (' . esc_html($sync['trigger']) . ')' : 'Never'; ?><br>
+                    <strong>Reviews stored on last sync:</strong> <?php echo intval($sync['reviews_saved']); ?><br>
+                    <strong>API calls in the last 30 days:</strong> <?php echo intval($sync['api_calls_30d']); ?><br>
+                    <?php if ($badge) : ?>
+                    <strong>Status:</strong>
+                    <span style="display:inline-block;padding:2px 8px;border-radius:3px;color:<?php echo esc_attr($badge[1]); ?>;background:<?php echo esc_attr($badge[2]); ?>;">
+                        <?php echo esc_html($badge[0]); ?>
+                    </span>
+                    <?php if (!empty($sync['message'])) : ?>
+                        &nbsp;<em><?php echo esc_html($sync['message']); ?></em>
+                    <?php endif; ?>
+                    <?php endif; ?>
                 </div>
 
                 <div class="grs-extract-controls">
-                    <label for="reviews_limit">Number of reviews to fetch:</label>
-                    <select id="reviews_limit" name="reviews_limit">
-                        <option value="10">10 Reviews</option>
-                        <option value="15" selected>15 Reviews</option>
-                    </select>
-
                     <button type="button" id="extract-reviews-btn" class="button button-primary">
-                        <span class="dashicons dashicons-download"></span> Extract 5-Star Reviews
-                    </button>
-
-                    <button type="button" id="refresh-now-btn" class="button" style="background:#28a745;color:white;border-color:#28a745;">
-                        <span class="dashicons dashicons-update"></span> Delete & Refresh All
+                        <span class="dashicons dashicons-update"></span> Sync Now
                     </button>
 
                     <button type="button" id="check-usage-btn" class="button button-secondary">
@@ -81,7 +95,7 @@ class GRS_Reviews_Manager {
 
                     <div id="extraction-status" class="grs-status-message" style="display:none;"></div>
                 </div>
-                
+
                 <div id="api-usage-info" class="grs-api-usage" style="display:none;">
                     <h5>API Usage Information</h5>
                     <div class="usage-content"></div>
@@ -315,34 +329,25 @@ class GRS_Reviews_Manager {
             var isExtracting = false; // Flag to prevent multiple clicks
             
             $('#extract-reviews-btn').on('click', function() {
-                // Prevent multiple simultaneous extractions
                 if (isExtracting) {
                     return false;
                 }
-                
-                console.log('Extract button clicked');
+
                 var button = $(this);
                 var status = $('#extraction-status');
-                var reviewsLimit = $('#reviews_limit').val();
-                
-                console.log('Place ID:', placeId);
-                console.log('Reviews Limit:', reviewsLimit);
-                console.log('Nonce:', '<?php echo wp_create_nonce("grs_nonce"); ?>');
-                
+
                 isExtracting = true;
                 button.prop('disabled', true);
                 status.removeClass('success error').addClass('loading').html(
-                    '<span class="dashicons dashicons-update spinning"></span> Extracting reviews...'
+                    '<span class="dashicons dashicons-update spinning"></span> Syncing reviews...'
                 ).show();
-                
-                // Always read live values from inputs (map search may have changed them)
+
+                // Live form values win over saved settings: the admin may have
+                // just picked a new place on the map without hitting Save.
                 var livePlace = document.getElementById('grs_place_id');
                 var liveData = document.getElementById('grs_data_id');
                 var currentPlaceId = (livePlace && livePlace.value) ? livePlace.value : placeId;
                 var currentDataId = (liveData && liveData.value) ? liveData.value : '';
-
-                console.log('Live Place ID:', currentPlaceId);
-                console.log('Live Data ID:', currentDataId);
 
                 $.ajax({
                     url: ajaxurl,
@@ -351,109 +356,33 @@ class GRS_Reviews_Manager {
                         action: 'grs_extract_reviews',
                         place_id: currentPlaceId,
                         data_id: currentDataId,
-                        reviews_limit: reviewsLimit,
                         nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
                     },
                     success: function(response) {
-                        console.log('Success response:', response);
                         if (response.success) {
                             var data = response.data;
-                            var msg = '<span class="dashicons dashicons-yes"></span> Success! ';
-                            msg += 'Found ' + data.reviews_found + ' total reviews, ';
-                            msg += (data.five_star_count || data.reviews_saved) + ' are 5-star. ';
-                            msg += 'Saved ' + data.reviews_saved + ' reviews.';
-                            status.removeClass('loading error').addClass('success').html(msg);
-                            
-                            // Reload the page after 2 seconds to show new data
+                            status.removeClass('loading error').addClass('success').html(
+                                '<span class="dashicons dashicons-yes"></span> ' +
+                                $('<span/>').text(data.message).html()
+                            );
                             setTimeout(function() {
                                 location.reload();
                             }, 2000);
                         } else {
-                            console.error('Error in response:', response);
                             status.removeClass('loading success').addClass('error').html(
-                                '<span class="dashicons dashicons-warning"></span> Error: ' + (response.data || 'Unknown error')
+                                '<span class="dashicons dashicons-warning"></span> Error: ' +
+                                $('<span/>').text(response.data || 'Unknown error').html()
                             );
                         }
                     },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX error:', xhr, status, error);
-                        console.error('Response Text:', xhr.responseText);
+                    error: function() {
                         status.removeClass('loading success').addClass('error').html(
-                            '<span class="dashicons dashicons-warning"></span> An error occurred while extracting reviews.'
+                            '<span class="dashicons dashicons-warning"></span> An error occurred while syncing reviews.'
                         );
                     },
                     complete: function() {
                         button.prop('disabled', false);
-                        isExtracting = false; // Reset the flag
-                    }
-                });
-            });
-            
-            // Delete & Refresh All
-            $('#refresh-now-btn').on('click', function() {
-                if (!confirm('This will DELETE all existing reviews and fetch fresh 5-star reviews.\n\nContinue?')) {
-                    return;
-                }
-
-                var button = $(this);
-                var status = $('#extraction-status');
-                var reviewsLimit = $('#reviews_limit').val();
-
-                button.prop('disabled', true);
-                status.removeClass('success error').addClass('loading').html(
-                    '<span class="dashicons dashicons-update spinning"></span> Deleting old reviews and fetching new ones...'
-                ).show();
-
-                // Always read live values from inputs
-                var livePlace = document.getElementById('grs_place_id');
-                var liveData = document.getElementById('grs_data_id');
-                var currentPlaceId = (livePlace && livePlace.value) ? livePlace.value : placeId;
-                var currentDataId = (liveData && liveData.value) ? liveData.value : '';
-
-                // First delete all reviews
-                $.ajax({
-                    url: ajaxurl,
-                    type: 'POST',
-                    data: {
-                        action: 'grs_delete_all_reviews',
-                        place_id: currentPlaceId,
-                        nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
-                    },
-                    success: function() {
-                        // Then extract new reviews
-                        $.ajax({
-                            url: ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'grs_extract_reviews',
-                                place_id: currentPlaceId,
-                                data_id: currentDataId,
-                                reviews_limit: reviewsLimit,
-                                nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    var data = response.data;
-                                    status.removeClass('loading error').addClass('success').html(
-                                        '<span class="dashicons dashicons-yes"></span> Refreshed! Saved ' +
-                                        data.reviews_saved + ' five-star reviews.'
-                                    );
-                                    setTimeout(function() { location.reload(); }, 2000);
-                                } else {
-                                    status.removeClass('loading').addClass('error').html(
-                                        '<span class="dashicons dashicons-warning"></span> Error: ' + response.data
-                                    );
-                                }
-                            },
-                            error: function() {
-                                status.removeClass('loading').addClass('error').html(
-                                    '<span class="dashicons dashicons-warning"></span> Error fetching reviews'
-                                );
-                            },
-                            complete: function() {
-                                button.prop('disabled', false);
-                            }
-                        });
+                        isExtracting = false;
                     }
                 });
             });
@@ -478,16 +407,19 @@ class GRS_Reviews_Manager {
                     success: function(response) {
                         if (response.success) {
                             var usage = response.data;
-                            var html = '<table class="widefat">';
+                            var table = $('<table class="widefat"/>');
                             for (var key in usage) {
                                 if (usage.hasOwnProperty(key)) {
-                                    html += '<tr><td><strong>' + key + ':</strong></td><td>' + usage[key] + '</td></tr>';
+                                    var row = $('<tr/>');
+                                    row.append($('<td/>').append($('<strong/>').text(key + ':')));
+                                    row.append($('<td/>').text(usage[key]));
+                                    table.append(row);
                                 }
                             }
-                            html += '</table>';
-                            content.html(html);
+                            content.empty().append(table);
                         } else {
-                            content.html('<span class="dashicons dashicons-warning"></span> Error: ' + response.data);
+                            content.html('<span class="dashicons dashicons-warning"></span> Error: ' +
+                                $('<span/>').text(response.data).html());
                         }
                     },
                     error: function() {
@@ -670,8 +602,8 @@ class GRS_Reviews_Manager {
                         }
                         ?>
                     </td>
-                    <td><?php echo date('Y-m-d', $review['time']); ?></td>
-                    <td><?php echo ucfirst($review['source']); ?></td>
+                    <td><?php echo esc_html(wp_date('Y-m-d', $review['time'])); ?></td>
+                    <td><?php echo esc_html(ucfirst($review['source'])); ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -728,11 +660,9 @@ function grs_handle_delete_all_reviews() {
     $place_id = sanitize_text_field($_POST['place_id']);
     
     require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+    require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
     $deleted = GRS_Database::delete_all_reviews($place_id);
-    
-    // Also clear any cached reviews
-    delete_transient('grs_reviews');
-    delete_transient('grs_total_review_count');
-    
+    GRS_Sync::purge_page_caches();
+
     wp_send_json_success($deleted);
 }
