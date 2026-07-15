@@ -18,19 +18,19 @@ class GRS_SerpAPI {
     private $api_key;
 
     /**
-     * Default API Key (fallback)
-     */
-    const DEFAULT_API_KEY = 'e16931eb218fa770300a195b81ae0a6e6a879f3fadd02a3b626d19668386677c';
-
-    /**
      * Constructor
+     *
+     * Key resolution: explicit arg > GRS_SERPAPI_KEY constant (set in wp-config.php,
+     * never committed) > saved setting. No key is hardcoded in source.
      */
     public function __construct($api_key = null) {
         if ($api_key) {
             $this->api_key = $api_key;
+        } elseif (defined('GRS_SERPAPI_KEY') && GRS_SERPAPI_KEY) {
+            $this->api_key = GRS_SERPAPI_KEY;
         } else {
             $options = get_option('grs_settings');
-            $this->api_key = !empty($options['grs_serpapi_key']) ? $options['grs_serpapi_key'] : self::DEFAULT_API_KEY;
+            $this->api_key = !empty($options['grs_serpapi_key']) ? $options['grs_serpapi_key'] : '';
         }
     }
 

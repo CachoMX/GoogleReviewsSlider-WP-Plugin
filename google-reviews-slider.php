@@ -38,8 +38,8 @@ function grs_activation_hook() {
         'grs_api_key' => '',
         'grs_place_id' => '',
         'grs_min_rating' => '1',
-        // SerpAPI key for reviews extraction
-        'grs_serpapi_key' => 'e16931eb218fa770300a195b81ae0a6e6a879f3fadd02a3b626d19668386677c',
+        // Set per-site in wp-admin or via the GRS_SERPAPI_KEY constant; never hardcode a key here.
+        'grs_serpapi_key' => '',
         // SerpAPI Data ID - empty by default, gets populated from Place ID
         'grs_data_id' => '',
     );
