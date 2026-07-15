@@ -432,14 +432,12 @@ class GRS_Reviews_Manager {
             });
             
             // Filter reviews
-            $('#filter-rating, #refresh-reviews-btn').on('change click', function(e) {
-                if (e.type === 'click') e.preventDefault();
-                
+            function grsReloadReviewsTable() {
                 var rating = $('#filter-rating').val();
                 var container = $('#reviews-table-container');
-                
+
                 container.html('<p>Loading reviews...</p>');
-                
+
                 $.ajax({
                     url: ajaxurl,
                     type: 'POST',
@@ -457,6 +455,12 @@ class GRS_Reviews_Manager {
                         }
                     }
                 });
+            }
+
+            $('#filter-rating').on('change', grsReloadReviewsTable);
+            $('#refresh-reviews-btn').on('click', function(e) {
+                e.preventDefault();
+                grsReloadReviewsTable();
             });
             
             // Expand/collapse review text
@@ -556,7 +560,7 @@ class GRS_Reviews_Manager {
         $reviews = GRS_Database::get_reviews($place_id, $min_rating, 100);
         
         if (empty($reviews)) {
-            echo '<p>No reviews found. Click "Extract Reviews" to fetch reviews from Google.</p>';
+            echo '<p>No reviews found. Click "Sync Now" to fetch reviews from Google.</p>';
             return;
         }
         
@@ -591,10 +595,12 @@ class GRS_Reviews_Manager {
                         <?php endfor; ?>
                     </td>
                     <td class="review-text-cell">
-                        <?php 
+                        <?php
                         $text = $review['text'];
-                        if (strlen($text) > 200) {
-                            echo esc_html(substr($text, 0, 200)) . '...';
+                        // mb_*: a byte-based cut can split a UTF-8 character,
+                        // and esc_html blanks the whole string on invalid UTF-8.
+                        if (mb_strlen($text) > 200) {
+                            echo esc_html(mb_substr($text, 0, 200)) . '...';
                             echo '<a href="#" class="review-expand-btn">Read more</a>';
                             echo '<span style="display:none;">' . esc_html($text) . '</span>';
                         } else {

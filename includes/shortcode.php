@@ -12,7 +12,7 @@ function grs_direct_init() {
     add_action('wp_enqueue_scripts', 'grs_direct_enqueue_assets');
 }
 
-function grs_direct_enqueue_assets() {
+function grs_direct_enqueue_assets($force = false) {
     global $post;
     $has_shortcode = false;
 
@@ -25,7 +25,7 @@ function grs_direct_enqueue_assets() {
     $is_builder = isset($_GET['builder']) ||
                   (function_exists('fusion_is_preview_frame') && fusion_is_preview_frame());
 
-    if (!$has_shortcode && !$is_builder) {
+    if (!$force && !$has_shortcode && !$is_builder) {
         return;
     }
 
@@ -51,6 +51,13 @@ function grs_direct_display($atts) {
         'slides_mobile' => '1',
         'arrows' => 'true'
     ), $atts, 'google_reviews_slider');
+
+    // Widgets, templates, and builder modules bypass the head-time
+    // post_content scan; late enqueue prints styles in the footer, an
+    // acceptable fallback so the markup is never dead.
+    if (!wp_script_is('grs-swiper-init', 'enqueued')) {
+        grs_direct_enqueue_assets(true);
+    }
 
     $options = get_option('grs_settings');
     $place_id = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';

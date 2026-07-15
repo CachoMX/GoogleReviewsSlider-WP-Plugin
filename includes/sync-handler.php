@@ -13,9 +13,9 @@
 
 class GRS_Sync {
     /**
-     * Mutex option name. add_option() is used as the lock primitive
-     * because it is a single INSERT that fails if the row exists,
-     * unlike update_option/set_transient which can race.
+     * Mutex option name. Acquired via a raw INSERT against wp_options'
+     * option_name UNIQUE KEY (see acquire_lock()): the row either inserts
+     * or it doesn't, so two processes can never both hold the lock.
      */
     const LOCK_OPTION = 'grs_sync_lock';
 
@@ -51,6 +51,8 @@ class GRS_Sync {
             return self::finish($trigger, 'error', __('No Place ID configured.', 'google-reviews-slider'), 0);
         }
 
+        // Cheap pre-check only; a competing sync may finish between this
+        // read and the lock, so it cannot be trusted on its own.
         $guard = self::check_interval($trigger);
         if ($guard !== true) {
             return $guard;
@@ -65,6 +67,13 @@ class GRS_Sync {
         }
 
         try {
+            // Authoritative check: under the lock, nothing else can update
+            // last_success/last_attempt between here and do_sync.
+            $guard = self::check_interval($trigger);
+            if ($guard !== true) {
+                return $guard;
+            }
+
             $result = self::do_sync($place_id, $data_id, $options, $trigger);
         } finally {
             self::release_lock();
@@ -101,21 +110,51 @@ class GRS_Sync {
     }
 
     private static function acquire_lock() {
-        if (add_option(self::LOCK_OPTION, time(), '', 'no')) {
+        global $wpdb;
+
+        // add_option() is get_option()+ODKU under the hood and can hand the
+        // lock to two racing processes; a plain INSERT against the
+        // option_name UNIQUE KEY cannot.
+        $acquired = @$wpdb->query($wpdb->prepare(
+            "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+            self::LOCK_OPTION,
+            (string) time()
+        ));
+
+        if ($acquired) {
+            wp_cache_delete(self::LOCK_OPTION, 'options');
             return true;
         }
 
-        $held_since = intval(get_option(self::LOCK_OPTION, 0));
-        if ($held_since && (time() - $held_since) > self::LOCK_TTL) {
-            delete_option(self::LOCK_OPTION);
-            return add_option(self::LOCK_OPTION, time(), '', 'no');
+        // Conditional DELETE frees only a stale lock, never a fresh one a
+        // competing process just wrote, then a single retry races cleanly.
+        // option_value holds time() as a string; Unix timestamps keep the
+        // same digit count until 2286, so lexicographic compare equals
+        // numeric compare here.
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value < %s",
+            self::LOCK_OPTION,
+            (string) (time() - self::LOCK_TTL)
+        ));
+
+        $acquired = @$wpdb->query($wpdb->prepare(
+            "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+            self::LOCK_OPTION,
+            (string) time()
+        ));
+
+        if ($acquired) {
+            wp_cache_delete(self::LOCK_OPTION, 'options');
+            return true;
         }
 
         return false;
     }
 
     private static function release_lock() {
-        delete_option(self::LOCK_OPTION);
+        global $wpdb;
+        $wpdb->delete($wpdb->options, array('option_name' => self::LOCK_OPTION));
+        wp_cache_delete(self::LOCK_OPTION, 'options');
     }
 
     private static function do_sync($place_id, $data_id, $options, $trigger) {
@@ -168,6 +207,9 @@ class GRS_Sync {
         }
 
         GRS_Database::log_extraction($place_id, 'success', $saved);
+        // Only now is it safe to drop other places' rows: the new place's
+        // set is stored, so a failed place switch can never zero the site.
+        GRS_Database::delete_orphan_reviews($place_id);
         self::purge_page_caches();
 
         return self::finish($trigger, 'ok', sprintf(

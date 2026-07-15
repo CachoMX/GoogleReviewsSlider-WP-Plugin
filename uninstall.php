@@ -15,6 +15,7 @@ delete_option('grs_business_info');
 delete_option('grs_sync_status');
 delete_option('grs_sync_lock');
 delete_option('grs_notice_seen_version');
+delete_option('grs_was_active_before_update');
 
 global $wpdb;
 $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_grs_%'");

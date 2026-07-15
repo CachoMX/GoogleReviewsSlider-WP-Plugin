@@ -71,7 +71,9 @@ class GRS_SerpAPI {
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
 
-        GRS_Database::log_api_call($context, $place_id, $http_code, $http_code === 200 ? 'ok' : 'error');
+        // A 200 whose body fails JSON parsing is still a failed call.
+        $parsed_ok = ($http_code === 200 && is_array($data));
+        GRS_Database::log_api_call($context, $place_id, $http_code, $parsed_ok ? 'ok' : 'error');
 
         if ($http_code !== 200) {
             $msg = isset($data['error']) ? $data['error'] : 'HTTP ' . $http_code;
@@ -303,29 +305,6 @@ class GRS_SerpAPI {
 
         return new WP_Error('not_found', 'Could not find data_id for this Place ID');
     }
-
-    /**
-     * Search for a place and get its data_id
-     *
-     * @param string $query Business name or address
-     * @return array|WP_Error
-     */
-    public function search_place($query) {
-        $params = array(
-            'engine' => 'google_maps',
-            'q' => $query,
-            'type' => 'search',
-            'api_key' => $this->api_key,
-        );
-
-        $data = $this->request(self::API_BASE_URL . '?' . http_build_query($params), 'place_search');
-
-        if (is_wp_error($data)) {
-            return $data;
-        }
-
-        return isset($data['local_results']) ? $data['local_results'] : array();
-    }
 }
 
 // AJAX handlers for admin panel
@@ -361,10 +340,12 @@ function grs_handle_extract_reviews() {
         update_option('grs_settings', $options);
         delete_option('grs_business_info');
 
-        if ($saved_place !== '') {
-            require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-            GRS_Database::delete_all_reviews($saved_place);
-        }
+        // The old place's reviews are kept as orphans and cleaned up only
+        // after the next successful sync (GRS_Sync), so a failed sync can
+        // never leave the site with zero reviews. Cached pages showing the
+        // old place must die now, though, even if the sync below fails.
+        require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+        GRS_Sync::purge_page_caches();
     }
 
     require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
@@ -404,35 +385,4 @@ function grs_test_api_connection() {
         'searches_per_month' => isset($account['plan_searches_left']) ? $account['plan_searches_left'] : 'N/A',
         'total_searches_left' => isset($account['total_searches_left']) ? $account['total_searches_left'] : 'N/A',
     ));
-}
-
-// Search for places
-add_action('wp_ajax_grs_search_place', 'grs_handle_search_place');
-function grs_handle_search_place() {
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error('Unauthorized');
-        return;
-    }
-
-    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
-        wp_send_json_error('Security check failed');
-        return;
-    }
-
-    $query = isset($_POST['query']) ? sanitize_text_field(wp_unslash($_POST['query'])) : '';
-
-    if (empty($query)) {
-        wp_send_json_error('Search query is required');
-        return;
-    }
-
-    $api = new GRS_SerpAPI();
-    $results = $api->search_place($query);
-
-    if (is_wp_error($results)) {
-        wp_send_json_error($results->get_error_message());
-        return;
-    }
-
-    wp_send_json_success($results);
 }

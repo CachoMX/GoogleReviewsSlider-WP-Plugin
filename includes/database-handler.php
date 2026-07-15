@@ -205,6 +205,23 @@ class GRS_Database {
     }
 
     /**
+     * Delete rows stored under any place other than $place_id. Runs only
+     * after a successful sync so a failed place switch can never leave
+     * the site with zero reviews.
+     *
+     * @param string $place_id
+     * @return int Rows deleted.
+     */
+    public static function delete_orphan_reviews($place_id) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'grs_reviews';
+        return (int) $wpdb->query($wpdb->prepare(
+            "DELETE FROM $table_name WHERE place_id != %s",
+            $place_id
+        ));
+    }
+
+    /**
      * Trim stored reviews for a place down to the newest $keep by review time.
      *
      * @param string $place_id
@@ -291,7 +308,7 @@ class GRS_Database {
             "SELECT * FROM $table_name
             WHERE place_id = %s
             AND rating >= %d
-            ORDER BY time DESC
+            ORDER BY time DESC, id DESC
             LIMIT %d",
             $place_id,
             $min_rating,
@@ -421,25 +438,6 @@ class GRS_Database {
         }
         
         return $wpdb->get_results($query, ARRAY_A);
-    }
-
-    /**
-     * Get last successful extraction date
-     *
-     * @param string $place_id
-     * @return string|null
-     */
-    public static function get_last_extraction($place_id) {
-        global $wpdb;
-
-        $table_name = $wpdb->prefix . 'grs_extraction_history';
-
-        return $wpdb->get_var($wpdb->prepare(
-            "SELECT extraction_date FROM $table_name
-            WHERE place_id = %s AND status = 'success'
-            ORDER BY extraction_date DESC LIMIT 1",
-            $place_id
-        ));
     }
 
     /**

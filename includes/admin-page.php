@@ -30,39 +30,39 @@ function grs_settings_init() {
     ));
 
     add_settings_section(
-        'grs_pluginPage_section', 
-        __('Settings', 'grs'), 
-        'grs_settings_section_callback', 
+        'grs_pluginPage_section',
+        __('Settings', 'google-reviews-slider'),
+        'grs_settings_section_callback',
         'pluginPage'
     );
 
     add_settings_field(
-        'grs_api_key', 
-        __('Google API Key', 'grs'), 
-        'grs_api_key_render', 
-        'pluginPage', 
+        'grs_api_key',
+        __('Google API Key', 'google-reviews-slider'),
+        'grs_api_key_render',
+        'pluginPage',
         'grs_pluginPage_section'
     );
 
     add_settings_field(
-        'grs_place_id', 
-        __('Google Place ID', 'grs'), 
-        'grs_place_id_render', 
-        'pluginPage', 
+        'grs_place_id',
+        __('Google Place ID', 'google-reviews-slider'),
+        'grs_place_id_render',
+        'pluginPage',
         'grs_pluginPage_section'
     );
 
     add_settings_field(
-        'grs_min_rating', 
-        __('Minimum Rating', 'grs'), 
-        'grs_min_rating_render', 
-        'pluginPage', 
+        'grs_min_rating',
+        __('Minimum Rating', 'google-reviews-slider'),
+        'grs_min_rating_render',
+        'pluginPage',
         'grs_pluginPage_section'
     );
 
     add_settings_field(
         'grs_serpapi_key',
-        __('SerpAPI Key', 'grs'),
+        __('SerpAPI Key', 'google-reviews-slider'),
         'grs_serpapi_key_render',
         'pluginPage',
         'grs_pluginPage_section'
@@ -70,7 +70,7 @@ function grs_settings_init() {
 
     add_settings_field(
         'grs_data_id',
-        __('SerpAPI Data ID', 'grs'),
+        __('SerpAPI Data ID', 'google-reviews-slider'),
         'grs_data_id_render',
         'pluginPage',
         'grs_pluginPage_section'
@@ -80,8 +80,10 @@ add_action('admin_init', 'grs_settings_init');
 
 /**
  * Sanitize the settings array and reconcile place changes: a new Place ID
- * invalidates the derived data_id, the stored business identity, and the
- * previous place's reviews, which would otherwise linger as orphans.
+ * invalidates the derived data_id and the stored business identity. The
+ * previous place's reviews are kept and cleaned up as orphans only after
+ * the next successful sync (GRS_Sync), so a failed sync can never leave
+ * the site with zero reviews.
  */
 function grs_sanitize_settings($input) {
     $old = get_option('grs_settings', array());
@@ -102,8 +104,10 @@ function grs_sanitize_settings($input) {
         }
         delete_option('grs_business_info');
 
-        require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-        GRS_Database::delete_all_reviews($old_place);
+        // Cached pages keep serving the old place's reviews even if the
+        // next sync fails, so they must die at place-change time.
+        require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+        GRS_Sync::purge_page_caches();
     }
 
     return $clean;
@@ -111,7 +115,7 @@ function grs_sanitize_settings($input) {
 
 // Add these callback functions
 function grs_settings_section_callback() {
-    echo __('Configure your Google Reviews Slider settings below.', 'grs');
+    echo esc_html__('Configure your Google Reviews Slider settings below.', 'google-reviews-slider');
 }
 
 function grs_api_key_render() {
@@ -392,7 +396,7 @@ function grs_options_page() {
                             ).show();
                         }
                     } else {
-                        message.html('<span style="color: #d63638;">✗ Error: ' + (response.data || 'Could not check for updates') + '</span>');
+                        message.html('<span style="color: #d63638;">✗ Error: ' + $('<span/>').text(response.data || 'Could not check for updates').html() + '</span>');
                     }
                 },
                 error: function() {

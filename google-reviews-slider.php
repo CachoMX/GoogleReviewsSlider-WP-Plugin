@@ -44,13 +44,16 @@ function grs_activation_hook() {
     $options = wp_parse_args($existing_options, $default_options);
     update_option('grs_settings', $options);
 
-    update_option('grs_version', GRS_VERSION);
-
     require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
     GRS_Database::init();
 
+    // On the deactivate -> replace-files -> activate path, plugins_loaded
+    // fired before the new code loaded, so activation must run the
+    // migration itself; grs_maybe_upgrade() is version-gated and idempotent.
+    grs_maybe_upgrade();
+
     if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
-        wp_schedule_event(time() + DAY_IN_SECONDS, 'monthly', 'grs_auto_refresh_reviews');
+        wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
     }
 }
 
@@ -62,14 +65,12 @@ function grs_deactivation_hook() {
 
 add_filter('cron_schedules', 'grs_add_cron_schedules');
 function grs_add_cron_schedules($schedules) {
-    // Another plugin may already define 'monthly'; overriding it would
-    // silently change that plugin's cadence.
-    if (!isset($schedules['monthly'])) {
-        $schedules['monthly'] = array(
-            'interval' => 30 * DAY_IN_SECONDS,
-            'display' => __('Every 30 Days', 'google-reviews-slider'),
-        );
-    }
+    // Plugin-prefixed: a generic 'monthly' defined by another plugin with
+    // a different interval would silently change our cadence.
+    $schedules['grs_monthly'] = array(
+        'interval' => 30 * DAY_IN_SECONDS,
+        'display' => __('Every 30 Days', 'google-reviews-slider'),
+    );
     return $schedules;
 }
 
@@ -103,7 +104,7 @@ function grs_maybe_upgrade() {
     }
 
     if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
-        wp_schedule_event(time() + DAY_IN_SECONDS, 'monthly', 'grs_auto_refresh_reviews');
+        wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
     }
 
     update_option('grs_version', GRS_VERSION);
@@ -142,6 +143,15 @@ function grs_upgrade_to_280() {
     if (!empty($options['grs_place_id'])) {
         GRS_Database::prune_reviews($options['grs_place_id']);
     }
+
+    // Existing installs sit on the generic 'monthly' schedule, whose
+    // interval another plugin controls; move them to grs_monthly.
+    wp_clear_scheduled_hook('grs_auto_refresh_reviews');
+    wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
+
+    // Cached pages still carry pre-2.8.0 markup and stale review data.
+    require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+    GRS_Sync::purge_page_caches();
 }
 
 add_action('admin_notices', 'grs_update_notice');
@@ -173,14 +183,14 @@ include(GRS_PLUGIN_PATH . 'includes/reviews-manager.php');
 
 require_once(GRS_PLUGIN_PATH . 'includes/plugin-updater.php');
 
-if (is_admin()) {
-    new GRS_Plugin_Updater(
-        GRS_GITHUB_USERNAME,
-        GRS_GITHUB_REPOSITORY,
-        __FILE__,
-        GRS_VERSION
-    );
-}
+// Unconditional: background/cron updates run outside is_admin(), and the
+// update filters must be registered there too.
+new GRS_Plugin_Updater(
+    GRS_GITHUB_USERNAME,
+    GRS_GITHUB_REPOSITORY,
+    __FILE__,
+    GRS_VERSION
+);
 
 // AJAX handler for checking API usage
 add_action('wp_ajax_grs_check_api_usage', 'grs_check_api_usage_handler');
