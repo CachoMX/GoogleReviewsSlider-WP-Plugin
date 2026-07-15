@@ -10,7 +10,13 @@ class GRS_Database {
     /**
      * Database version
      */
-    const DB_VERSION = '2.0.0';
+    const DB_VERSION = '2.1.0';
+
+    /**
+     * Hard cap of stored/rendered reviews per place. Keeps SerpAPI spend
+     * bounded and the slider payload small.
+     */
+    const MAX_REVIEWS_PER_PLACE = 10;
     
     /**
      * Initialize database
@@ -79,9 +85,23 @@ class GRS_Database {
             KEY idx_place_date (place_id, extraction_date)
         ) $charset_collate;";
         
+        // API call audit table: one row per billable SerpAPI request
+        $api_log_table = $wpdb->prefix . 'grs_api_log';
+        $sql_api_log = "CREATE TABLE IF NOT EXISTS $api_log_table (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            context varchar(50) NOT NULL,
+            place_id varchar(255),
+            http_code smallint,
+            status varchar(20) NOT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_created (created_at)
+        ) $charset_collate;";
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_reviews);
         dbDelta($sql_history);
+        dbDelta($sql_api_log);
     }
 
     /**
@@ -112,77 +132,144 @@ class GRS_Database {
     }
 
     /**
-     * Save reviews to database
-     * 
+     * Atomically replace all stored reviews for a place.
+     *
+     * Deletes old rows only after the caller has a validated, non-empty
+     * replacement set, so an upstream API failure can never leave the
+     * place without reviews. Rows beyond MAX_REVIEWS_PER_PLACE are
+     * dropped (input is expected newest-first; a defensive sort keeps
+     * the invariant even if the caller forgot).
+     *
      * @param string $place_id
-     * @param array $reviews
-     * @return int Number of reviews saved
+     * @param array  $reviews Mapped review rows (see GRS_SerpAPI::map_review()).
+     * @return int|WP_Error Number of reviews stored, or error when input is empty.
      */
-    public static function save_reviews($place_id, $reviews) {
+    public static function replace_reviews($place_id, $reviews) {
         global $wpdb;
 
         self::ensure_tables();
 
+        if (empty($reviews)) {
+            return new WP_Error('empty_set', 'Refusing to replace stored reviews with an empty set');
+        }
+
+        usort($reviews, function ($a, $b) {
+            return $b['time'] <=> $a['time'];
+        });
+        $reviews = array_slice($reviews, 0, self::MAX_REVIEWS_PER_PLACE);
+
         $table_name = $wpdb->prefix . 'grs_reviews';
         $saved_count = 0;
-        
+
+        // No-op on MyISAM; on InnoDB it makes delete+insert atomic.
+        $wpdb->query('START TRANSACTION');
+
+        $wpdb->delete($table_name, array('place_id' => $place_id), array('%s'));
+
         foreach ($reviews as $review) {
-            // Prepare review data
-            $data = array(
+            $result = $wpdb->insert($table_name, array(
                 'place_id' => $place_id,
-                'review_id' => isset($review['review_id']) ? $review['review_id'] : md5($review['author_name'] . $review['time']),
-                'author_name' => !empty($review['author_name']) ? $review['author_name'] : 'Anonymous User',
+                'review_id' => $review['review_id'],
+                'author_name' => !empty($review['author_name']) ? $review['author_name'] : 'Anonymous',
                 'author_url' => isset($review['author_url']) ? $review['author_url'] : null,
                 'profile_photo_url' => isset($review['profile_photo_url']) ? $review['profile_photo_url'] : null,
                 'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
                 'text' => isset($review['text']) ? $review['text'] : '',
-                'time' => isset($review['time']) ? $review['time'] : time(),
+                'time' => intval($review['time']),
                 'relative_time_description' => isset($review['relative_time_description']) ? $review['relative_time_description'] : '',
                 'language' => isset($review['language']) ? $review['language'] : 'en',
-                'translated_text' => isset($review['translated_text']) ? $review['translated_text'] : null,
                 'response_from_owner_text' => isset($review['response_from_owner_text']) ? $review['response_from_owner_text'] : null,
                 'response_from_owner_time' => isset($review['response_from_owner_time']) ? $review['response_from_owner_time'] : null,
-                'photos_links' => isset($review['photos_links']) ? json_encode($review['photos_links']) : null,
+                'photos_links' => isset($review['photos_links']) ? wp_json_encode($review['photos_links']) : null,
                 'review_likes_count' => isset($review['review_likes_count']) ? intval($review['review_likes_count']) : 0,
                 'total_number_of_reviews_by_reviewer' => isset($review['total_number_of_reviews_by_reviewer']) ? intval($review['total_number_of_reviews_by_reviewer']) : null,
-                'reviewer_number_of_photos' => isset($review['reviewer_number_of_photos']) ? intval($review['reviewer_number_of_photos']) : null,
-                'is_local_guide' => isset($review['is_local_guide']) ? (bool)$review['is_local_guide'] : false,
-                'review_translated_by_google' => isset($review['review_translated_by_google']) ? (bool)$review['review_translated_by_google'] : false,
-                'response_from_owner_translated_by_google' => isset($review['response_from_owner_translated_by_google']) ? (bool)$review['response_from_owner_translated_by_google'] : false,
-                'source' => isset($review['source']) ? $review['source'] : 'serpapi'
-            );
-            
-            // Check if review already exists
-            $existing = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM $table_name WHERE place_id = %s AND review_id = %s",
-                $place_id,
-                $data['review_id']
+                'is_local_guide' => !empty($review['is_local_guide']) ? 1 : 0,
+                'source' => isset($review['source']) ? $review['source'] : 'serpapi',
             ));
-            
-            if ($existing) {
-                // Update existing review
-                $result = $wpdb->update(
-                    $table_name,
-                    $data,
-                    array(
-                        'place_id' => $place_id,
-                        'review_id' => $data['review_id']
-                    )
-                );
-            } else {
-                // Insert new review
-                $result = $wpdb->insert($table_name, $data);
-            }
 
             if ($result === false) {
                 error_log('GRS DB Error: ' . $wpdb->last_error);
-                error_log('GRS DB Data: ' . json_encode($data));
             } else {
                 $saved_count++;
             }
         }
-        
+
+        if ($saved_count === 0) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('insert_failed', 'All review inserts failed: ' . $wpdb->last_error);
+        }
+
+        $wpdb->query('COMMIT');
+
         return $saved_count;
+    }
+
+    /**
+     * Trim stored reviews for a place down to the newest $keep by review time.
+     *
+     * @param string $place_id
+     * @param int    $keep
+     * @return int Rows deleted.
+     */
+    public static function prune_reviews($place_id, $keep = self::MAX_REVIEWS_PER_PLACE) {
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'grs_reviews';
+
+        // MySQL forbids LIMIT in a NOT IN subquery; the derived table works around it.
+        return (int) $wpdb->query($wpdb->prepare(
+            "DELETE FROM $table_name
+            WHERE place_id = %s
+            AND id NOT IN (
+                SELECT id FROM (
+                    SELECT id FROM $table_name
+                    WHERE place_id = %s
+                    ORDER BY time DESC, id DESC
+                    LIMIT %d
+                ) keepers
+            )",
+            $place_id,
+            $place_id,
+            $keep
+        ));
+    }
+
+    /**
+     * Record one outbound API request for spend auditing.
+     *
+     * @param string      $context   Which call site (e.g. 'reviews_page', 'place_lookup').
+     * @param string|null $place_id
+     * @param int|null    $http_code
+     * @param string      $status    'ok' | 'error'.
+     */
+    public static function log_api_call($context, $place_id = null, $http_code = null, $status = 'ok') {
+        global $wpdb;
+
+        self::ensure_tables();
+
+        $wpdb->insert($wpdb->prefix . 'grs_api_log', array(
+            'context' => $context,
+            'place_id' => $place_id,
+            'http_code' => $http_code,
+            'status' => $status,
+        ));
+    }
+
+    /**
+     * Count API calls made since a given moment.
+     *
+     * @param string $since MySQL datetime.
+     * @return int
+     */
+    public static function count_api_calls_since($since) {
+        global $wpdb;
+
+        self::ensure_tables();
+
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}grs_api_log WHERE created_at >= %s",
+            $since
+        ));
     }
     
     /**
@@ -193,7 +280,7 @@ class GRS_Database {
      * @param int $limit
      * @return array
      */
-    public static function get_reviews($place_id, $min_rating = 1, $limit = 50) {
+    public static function get_reviews($place_id, $min_rating = 1, $limit = self::MAX_REVIEWS_PER_PLACE) {
         global $wpdb;
 
         self::ensure_tables();
@@ -355,38 +442,6 @@ class GRS_Database {
         ));
     }
 
-    /**
-     * Delete old reviews
-     * 
-     * @param string $place_id
-     * @param int $days_old
-     * @return int Number of reviews deleted
-     */
-    public static function delete_old_reviews($place_id = null, $days_old = 90) {
-        global $wpdb;
-        
-        $table_name = $wpdb->prefix . 'grs_reviews';
-        $date_threshold = date('Y-m-d H:i:s', strtotime("-$days_old days"));
-        
-        if ($place_id) {
-            $query = $wpdb->prepare(
-                "DELETE FROM $table_name 
-                WHERE place_id = %s 
-                AND extracted_at < %s",
-                $place_id,
-                $date_threshold
-            );
-        } else {
-            $query = $wpdb->prepare(
-                "DELETE FROM $table_name 
-                WHERE extracted_at < %s",
-                $date_threshold
-            );
-        }
-        
-        return $wpdb->query($query);
-    }
-    
     /**
      * Remove duplicate reviews
      * 

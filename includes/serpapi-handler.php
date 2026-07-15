@@ -13,6 +13,14 @@ class GRS_SerpAPI {
     const API_BASE_URL = 'https://serpapi.com/search.json';
 
     /**
+     * Max paginated requests per sync. Each page is one billable SerpAPI
+     * search returning ~10 reviews sorted newest-first, so two pages give
+     * enough raw material to fill the 10-review cap after rating/text
+     * filters without burning extra credits.
+     */
+    const MAX_PAGES = 2;
+
+    /**
      * API Key
      */
     private $api_key;
@@ -35,296 +43,227 @@ class GRS_SerpAPI {
     }
 
     /**
-     * Fast cURL request
+     * GET a SerpAPI endpoint and log the call for spend auditing.
+     *
+     * @param string      $url
+     * @param string      $context  Call-site label stored in the API log.
+     * @param string|null $place_id
+     * @return array|WP_Error Decoded JSON body.
      */
-    private function curl_get($url) {
-        $ch = curl_init();
-        curl_setopt_array($ch, array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTPHEADER => array('Accept: application/json')
-        ));
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($error) {
-            return new WP_Error('curl_error', $error);
+    private function request($url, $context, $place_id = null) {
+        if (empty($this->api_key)) {
+            return new WP_Error('no_api_key', 'No SerpAPI key configured');
         }
 
+        $response = wp_remote_get($url, array(
+            'timeout' => 30,
+            'headers' => array('Accept' => 'application/json'),
+        ));
+
+        require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+
+        if (is_wp_error($response)) {
+            GRS_Database::log_api_call($context, $place_id, null, 'error');
+            return $response;
+        }
+
+        $http_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        GRS_Database::log_api_call($context, $place_id, $http_code, $http_code === 200 ? 'ok' : 'error');
+
         if ($http_code !== 200) {
-            $data = json_decode($response, true);
             $msg = isset($data['error']) ? $data['error'] : 'HTTP ' . $http_code;
             return new WP_Error('api_error', $msg);
         }
 
-        return json_decode($response, true);
+        if (!is_array($data)) {
+            return new WP_Error('parse_error', 'SerpAPI returned a non-JSON body');
+        }
+
+        return $data;
     }
 
     /**
-     * Extract reviews from Google Maps using SerpAPI
+     * Fetch the newest reviews for a place, mapped and filtered.
      *
-     * @param string $data_id Google Maps Data ID (format: 0x...:0x...)
-     * @param string $sort Sort order: qualityScore, newestFirst, ratingHigh, ratingLow
-     * @param string $hl Language code
-     * @return array|WP_Error
-     */
-    public function extract_reviews($data_id, $sort = 'newestFirst', $hl = 'en') {
-        $params = array(
-            'engine' => 'google_maps_reviews',
-            'data_id' => $data_id,
-            'hl' => $hl,
-            'sort_by' => $sort,
-            'api_key' => $this->api_key
-        );
-
-        $url = self::API_BASE_URL . '?' . http_build_query($params);
-        return $this->curl_get($url);
-    }
-
-    /**
-     * Extract reviews with pagination (fetch multiple pages)
+     * Pages through google_maps_reviews (sort newest-first) until
+     * GRS_Database::MAX_REVIEWS_PER_PLACE usable reviews are collected or
+     * MAX_PAGES is hit. Usable means: rating >= $min_rating, non-empty
+     * text, and a parseable review date. Reviews with no parseable date
+     * are dropped because an invented timestamp would corrupt the
+     * newest-first ordering.
      *
-     * @param string $data_id Google Maps Data ID
-     * @param int $max_reviews Maximum reviews to fetch
-     * @param string $sort Sort order
-     * @param string $hl Language
-     * @return array|WP_Error
+     * @param string $data_id    Google Maps data ID (0x...:0x...).
+     * @param string $place_id   Storage/logging key.
+     * @param int    $min_rating 1-5.
+     * @return array|WP_Error {place_info: array|null, reviews: array, raw_count: int}
      */
-    public function extract_all_reviews($data_id, $max_reviews = 100, $sort = 'newestFirst', $hl = 'en') {
-        $all_reviews = array();
+    public function fetch_recent_reviews($data_id, $place_id, $min_rating = 1) {
+        $needed = GRS_Database::MAX_REVIEWS_PER_PLACE;
+        $collected = array();
         $place_info = null;
+        $raw_count = 0;
         $next_page_token = null;
 
-        while (count($all_reviews) < $max_reviews) {
+        for ($page = 1; $page <= self::MAX_PAGES; $page++) {
             $params = array(
                 'engine' => 'google_maps_reviews',
                 'data_id' => $data_id,
-                'hl' => $hl,
-                'sort_by' => $sort,
-                'api_key' => $this->api_key
+                'hl' => 'en',
+                'sort_by' => 'newestFirst',
+                'api_key' => $this->api_key,
             );
-
             if ($next_page_token) {
                 $params['next_page_token'] = $next_page_token;
             }
 
-            $url = self::API_BASE_URL . '?' . http_build_query($params);
-            $data = $this->curl_get($url);
+            $data = $this->request(
+                self::API_BASE_URL . '?' . http_build_query($params),
+                'reviews_page_' . $page,
+                $place_id
+            );
 
             if (is_wp_error($data)) {
-                if (empty($all_reviews)) {
+                if (empty($collected)) {
                     return $data;
                 }
                 break;
             }
 
-            // Get place info from first response
             if (!$place_info && isset($data['place_info'])) {
-                $place_info = $data['place_info'];
+                $place_info = $this->map_place_info($data['place_info']);
             }
 
-            // Add reviews
-            if (isset($data['reviews']) && is_array($data['reviews'])) {
-                $all_reviews = array_merge($all_reviews, $data['reviews']);
-            } else {
+            $raw_reviews = isset($data['reviews']) && is_array($data['reviews']) ? $data['reviews'] : array();
+            $raw_count += count($raw_reviews);
+
+            foreach ($raw_reviews as $raw) {
+                $mapped = $this->map_review($raw);
+                if ($mapped === null || $mapped['rating'] < $min_rating) {
+                    continue;
+                }
+                // Keyed by review_id: dedupes across pages.
+                $collected[$mapped['review_id']] = $mapped;
+            }
+
+            if (count($collected) >= $needed) {
                 break;
             }
 
-            // Check for next page
-            if (isset($data['serpapi_pagination']['next_page_token'])) {
-                $next_page_token = $data['serpapi_pagination']['next_page_token'];
-            } else {
+            if (empty($data['serpapi_pagination']['next_page_token'])) {
                 break;
             }
-
-            // Small delay to avoid rate limits
-            usleep(200000); // 200ms
-        }
-
-        // Trim to max reviews
-        if (count($all_reviews) > $max_reviews) {
-            $all_reviews = array_slice($all_reviews, 0, $max_reviews);
+            $next_page_token = $data['serpapi_pagination']['next_page_token'];
         }
 
         return array(
             'place_info' => $place_info,
-            'reviews' => $all_reviews,
-            'total_fetched' => count($all_reviews)
+            'reviews' => array_values($collected),
+            'raw_count' => $raw_count,
         );
     }
 
     /**
-     * Process and save reviews from SerpAPI response
+     * Map one raw SerpAPI review to the storage row shape.
      *
-     * @param array $api_response
-     * @param string $place_id Place ID for database storage
-     * @return array Results summary
+     * @param array $raw
+     * @return array|null Null when the review is unusable (no text or no
+     *                    parseable date).
      */
-    public function process_reviews_response($api_response, $place_id) {
-        $results = array(
-            'success' => false,
-            'reviews_found' => 0,
-            'reviews_saved' => 0,
-            'place_info' => null,
-            'error' => null
-        );
-
-        try {
-            // Handle both single response and paginated response formats
-            $reviews = array();
-            $place_info = null;
-
-            if (isset($api_response['reviews'])) {
-                $reviews = $api_response['reviews'];
-            }
-
-            if (isset($api_response['place_info'])) {
-                $place_info = $api_response['place_info'];
-
-                // Try different field names that SerpAPI might use
-                $business_name = $place_info['title'] ?? $place_info['name'] ?? '';
-                $business_rating = $place_info['rating'] ?? 0;
-                $reviews_count = $place_info['reviews'] ?? $place_info['reviews_count'] ?? $place_info['user_ratings_total'] ?? 0;
-
-                $results['place_info'] = array(
-                    'name' => $business_name,
-                    'address' => $place_info['address'] ?? '',
-                    'rating' => $business_rating,
-                    'reviews_count' => $reviews_count
-                );
-
-                // Save business info to options for display in shortcode
-                $options = get_option('grs_settings', array());
-                if (!empty($business_name)) {
-                    $options['grs_business_name'] = sanitize_text_field($business_name);
-                }
-                if (!empty($business_rating)) {
-                    $options['grs_business_rating'] = floatval($business_rating);
-                }
-                if (!empty($reviews_count)) {
-                    $options['grs_total_reviews'] = intval($reviews_count);
-                }
-                update_option('grs_settings', $options);
-
-                error_log('GRS: Saved business info - Name: ' . $business_name . ', Rating: ' . $business_rating);
-            } else {
-                error_log('GRS: No place_info in API response. Keys: ' . implode(', ', array_keys($api_response)));
-            }
-
-            if (empty($reviews)) {
-                throw new Exception('No reviews found in API response');
-            }
-
-            // Filter ONLY 5-star reviews
-            $five_star_reviews = array_filter($reviews, function($review) {
-                return isset($review['rating']) && intval($review['rating']) === 5;
-            });
-
-            $results['reviews_found'] = count($reviews);
-            $results['five_star_count'] = count($five_star_reviews);
-
-            if (empty($five_star_reviews)) {
-                throw new Exception('No 5-star reviews found');
-            }
-
-            // Process each 5-star review - map SerpAPI fields to our DB structure
-            $processed_reviews = array();
-            foreach ($five_star_reviews as $review) {
-                // Get review text from various possible fields
-                $review_text = $review['snippet'] ?? $review['extracted_snippet']['original'] ?? '';
-
-                // Skip reviews without text
-                if (empty(trim($review_text))) {
-                    continue;
-                }
-
-                $processed_review = array(
-                    'review_id' => $review['review_id'] ?? md5(($review['user']['name'] ?? '') . ($review['iso_date'] ?? '')),
-                    'author_name' => $review['user']['name'] ?? 'Anonymous',
-                    'author_url' => $review['user']['link'] ?? null,
-                    'profile_photo_url' => $review['user']['thumbnail'] ?? null,
-                    'rating' => isset($review['rating']) ? intval($review['rating']) : 5,
-                    'text' => $review_text,
-                    'time' => $this->convert_to_timestamp($review['iso_date'] ?? null),
-                    'relative_time_description' => $review['date'] ?? '',
-                    'language' => 'en',
-                    'photos_links' => isset($review['images']) ? $review['images'] : null,
-                    'review_likes_count' => isset($review['likes']) ? intval($review['likes']) : 0,
-                    'total_number_of_reviews_by_reviewer' => isset($review['user']['reviews']) ? intval($review['user']['reviews']) : null,
-                    'is_local_guide' => isset($review['user']['local_guide']) ? (bool)$review['user']['local_guide'] : false,
-                    'response_from_owner_text' => $review['response']['snippet'] ?? null,
-                    'response_from_owner_time' => isset($review['response']['date']) ? $this->convert_to_timestamp($review['response']['date']) : null,
-                    'source' => 'serpapi'
-                );
-
-                $processed_reviews[] = $processed_review;
-            }
-
-            // Save reviews to database
-            require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-            $saved_count = GRS_Database::save_reviews($place_id, $processed_reviews);
-
-            $results['reviews_saved'] = $saved_count;
-            $results['success'] = true;
-
-            // Clear transient cache so shortcode reads fresh data from DB
-            delete_transient('grs_reviews');
-            delete_transient('grs_total_review_count');
-
-            // Log extraction
-            GRS_Database::log_extraction(
-                $place_id,
-                'success',
-                $saved_count,
-                null,
-                null
-            );
-
-        } catch (Exception $e) {
-            $results['error'] = $e->getMessage();
-
-            GRS_Database::log_extraction(
-                $place_id,
-                'failed',
-                0,
-                $e->getMessage(),
-                null
-            );
+    public function map_review($raw) {
+        $text = '';
+        if (!empty($raw['snippet'])) {
+            $text = $raw['snippet'];
+        } elseif (!empty($raw['extracted_snippet']['original'])) {
+            $text = $raw['extracted_snippet']['original'];
         }
 
-        return $results;
+        if (trim($text) === '') {
+            return null;
+        }
+
+        $time = $this->parse_timestamp(isset($raw['iso_date']) ? $raw['iso_date'] : null);
+        if ($time === false) {
+            return null;
+        }
+
+        $author = isset($raw['user']['name']) ? $raw['user']['name'] : '';
+        $review_id = !empty($raw['review_id'])
+            ? $raw['review_id']
+            : md5($author . '|' . $raw['iso_date']);
+
+        return array(
+            'review_id' => $review_id,
+            'author_name' => $author !== '' ? $author : 'Anonymous',
+            'author_url' => isset($raw['user']['link']) ? $raw['user']['link'] : null,
+            'profile_photo_url' => isset($raw['user']['thumbnail']) ? $raw['user']['thumbnail'] : null,
+            'rating' => isset($raw['rating']) ? intval($raw['rating']) : 0,
+            'text' => $text,
+            'time' => $time,
+            'relative_time_description' => isset($raw['date']) ? $raw['date'] : '',
+            'language' => 'en',
+            'photos_links' => isset($raw['images']) ? $raw['images'] : null,
+            'review_likes_count' => isset($raw['likes']) ? intval($raw['likes']) : 0,
+            'total_number_of_reviews_by_reviewer' => isset($raw['user']['reviews']) ? intval($raw['user']['reviews']) : null,
+            'is_local_guide' => !empty($raw['user']['local_guide']),
+            'response_from_owner_text' => isset($raw['response']['snippet']) ? $raw['response']['snippet'] : null,
+            'response_from_owner_time' => $this->parse_owner_response_time($raw),
+            'source' => 'serpapi',
+        );
     }
 
     /**
-     * Convert various timestamp formats to Unix timestamp
-     *
-     * @param mixed $timestamp
-     * @return int Unix timestamp
+     * Owner responses sometimes carry only a relative date string
+     * ("a week ago"), which strtotime can still resolve; unlike review
+     * dates this field is cosmetic, so a missing value is just null.
      */
-    private function convert_to_timestamp($timestamp) {
-        if (is_int($timestamp)) {
-            return $timestamp;
+    private function parse_owner_response_time($raw) {
+        foreach (array('iso_date', 'date') as $field) {
+            if (!empty($raw['response'][$field])) {
+                $parsed = $this->parse_timestamp($raw['response'][$field]);
+                if ($parsed !== false) {
+                    return $parsed;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function map_place_info($place_info) {
+        return array(
+            'name' => isset($place_info['title']) ? $place_info['title'] : (isset($place_info['name']) ? $place_info['name'] : ''),
+            'address' => isset($place_info['address']) ? $place_info['address'] : '',
+            'rating' => isset($place_info['rating']) ? $place_info['rating'] : 0,
+            'reviews_count' => isset($place_info['reviews']) ? $place_info['reviews'] : (isset($place_info['reviews_count']) ? $place_info['reviews_count'] : 0),
+        );
+    }
+
+    /**
+     * Parse an ISO-8601 date into a UTC Unix timestamp.
+     *
+     * @param mixed $value
+     * @return int|false False when the value is missing or unparseable;
+     *                   callers must drop the review rather than guess.
+     */
+    private function parse_timestamp($value) {
+        if (is_int($value) && $value > 0) {
+            return $value;
         }
 
-        if (is_numeric($timestamp) && strlen($timestamp) >= 10) {
-            return intval($timestamp);
+        if (is_numeric($value) && strlen((string) $value) >= 10) {
+            return intval($value);
         }
 
-        if (is_string($timestamp) && !empty($timestamp)) {
-            $parsed = strtotime($timestamp);
-            if ($parsed !== false) {
+        if (is_string($value) && $value !== '') {
+            $parsed = strtotime($value);
+            if ($parsed !== false && $parsed > 0) {
                 return $parsed;
             }
         }
 
-        return time();
+        return false;
     }
 
     /**
@@ -333,8 +272,10 @@ class GRS_SerpAPI {
      * @return array|WP_Error
      */
     public function get_account_info() {
-        $url = 'https://serpapi.com/account.json?api_key=' . $this->api_key;
-        return $this->curl_get($url);
+        return $this->request(
+            'https://serpapi.com/account.json?api_key=' . $this->api_key,
+            'account_info'
+        );
     }
 
     /**
@@ -347,11 +288,10 @@ class GRS_SerpAPI {
         $params = array(
             'engine' => 'google_maps',
             'place_id' => $place_id,
-            'api_key' => $this->api_key
+            'api_key' => $this->api_key,
         );
 
-        $url = self::API_BASE_URL . '?' . http_build_query($params);
-        $data = $this->curl_get($url);
+        $data = $this->request(self::API_BASE_URL . '?' . http_build_query($params), 'place_lookup', $place_id);
 
         if (is_wp_error($data)) {
             return $data;
@@ -375,21 +315,16 @@ class GRS_SerpAPI {
             'engine' => 'google_maps',
             'q' => $query,
             'type' => 'search',
-            'api_key' => $this->api_key
+            'api_key' => $this->api_key,
         );
 
-        $url = self::API_BASE_URL . '?' . http_build_query($params);
-        $data = $this->curl_get($url);
+        $data = $this->request(self::API_BASE_URL . '?' . http_build_query($params), 'place_search');
 
         if (is_wp_error($data)) {
             return $data;
         }
 
-        if (isset($data['local_results'])) {
-            return $data['local_results'];
-        }
-
-        return array();
+        return isset($data['local_results']) ? $data['local_results'] : array();
     }
 }
 
@@ -406,66 +341,39 @@ function grs_handle_extract_reviews() {
         return;
     }
 
-    // Get parameters
-    $data_id = isset($_POST['data_id']) ? sanitize_text_field($_POST['data_id']) : '';
-    $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
-    $reviews_limit = isset($_POST['reviews_limit']) ? intval($_POST['reviews_limit']) : 100;
+    $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
+    $data_id = isset($_POST['data_id']) ? sanitize_text_field(wp_unslash($_POST['data_id'])) : '';
 
     if (empty($place_id) && empty($data_id)) {
         wp_send_json_error('Place ID is required');
         return;
     }
 
-    $api = new GRS_SerpAPI();
+    // The form's live values may differ from saved settings when the admin
+    // picked a new place on the map without hitting Save. Persist them first
+    // so sync, admin table, and frontend all key off the same place.
+    $options = get_option('grs_settings', array());
+    $saved_place = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';
 
-    // Resolve data_id: use what was sent, or derive from place_id
-    if (!empty($place_id) && empty($data_id)) {
-        if (strpos($place_id, '0x') === 0) {
-            // place_id is already a data_id
-            $data_id = $place_id;
-        } else {
-            // Convert Place ID (ChIJ...) -> Data ID (0x...) via SerpAPI
-            $data_id = $api->get_data_id_from_place_id($place_id);
+    if (!empty($place_id) && $place_id !== $saved_place) {
+        $options['grs_place_id'] = $place_id;
+        $options['grs_data_id'] = $data_id;
+        update_option('grs_settings', $options);
+        delete_option('grs_business_info');
 
-            if (is_wp_error($data_id)) {
-                wp_send_json_error('Could not find business: ' . $data_id->get_error_message());
-                return;
-            }
-
-            // Save both to settings and clear stale cached data
-            $options = get_option('grs_settings', array());
-            $options['grs_data_id'] = $data_id;
-            $options['grs_place_id'] = $place_id;
-            // Clear old business info so it gets refreshed from new place
-            unset($options['grs_business_name']);
-            unset($options['grs_business_rating']);
-            unset($options['grs_total_reviews']);
-            update_option('grs_settings', $options);
-            // Clear cached Google review count from previous place
-            delete_transient('grs_google_total_reviews');
+        if ($saved_place !== '') {
+            require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
+            GRS_Database::delete_all_reviews($saved_place);
         }
     }
 
-    // Extract reviews
-    $response = $api->extract_all_reviews($data_id, $reviews_limit);
+    require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+    $result = GRS_Sync::run('manual');
 
-    if (is_wp_error($response)) {
-        wp_send_json_error($response->get_error_message());
-        return;
-    }
-
-    // Process and save reviews (use place_id for DB storage)
-    $storage_id = !empty($place_id) ? $place_id : $data_id;
-    $results = $api->process_reviews_response($response, $storage_id);
-
-    if ($results['success']) {
-        // Add saved business info to response for debugging
-        $saved_options = get_option('grs_settings', array());
-        $results['saved_business_name'] = $saved_options['grs_business_name'] ?? 'NOT SAVED';
-        $results['raw_place_info_keys'] = isset($response['place_info']) ? array_keys($response['place_info']) : 'NO place_info';
-        wp_send_json_success($results);
+    if ($result['status'] === 'ok') {
+        wp_send_json_success($result);
     } else {
-        wp_send_json_error($results['error'] ?: 'Unknown error occurred');
+        wp_send_json_error($result['message']);
     }
 }
 
@@ -473,7 +381,13 @@ function grs_handle_extract_reviews() {
 add_action('wp_ajax_grs_test_api', 'grs_test_api_connection');
 function grs_test_api_connection() {
     if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
+        wp_send_json_error('Unauthorized');
+        return;
+    }
+
+    if (!check_ajax_referer('grs_nonce', 'nonce', false)) {
+        wp_send_json_error('Security check failed');
+        return;
     }
 
     $api = new GRS_SerpAPI();
@@ -485,10 +399,10 @@ function grs_test_api_connection() {
     }
 
     wp_send_json_success(array(
-        'account_email' => $account['account_email'] ?? 'N/A',
-        'plan' => $account['plan_name'] ?? 'N/A',
-        'searches_per_month' => $account['plan_searches_left'] ?? 'N/A',
-        'total_searches_left' => $account['total_searches_left'] ?? 'N/A'
+        'account_email' => isset($account['account_email']) ? $account['account_email'] : 'N/A',
+        'plan' => isset($account['plan_name']) ? $account['plan_name'] : 'N/A',
+        'searches_per_month' => isset($account['plan_searches_left']) ? $account['plan_searches_left'] : 'N/A',
+        'total_searches_left' => isset($account['total_searches_left']) ? $account['total_searches_left'] : 'N/A',
     ));
 }
 
@@ -505,7 +419,7 @@ function grs_handle_search_place() {
         return;
     }
 
-    $query = isset($_POST['query']) ? sanitize_text_field($_POST['query']) : '';
+    $query = isset($_POST['query']) ? sanitize_text_field(wp_unslash($_POST['query'])) : '';
 
     if (empty($query)) {
         wp_send_json_error('Search query is required');
