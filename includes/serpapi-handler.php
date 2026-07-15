@@ -393,9 +393,6 @@ class GRS_SerpAPI {
     }
 }
 
-// Backwards compatibility alias
-class_alias('GRS_SerpAPI', 'GRS_Outscraper_API');
-
 // AJAX handlers for admin panel
 add_action('wp_ajax_grs_extract_reviews', 'grs_handle_extract_reviews');
 function grs_handle_extract_reviews() {
