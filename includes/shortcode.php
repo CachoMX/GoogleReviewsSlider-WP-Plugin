@@ -37,8 +37,8 @@ function grs_direct_enqueue_assets() {
     wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true);
     // NO swiper CSS from CDN — it overrides other carousels. All styles are in grs-direct.css scoped to .grs-swiper
 
-    // Custom styles and scripts
-    $version = get_option('grs_version', '2.0') . '.' . time();
+    // Version by plugin version only; a time()-based suffix defeats browser/proxy/CDN caching.
+    $version = defined('GRS_VERSION') ? GRS_VERSION : get_option('grs_version', '2.0');
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array(), $version);
     wp_enqueue_script('grs-swiper-init', plugins_url('js/swiper-init.js', dirname(__FILE__)), array('swiper-js'), $version, true);
 }
