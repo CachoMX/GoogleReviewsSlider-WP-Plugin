@@ -83,17 +83,28 @@ class GRS_Sync {
     }
 
     /**
+     * Queue a near-immediate one-shot sync and clear the monthly guard
+     * so that run('cron') will not skip it. WP dedupes single events
+     * within 10 minutes of an existing identical event; in that case
+     * the recurring event fires soon anyway, so scheduling
+     * unconditionally is safe.
+     */
+    public static function request_resync() {
+        $status = get_option('grs_sync_status', array());
+        unset($status['last_success']);
+        update_option('grs_sync_status', $status, false);
+        wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
+    }
+
+    /**
      * Reset sync bookkeeping and queue a near-immediate one-shot sync.
-     * Called on place changes: the fresh place has zero stored rows, so
-     * the monthly guard (keyed to the old place's last_success) must not
-     * defer its first sync, and visitors should not wait for the admin
-     * to remember Sync Now.
+     * Called on place changes: the whole status is deleted (not just
+     * last_success) so the new place also escapes the manual rate limit,
+     * and visitors should not wait for the admin to remember Sync Now.
      */
     public static function reset_for_new_place() {
         delete_option('grs_sync_status');
-        if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
-            wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
-        }
+        wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
     }
 
     /**
@@ -128,16 +139,22 @@ class GRS_Sync {
     private static function acquire_lock() {
         global $wpdb;
 
+        // A contended acquire makes these INSERTs hit the UNIQUE KEY by
+        // design; without suppression each miss writes duplicate-entry
+        // noise to debug.log.
+        $previous = $wpdb->suppress_errors(true);
+
         // add_option() is get_option()+ODKU under the hood and can hand the
         // lock to two racing processes; a plain INSERT against the
         // option_name UNIQUE KEY cannot.
-        $acquired = @$wpdb->query($wpdb->prepare(
+        $acquired = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
             self::LOCK_OPTION,
             (string) time()
         ));
 
         if ($acquired) {
+            $wpdb->suppress_errors($previous);
             wp_cache_delete(self::LOCK_OPTION, 'options');
             return true;
         }
@@ -153,11 +170,13 @@ class GRS_Sync {
             (string) (time() - self::LOCK_TTL)
         ));
 
-        $acquired = @$wpdb->query($wpdb->prepare(
+        $acquired = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
             self::LOCK_OPTION,
             (string) time()
         ));
+
+        $wpdb->suppress_errors($previous);
 
         if ($acquired) {
             wp_cache_delete(self::LOCK_OPTION, 'options');
@@ -214,17 +233,17 @@ class GRS_Sync {
             return self::finish($trigger, 'error', __('The API returned no usable reviews. Existing reviews were kept.', 'google-reviews-slider'), 0);
         }
 
-        // Business identity updates only on syncs that will actually
-        // replace reviews, so a rejected sync cannot desync the two.
-        if (!empty($result['place_info'])) {
-            self::store_business_info($result['place_info']);
-        }
-
         $saved = GRS_Database::replace_reviews($place_id, $result['reviews']);
 
         if (is_wp_error($saved)) {
             GRS_Database::log_extraction($place_id, 'failed', 0, $saved->get_error_message());
             return self::finish($trigger, 'error', $saved->get_error_message(), 0);
+        }
+
+        // Business identity updates only after the review set actually
+        // replaced, so a failed swap cannot desync the two.
+        if (!empty($result['place_info'])) {
+            self::store_business_info($result['place_info']);
         }
 
         GRS_Database::log_extraction($place_id, 'success', $saved);

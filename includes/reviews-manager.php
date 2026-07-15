@@ -125,7 +125,7 @@ class GRS_Reviews_Manager {
                     <tbody>
                         <?php foreach ($extraction_history as $entry): ?>
                         <tr>
-                            <td><?php echo date('Y-m-d H:i:s', strtotime($entry['extraction_date'])); ?></td>
+                            <td><?php echo esc_html(wp_date('Y-m-d H:i:s', strtotime($entry['extraction_date']))); ?></td>
                             <td>
                                 <span class="status-badge status-<?php echo esc_attr($entry['status']); ?>">
                                     <?php echo esc_html(ucfirst($entry['status'])); ?>
@@ -595,7 +595,10 @@ function grs_handle_get_reviews_table() {
     
     check_ajax_referer('grs_nonce', 'nonce');
 
-    $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
+    // Configured place only: a POSTed place_id would let any admin request
+    // read rows stored under arbitrary keys (e.g. swap-internal ids).
+    $options = get_option('grs_settings', array());
+    $place_id = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';
     if ($place_id === '') {
         wp_send_json_error('Place ID is required');
     }
@@ -617,7 +620,10 @@ function grs_handle_delete_all_reviews() {
     
     check_ajax_referer('grs_nonce', 'nonce');
 
-    $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
+    // Configured place only: deletion keyed to a POSTed place_id could be
+    // pointed at the swap's synthetic staging ids mid-sync.
+    $options = get_option('grs_settings', array());
+    $place_id = isset($options['grs_place_id']) ? $options['grs_place_id'] : '';
     if ($place_id === '') {
         wp_send_json_error('Place ID is required');
     }

@@ -322,6 +322,10 @@ function grs_handle_extract_reviews() {
 
     $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
     $data_id = isset($_POST['data_id']) ? sanitize_text_field(wp_unslash($_POST['data_id'])) : '';
+    // '::' is reserved for the review swap's synthetic place_ids
+    // (see GRS_Database::replace_reviews); real Google ids never contain it.
+    $place_id = str_replace('::', '', $place_id);
+    $data_id = str_replace('::', '', $data_id);
 
     if (empty($place_id) && empty($data_id)) {
         wp_send_json_error('Place ID is required');

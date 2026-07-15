@@ -96,6 +96,11 @@ function grs_sanitize_settings($input) {
         'grs_data_id' => isset($input['grs_data_id']) ? sanitize_text_field($input['grs_data_id']) : '',
     );
 
+    // '::' is reserved for the review swap's synthetic place_ids
+    // (see GRS_Database::replace_reviews); real Google ids never contain it.
+    $clean['grs_place_id'] = str_replace('::', '', $clean['grs_place_id']);
+    $clean['grs_data_id'] = str_replace('::', '', $clean['grs_data_id']);
+
     $old_place = isset($old['grs_place_id']) ? $old['grs_place_id'] : '';
 
     if ($old_place !== '' && $clean['grs_place_id'] !== $old_place) {
@@ -109,6 +114,15 @@ function grs_sanitize_settings($input) {
         require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
         GRS_Sync::purge_page_caches();
         GRS_Sync::reset_for_new_place();
+    }
+
+    $old_rating = isset($old['grs_min_rating']) ? $old['grs_min_rating'] : '1';
+    if ($clean['grs_min_rating'] !== $old_rating && $clean['grs_place_id'] !== '') {
+        require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
+        GRS_Sync::purge_page_caches();
+        // Storage only holds reviews >= the old minimum; a re-fetch is
+        // needed before a lower minimum can actually show more reviews.
+        GRS_Sync::request_resync();
     }
 
     return $clean;
@@ -220,7 +234,7 @@ function grs_options_page() {
     <div class="wrap">
         <h1>
             Google Reviews Slider
-            <span class="grs-version-info">Version <?php echo GRS_VERSION; ?></span>
+            <span class="grs-version-info">Version <?php echo esc_html(GRS_VERSION); ?></span>
         </h1>
         
         <?php if (isset($_GET['settings-updated']) && $_GET['settings-updated']) : ?>
@@ -237,7 +251,7 @@ function grs_options_page() {
             
             <div class="grs-cache-section" style="margin-top: 20px;">
                 <h3>🔄 Plugin Updates</h3>
-                <p><strong>Current Version:</strong> <?php echo GRS_VERSION; ?></p>
+                <p><strong>Current Version:</strong> <?php echo esc_html(GRS_VERSION); ?></p>
                 <p>This plugin updates automatically from GitHub. Click below to check for updates immediately.</p>
                 <button type="button" id="check-updates-btn" class="button button-primary">
                     <span class="dashicons dashicons-update"></span> Check for Updates Now
@@ -306,16 +320,15 @@ function grs_options_page() {
         </script>
 
         <div class="grs-changelog">
-            <h3>🎉 What's New in Version 2.0</h3>
+            <h3>🎉 What's New in Version 2.8.0</h3>
             <ul>
-                <li>✅ <strong>SerpAPI Integration</strong> - Fast and reliable Google reviews extraction!</li>
-                <li>✅ <strong>Review Database</strong> - All reviews stored locally for instant access</li>
-                <li>✅ <strong>Review Manager</strong> - View, filter, and manage all your reviews</li>
-                <li>✅ <strong>Statistics Dashboard</strong> - See review counts by rating breakdown</li>
-                <li>✅ <strong>Extraction History</strong> - Track when and how many reviews were extracted</li>
-                <li>✅ <strong>Enhanced Filtering</strong> - Show only 5-star reviews with plenty to display</li>
-                <li>✅ <strong>API Usage Tracking</strong> - Monitor your SerpAPI usage</li>
-                <li>✅ <strong>Performance Boost</strong> - Database caching for lightning-fast loading</li>
+                <li>✅ Reliable monthly auto-sync with lock and last-success guard (never double-bills the API)</li>
+                <li>✅ Reviews are never deleted unless a fresh set is already stored (API failures keep the slider intact)</li>
+                <li>✅ Minimum Rating now applies to fetch, storage and display</li>
+                <li>✅ Hard cap of 10 newest reviews per place across request, storage and render</li>
+                <li>✅ Review dates on the slider always reflect the real review timestamp</li>
+                <li>✅ Page caches are purged automatically after every data change</li>
+                <li>✅ Per-request SerpAPI call log for spend auditing</li>
             </ul>
         </div>
 
@@ -488,6 +501,6 @@ function grs_options_page() {
     <?php
     // Add the Google Maps JavaScript API with Places library
     if ($api_key) {
-        wp_enqueue_script('google-maps', "https://maps.googleapis.com/maps/api/js?key={$api_key}&libraries=places&callback=initMap", array(), null, true);
+        wp_enqueue_script('google-maps', 'https://maps.googleapis.com/maps/api/js?key=' . urlencode($api_key) . '&libraries=places&callback=initMap', array(), null, true);
     }
 }

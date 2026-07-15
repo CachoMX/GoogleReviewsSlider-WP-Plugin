@@ -41,7 +41,8 @@ class GRS_Database {
         
         // No "IF NOT EXISTS": dbDelta would parse the table name as 'IF'
         // and then never diff/ALTER an existing table; dbDelta itself
-        // handles existence.
+        // handles existence. "PRIMARY KEY  (id)" needs two spaces or
+        // dbDelta's parser emits a spurious ALTER on every diff.
         $reviews_table = $wpdb->prefix . 'grs_reviews';
         $sql_reviews = "CREATE TABLE $reviews_table (
             id int(11) NOT NULL AUTO_INCREMENT,
@@ -67,7 +68,7 @@ class GRS_Database {
             response_from_owner_translated_by_google boolean DEFAULT 0,
             extracted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             source varchar(50) DEFAULT 'serpapi',
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             UNIQUE KEY unique_review (place_id, review_id),
             KEY idx_place_rating (place_id, rating),
             KEY idx_time (time)
@@ -83,7 +84,7 @@ class GRS_Database {
             status varchar(50) NOT NULL,
             error_message text,
             api_response_id varchar(255),
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY idx_place_date (place_id, extraction_date)
         ) $charset_collate;";
         
@@ -96,7 +97,7 @@ class GRS_Database {
             http_code smallint,
             status varchar(20) NOT NULL,
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
+            PRIMARY KEY  (id),
             KEY idx_created (created_at)
         ) $charset_collate;";
 
@@ -136,20 +137,23 @@ class GRS_Database {
     /**
      * Replace all stored reviews for a place via stage-then-swap.
      *
-     * Transactions are a no-op on MyISAM, so the statement ordering is
-     * what guarantees an API/insert failure cannot destroy existing
-     * reviews: new rows are staged under a synthetic place_id first, and
-     * old rows are deleted only once the staged set is confirmed in the
-     * table. The only loss window left is a crash between the old-row
-     * delete and the staging rename. The '::staging' suffix cannot
-     * collide with a real place_id because Google place IDs never
-     * contain '::'. Rows beyond MAX_REVIEWS_PER_PLACE are dropped
-     * (input is expected newest-first; a defensive sort keeps the
-     * invariant even if the caller forgot).
+     * Transactions are a no-op on MyISAM, so rename-out/rename-in with a
+     * per-step restore path is what guarantees no data loss: new rows are
+     * staged under a synthetic place_id, live rows are renamed to
+     * '::retiring' (not deleted), and each checked step that fails
+     * restores the retired set before erroring. The reserved suffixes
+     * '::staging'/'::retiring' cannot collide with real Google place IDs
+     * (they never contain '::'), and sanitization strips '::' from admin
+     * input. The unique_review key makes the promote step collide only if
+     * a real row survived retirement — which the retired-count check
+     * prevents. Rows beyond MAX_REVIEWS_PER_PLACE are dropped (input is
+     * expected newest-first; a defensive sort keeps the invariant even if
+     * the caller forgot).
      *
      * @param string $place_id
      * @param array  $reviews Mapped review rows (see GRS_SerpAPI::map_review()).
-     * @return int|WP_Error Number of reviews stored, or error when input is empty.
+     * @return int|WP_Error Number of reviews stored, or error when input is
+     *                      empty or the swap fails (stored set restored).
      */
     public static function replace_reviews($place_id, $reviews) {
         global $wpdb;
@@ -167,13 +171,16 @@ class GRS_Database {
 
         $table_name = $wpdb->prefix . 'grs_reviews';
         $staging = $place_id . '::staging';
+        $retiring = $place_id . '::retiring';
         $saved_count = 0;
 
         // Still helps on InnoDB; the swap ordering below is the real
         // guard on MyISAM.
         $wpdb->query('START TRANSACTION');
 
+        // Clear leftovers from any earlier crashed swap.
         $wpdb->delete($table_name, array('place_id' => $staging), array('%s'));
+        $wpdb->delete($table_name, array('place_id' => $retiring), array('%s'));
 
         foreach ($reviews as $review) {
             $result = $wpdb->insert($table_name, array(
@@ -211,16 +218,26 @@ class GRS_Database {
             return new WP_Error('insert_failed', 'All review inserts failed: ' . $insert_error);
         }
 
-        $wpdb->delete($table_name, array('place_id' => $place_id), array('%s'));
+        // Rename-out instead of delete: every failure below has a restore path.
+        $retired = $wpdb->update($table_name, array('place_id' => $retiring), array('place_id' => $place_id), array('%s'), array('%s'));
+        if ($retired === false) {
+            $wpdb->update($table_name, array('place_id' => $place_id), array('place_id' => $retiring), array('%s'), array('%s'));
+            $wpdb->delete($table_name, array('place_id' => $staging), array('%s'));
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('swap_failed', 'Could not retire existing reviews: ' . $wpdb->last_error);
+        }
 
-        $wpdb->update(
-            $table_name,
-            array('place_id' => $place_id),
-            array('place_id' => $staging),
-            array('%s'),
-            array('%s')
-        );
+        $promoted = $wpdb->update($table_name, array('place_id' => $place_id), array('place_id' => $staging), array('%s'), array('%s'));
+        if ($promoted === false || intval($promoted) === 0) {
+            // Restore the retired set; the staged copy is removed so a later
+            // sync cannot double-promote it.
+            $wpdb->update($table_name, array('place_id' => $place_id), array('place_id' => $retiring), array('%s'), array('%s'));
+            $wpdb->delete($table_name, array('place_id' => $staging), array('%s'));
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('swap_failed', 'Could not promote staged reviews: ' . $wpdb->last_error);
+        }
 
+        $wpdb->delete($table_name, array('place_id' => $retiring), array('%s'));
         $wpdb->query('COMMIT');
 
         return $saved_count;

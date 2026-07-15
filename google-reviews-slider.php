@@ -162,10 +162,12 @@ function grs_update_notice() {
     if (!current_user_can('manage_options')) {
         return;
     }
-    if (get_option('grs_notice_seen_version') === GRS_VERSION) {
+    // Per-user meta: an option would be consumed by whichever admin
+    // happens to load a page first, hiding the notice from everyone else.
+    if (get_user_meta(get_current_user_id(), 'grs_notice_seen_version', true) === GRS_VERSION) {
         return;
     }
-    update_option('grs_notice_seen_version', GRS_VERSION, false);
+    update_user_meta(get_current_user_id(), 'grs_notice_seen_version', GRS_VERSION);
 
     echo '<div class="notice notice-info is-dismissible">';
     echo '<p><strong>Google Reviews Slider</strong> ' . esc_html__('has been updated to version', 'google-reviews-slider') . ' ' . esc_html(GRS_VERSION) . '! ';
