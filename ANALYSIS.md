@@ -228,10 +228,44 @@ La query ya ordena `ORDER BY time DESC` ([database-handler.php:203-212](includes
 3. **Page cache del hosting**: CR-4 depende de la configuración del servidor (LiteSpeed/Hostinger/CDN). El gap de purga es real; su impacto exacto, no medible desde aquí.
 4. **H12 (doble avance de flechas)**: diagnóstico por lectura de código; requiere confirmación en navegador.
 
-## 10. Decisiones de diseño
+## 10. Decisiones de diseño (v2.8.0)
 
-Pendiente: esta sección se completa en la fase de implementación, junto con el rediseño del slider (SVG para estrellas, variables CSS para theming, jerarquía tipográfica, `prefers-reduced-motion`). El diseño actual depende de dashicons, muestra un "EXCELLENT" hardcodeado y no expone ningún punto de personalización.
+**Rediseño visual pospuesto por decisión del dueño del plugin** (2026-07-15): el CSS, el markup y la apariencia del slider quedan intactos para no alterar los sitios en producción. Las mejoras propuestas (estrellas SVG, variables CSS, jerarquía tipográfica, `prefers-reduced-motion`) quedan para una versión futura.
 
-## 11. Problemas sin resolver
+Decisiones de arquitectura tomadas, con su porqué:
 
-Pendiente: se documenta aquí lo que sobreviva al loop de QA.
+1. **`min_rating` manda de verdad** (decisión del dueño): gobierna fetch, almacenamiento y render. El filtro fijo de 5 estrellas desaparece.
+2. **Una sola fuente de verdad**: la tabla `wp_grs_reviews`. El render jamás llama APIs externas; refrescar datos es trabajo exclusivo de `GRS_Sync`.
+3. **Fecha visible derivada del timestamp en cada render** (`human_time_diff`), conservando el formato "X ago" que ya se mostraba. El string relativo de SerpAPI se guarda solo como referencia.
+4. **Reemplazo por rename-out/rename-in** (`::retiring`/`::staging`): cada paso verifica su retorno y tiene ruta de restauración. Las transacciones son no-op en MyISAM, así que el orden de statements es lo que garantiza no perder datos.
+5. **Cambio de Place ID sin borrado inmediato**: las reseñas del lugar anterior quedan como huérfanas (revertir es instantáneo) y se limpian solo tras el primer sync exitoso del lugar nuevo. El visitante ve un slider vacío breve en lugar de reseñas del negocio equivocado; un one-shot a +30 s y el flag `grs_resync_pending` acotan esa ventana.
+6. **Lock con token de dueño vía INSERT crudo en `wp_options`**: `add_option()` de core es get+ODKU y puede entregar el mutex a dos procesos; un INSERT plano contra la UNIQUE KEY no.
+7. **Reseñas sin fecha parseable se rechazan** en lugar de inventarles "ahora": un timestamp fabricado corrompe el orden newest-first, que es un requerimiento duro.
+8. **Guard mensual persistido + rate limit manual con reloj propio**: el cron doble no factura doble, y un intento de cron no bloquea el botón del admin.
+9. **Purga de page cache en cada mutación** (best-effort sobre LiteSpeed, WP Rocket, W3TC, Super Cache, SiteGround, Autoptimize + action `grs_reviews_synced` para el resto): sin esto, el admin ve datos frescos y el visitante HTML congelado.
+
+## 11. Reporte del loop de QA (5 iteraciones)
+
+Cada iteración corrió un subagente QA hostil sin contexto previo, seguido de un subagente Senior Dev aplicando los fixes. Resumen:
+
+| Iter. | Resultado | Hallazgos clave |
+|---|---|---|
+| 1 | 3 FAIL (sync, API-failure, cachés) | Lock no atómico (`add_option` es get+ODKU); cambio de lugar borraba reseñas antes de conocer el resultado del sync; purga de caché no cubría todas las mutaciones; migración se saltaba en reactivación |
+| 2 | 2 FAIL (place-change, cachés) | Cambio de Place ID por settings dejaba el slider vacío hasta 27 días (guard global); `replace_reviews` perdía todo en MyISAM; `IF NOT EXISTS` congelaba el esquema ante `dbDelta`; Enter en el buscador del mapa enviaba el form |
+| 3 | 1 FAIL (sync) | El one-shot de resync era código muerto (su guard siempre coincidía con el evento recurrente); el promote sin verificar podía vaciar la tabla reportando éxito; cambio de `min_rating` no purgaba ni re-sincronizaba |
+| 4 | 9/9 PASS | 1 medium residual: petición de resync tragada por un sync en vuelo; lows: lock sin owner-fence, self-heal parcial de tablas, primer Place ID sin sync inicial |
+| 5 | 9/9 PASS - **GO** | 1 medium residual (carrera de segundos en `grs_resync_pending`, corregida post-gate con comparación de timestamps) y lows acotados documentados abajo |
+
+Sin PHP local, la sintaxis se verificó por lectura exhaustiva en cada iteración (5 auditores independientes); ninguno encontró errores de sintaxis ni construcciones fuera de PHP 7.4.
+
+## 12. Problemas sin resolver
+
+1. **Rotación de llaves (crítico, acción del dueño)**: la SerpAPI key y el token viejo de Outscraper siguen en el historial público de git. Ningún cambio de código lo arregla; hay que rotarlas en serpapi.com y Outscraper.
+2. **"EXCELLENT" y 5 estrellas fijas en el resumen** ([shortcode.php](includes/shortcode.php)): el rating real está disponible y se ignora; un negocio de 3.2 estrellas se anuncia como excelente. Es cambio visual, pospuesto junto con el rediseño por decisión del dueño.
+3. **Ventanas residuales en MyISAM**: un crash del proceso entre retire y promote deja el slider vacío hasta el siguiente sync; la restauración tras un promote parcial puede chocar con la unique key. InnoDB (el default moderno) queda cubierto por la transacción.
+4. **`unique_review` mide 2040 bytes en utf8mb4**: en MySQL < 5.7 o hosts con MyISAM por default, el CREATE TABLE falla. Preexistente desde 2.x; solo afecta instalaciones nuevas en hosts muy viejos.
+5. **`wp_is_mobile()` en markup cacheable**: hoy nada consume esas clases, pero si algún CSS futuro las usa, el page cache servirá markup del dispositivo equivocado.
+6. **Carreras acotadas**: lectura-modificación-escritura de `grs_sync_status` sin atomicidad (peor caso: un rate-limit fallado); doble registro del evento recurrente si dos admins auto-sanan a la vez (el guard absorbe la ejecución extra).
+7. **Swiper desde CDN** (pinneado a 11.0.0): dependencia externa; si jsdelivr cae, las reseñas se apilan sin slider. Alternativa: empaquetarlo localmente.
+8. **i18n incompleta**: los strings nuevos usan `__()` con el text domain correcto, pero gran parte de la UI de admin sigue hardcodeada en inglés y no hay carpeta `languages/`.
+9. **WP-Cron depende de tráfico**: en sitios sin visitas el sync mensual y el one-shot se retrasan hasta la siguiente visita. Mitigación estándar: cron del sistema llamando `wp-cron.php`.

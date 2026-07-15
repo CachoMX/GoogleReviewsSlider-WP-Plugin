@@ -229,6 +229,7 @@ class GRS_Sync {
         require_once(GRS_PLUGIN_PATH . 'includes/serpapi-handler.php');
         require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
 
+        $started_at = time();
         self::record_attempt($trigger);
 
         $api = new GRS_SerpAPI();
@@ -280,7 +281,13 @@ class GRS_Sync {
         }
 
         GRS_Database::log_extraction($place_id, 'success', $saved);
-        delete_option('grs_resync_pending');
+        // A resync requested AFTER this sync began was filed against newer
+        // settings than the snapshot just synced; it must survive so the
+        // queued one-shot still runs.
+        $pending_since = intval(get_option('grs_resync_pending', 0));
+        if ($pending_since && $pending_since <= $started_at) {
+            delete_option('grs_resync_pending');
+        }
         // Only now is it safe to drop other places' rows: the new place's
         // set is stored, so a failed place switch can never zero the site.
         GRS_Database::delete_orphan_reviews($place_id);
@@ -327,8 +334,14 @@ class GRS_Sync {
 
     private static function finish($trigger, $outcome, $message, $saved, $success = false) {
         $status = get_option('grs_sync_status', array());
-        $status['last_attempt'] = isset($status['last_attempt']) ? $status['last_attempt'] : time();
-        $status['trigger'] = $trigger;
+        if (!isset($status['last_attempt'])) {
+            $status['last_attempt'] = time();
+            $status['trigger'] = $trigger;
+        } elseif ($outcome !== 'skipped' && $outcome !== 'locked' && $outcome !== 'rate_limited') {
+            // Guard outcomes keep the prior attempt's trigger label; a cron
+            // skip must not relabel an older manual attempt as "(cron)".
+            $status['trigger'] = $trigger;
+        }
         $status['status'] = $outcome;
         $status['message'] = $message;
         $status['reviews_saved'] = $saved;

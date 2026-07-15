@@ -1,178 +1,113 @@
 === Google Reviews Slider ===
 Contributors: carlosaragon
-Tags: google reviews, reviews slider, testimonials, google places, reviews carousel, outscraper, review management
-Requires at least: 5.0
+Tags: google reviews, reviews slider, testimonials, google places, reviews carousel, review management
+Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.7.11
+Stable tag: 2.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Display Google Reviews in an attractive slider format with advanced review extraction and management capabilities.
+Display your newest Google Reviews in a responsive slider, synced automatically once a month via SerpAPI.
 
 == Description ==
 
-Google Reviews Slider allows you to easily display your Google Reviews in a beautiful, responsive slider on your WordPress website. Now with powerful review extraction capabilities to ensure you always have enough reviews to display!
+Google Reviews Slider shows your business's Google reviews in a responsive Swiper-based slider. Reviews are fetched through SerpAPI, stored in your WordPress database, and refreshed automatically once a month, so your API credits stay predictable and your site never blocks on an external call.
 
-**🚀 NEW in Version 2.0: Advanced Review Extraction**
+**Key features:**
 
-No more limitations! Extract up to 500 reviews from Google using the integrated Outscraper API. Perfect for businesses that want to showcase only 5-star reviews or need more than the standard 5 reviews from Google's API.
-
-**Key Features:**
-
-* 🎯 **Easy Setup** - Simple configuration with Google Places API
-* 📱 **Responsive Design** - Looks great on all devices
-* ⚡ **Fast Performance** - Database-cached reviews for optimal loading speed
-* 🎨 **Customizable** - Multiple display options and styling
-* 🔍 **Smart Filtering** - Show only reviews above a certain rating
-* 📊 **Review Summary** - Display overall rating and review count
-* 🖼️ **Profile Photos** - Show reviewer profile pictures
-* 📅 **Recent Reviews** - Automatically sorted by date
-
-**🆕 New Premium Features (v2.0):**
-
-* 📥 **Extract 10-500 Reviews** - No more 5-review limitation!
-* 💾 **Database Storage** - All reviews stored locally for instant access
-* 📊 **Review Analytics** - See statistics by rating breakdown
-* 🔄 **Bulk Review Management** - Extract and manage hundreds of reviews
-* 📈 **Extraction History** - Track all your review extraction activities
-* 🎯 **Advanced Filtering** - Filter by rating to always show enough reviews
-* 🔌 **Outscraper Integration** - Powerful review extraction API included
-
-== What's New in Version 2.0 ==
-
-* ✅ **Outscraper API Integration** - Extract up to 500 reviews per location
-* ✅ **Review Database** - Store all reviews locally for better performance
-* ✅ **Review Manager Interface** - View, filter, and manage all your reviews
-* ✅ **Statistics Dashboard** - See review counts by rating
-* ✅ **Extraction History** - Track when and how many reviews were extracted
-* ✅ **Enhanced Filtering** - Ensure enough reviews display even with 5-star filter
-* ✅ **API Usage Tracking** - Monitor your Outscraper API usage
-* ✅ **Improved Admin UI** - Better organization and user experience
+* Automatic monthly sync with a lock and last-success guard: a double-fired cron can never sync (or bill) twice
+* Reviews are never deleted unless a fresh set is already stored - API failures keep your slider intact
+* Keeps the 10 newest reviews per location, ordered newest to oldest by the real review date
+* Minimum Rating setting applies to fetching, storage, and display
+* Manual "Sync Now" button with server-side rate limiting
+* Sync status panel: last/next sync, result, reviews stored, and API calls over the last 30 days
+* Per-request SerpAPI call log for spend auditing
+* Page caches (LiteSpeed, WP Rocket, W3TC, WP Super Cache, SiteGround, Autoptimize) are purged after every data change
+* Responsive slider with touch support, pagination, and navigation arrows
 
 == Installation ==
 
 1. Upload the plugin files to `/wp-content/plugins/google-reviews-slider/` or install through WordPress admin
-2. Activate the plugin through the 'Plugins' screen in WordPress
-3. Go to the Google Cloud Console and create a Google Places API key
-4. Navigate to 'Google Reviews' in your WordPress admin menu
-5. Enter your API key and find your business using the map search
-6. **NEW:** Click "Extract Reviews" to fetch 10-500 reviews from Google
-7. Use the shortcode `[google_reviews_slider]` on any page or post
+2. Activate the plugin through the 'Plugins' screen
+3. Go to 'Google Reviews' in your admin menu
+4. Enter your SerpAPI key (or define the `GRS_SERPAPI_KEY` constant in wp-config.php)
+5. Optionally enter a Google Places API key to enable the business-finder map, then pick your business
+6. Click "Sync Now" to fetch your reviews
+7. Add the shortcode `[google_reviews_slider]` to any page or post
 
 == Frequently Asked Questions ==
 
 = Do I need a Google API key? =
 
-Yes, you need a Google Places API key for the initial setup and place search. The plugin provides instructions on how to get one for free.
+Only for the business-finder map that helps you locate your Place ID. Reviews themselves are fetched via SerpAPI.
 
-= What is Outscraper and do I need an API key for it? =
+= Do I need a SerpAPI key? =
 
-Outscraper is a service that allows extraction of more Google reviews. The plugin comes with a pre-configured API token, so you don't need to set up your own unless you want to use your personal account.
+Yes. Create one at serpapi.com and paste it in the settings, or define `GRS_SERPAPI_KEY` in wp-config.php to keep it out of the database.
 
-= How many reviews can I extract? =
+= How many reviews are stored? =
 
-You can extract between 10 to 500 reviews per location. The default Google API only provides 5 reviews, but with Outscraper integration, you can get much more.
+The 10 newest reviews that meet your Minimum Rating and have text. The cap keeps API spend low and the slider fast.
 
 = How often are reviews updated? =
 
-Reviews are stored in your database permanently. You can manually extract new reviews anytime using the "Extract Reviews" button in the admin panel.
+Automatically once every 30 days, or whenever you click "Sync Now" (rate-limited to avoid accidental double spending).
+
+= What happens if the API fails? =
+
+Nothing is deleted. Your existing reviews keep displaying, and the failure is recorded in the sync status panel and extraction history.
 
 = Can I show only 5-star reviews? =
 
-Yes! With the ability to extract up to 500 reviews, you can filter to show only 5-star reviews and still have plenty to display in your slider.
+Yes - set Minimum Rating to "5 Stars only". The setting applies to both fetching and display.
 
 = Is the slider responsive? =
 
-Yes, the slider automatically adjusts to different screen sizes and works perfectly on mobile devices.
+Yes. It uses Swiper with per-breakpoint slide counts you can control from the shortcode: `slides_desktop`, `slides_tablet`, `slides_mobile`, plus `autoplay`, `arrows`, `show_summary`, and `min_rating`.
 
-= Where are reviews stored? =
+== Shortcode ==
 
-Reviews are stored in your WordPress database, ensuring fast loading times and no repeated API calls.
+`[google_reviews_slider show_summary="true" autoplay="true" autoplay_speed="4000" slides_desktop="3" slides_tablet="2" slides_mobile="1" arrows="true" min_rating="4"]`
 
-= Can I see review statistics? =
-
-Yes! The new Review Manager shows you total reviews, average rating, and breakdown by star rating.
-
-== Screenshots ==
-
-1. Admin configuration page with map search
-2. NEW: Review Manager with statistics dashboard
-3. NEW: Review extraction interface with options
-4. NEW: Extraction history and review table
-5. Reviews slider on frontend with summary box
-6. Mobile responsive design
-7. Review filtering options
+All attributes are optional.
 
 == Changelog ==
 
+= 2.8.0 =
+* Fixed the backend/frontend desync: the frontend now reads only from the reviews table, the same data the admin sees
+* Review dates on the slider always reflect the real review timestamp instead of a frozen relative string
+* Reviews are strictly ordered newest to oldest by review date, enforced in SQL
+* Monthly auto-sync with lock and last-success guard; a double-fired cron cannot double-bill
+* Hard cap of 10 newest reviews per place across request, storage, and render
+* Minimum Rating now governs fetching, storage, and display
+* Reviews are never deleted unless a validated fresh set is already stored
+* Page caches are purged automatically after every data change
+* Per-request SerpAPI call log for spend auditing; sync status panel in admin
+* Removed the hardcoded API key from source (rotate your keys - see CHANGELOG.md)
+* Removed the legacy Google Places pipeline, dead Outscraper code, and Slick assets
+* Fixed navigation arrows advancing two slides per click, the missing default avatar, and the uninstall routine
+
 = 2.7.11 =
-* CRITICAL FIX: Self-healing database tables. If the `grs_reviews` table is missing, it is now recreated automatically on the next page load instead of falling into a "Table doesn't exist" loop on every request.
-* CRITICAL FIX: Circuit breaker on the front-end reviews fetch. The plugin now attempts an external API fetch at most once every 15 minutes per place, even on failure, preventing PHP worker exhaustion and server-wide overload when the table or upstream API is unavailable.
-* Corrected the plugin version number, which had been stuck at 2.7.8 across releases.
+* Self-healing database tables and a circuit breaker on the front-end fetch
 
 = 2.0 =
-* Major Update: Outscraper API integration for extracting 10-500 reviews
-* Added database storage for all reviews
-* New Review Manager interface in admin
-* Review statistics dashboard
-* Extraction history tracking
-* Enhanced filtering to ensure enough reviews display
-* API usage monitoring
-* Improved review data handling
-* Better support for 5-star only displays
-* Performance improvements with database caching
+* Review extraction service integration, database storage, review manager, statistics
 
-= 1.3 =
-* Fixed mobile display issues
-* Improved Avada theme compatibility
-* Enhanced review text visibility
-* Better responsive behavior
-
-= 1.2 =
-* Fixed "Read More" functionality
-* Added visible pagination dots
-* Improved navigation arrows
-* Better layout handling
-* Enhanced responsive design
-
-= 1.1 =
-* Added cache management with manual clear option
-* Improved error handling and user feedback
-* Enhanced admin interface with status indicators
-* Performance optimizations for faster loading
-* Better WordPress compatibility and code standards
-* Updated documentation and help text
-* Added version tracking and update notifications
-
-= 1.0 =
-* Initial release
-* Basic Google Reviews slider functionality
-* Responsive design
-* Configurable minimum rating filter
-* Google Places API integration
-* Review caching for performance
+Older versions: see the RELEASE-v*.md files in the repository.
 
 == Upgrade Notice ==
 
-= 2.0 =
-Major update! Now extract up to 500 reviews with Outscraper integration. Includes database storage, review manager, and statistics. Highly recommended for all users, especially those wanting to display only 5-star reviews.
+= 2.8.0 =
+Major data-pipeline rework: reliable monthly sync, 10-review cap, real newest-first ordering, and no more stale frontend. Enter your own SerpAPI key after upgrading - the plugin no longer ships one.
 
 == Support ==
 
 For support and feature requests, please visit: https://carlosaragon.online/contact/
 
-== Credits ==
-
-* Uses Slick Carousel for slider functionality
-* Google Places API for initial review data
-* Outscraper API for advanced review extraction
-* WordPress best practices and coding standards
-
 == Privacy Policy ==
 
-This plugin stores Google reviews data in your WordPress database. No personal data is sent to external servers except for:
-- Google Places API calls (for place search and initial reviews)
-- Outscraper API calls (for extended review extraction)
-
-All data is stored locally on your WordPress installation.
+This plugin stores Google review data in your WordPress database. External calls are limited to:
+- SerpAPI (review fetching, at most a few requests per month plus manual syncs)
+- Google Maps JavaScript API (admin-only business-finder map, if you provide a key)
+- GitHub (plugin update checks)
