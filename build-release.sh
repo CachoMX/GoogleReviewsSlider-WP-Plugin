@@ -62,6 +62,10 @@ rsync -av --progress \
     --exclude='.idea' \
     --exclude='*.log' \
     --exclude='build-exclude.txt' \
+    --exclude='tests' \
+    --exclude='docs' \
+    --exclude='.claude' \
+    --exclude='.DS_Store' \
     ./ "${BUILD_DIR}/"
 
 # Create ZIP with files at root (WordPress will create the folder)
