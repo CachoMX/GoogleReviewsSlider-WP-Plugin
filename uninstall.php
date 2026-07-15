@@ -14,6 +14,7 @@ delete_option('grs_db_version');
 delete_option('grs_business_info');
 delete_option('grs_sync_status');
 delete_option('grs_sync_lock');
+delete_option('grs_resync_pending');
 delete_option('grs_was_active_before_update');
 
 global $wpdb;

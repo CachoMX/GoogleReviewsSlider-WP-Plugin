@@ -16,8 +16,17 @@ class GRS_Sync {
      * Mutex option name. Acquired via a raw INSERT against wp_options'
      * option_name UNIQUE KEY (see acquire_lock()): the row either inserts
      * or it doesn't, so two processes can never both hold the lock.
+     * The value is "timestamp:token"; release_lock() deletes only its own
+     * token, so a sync that stalls past LOCK_TTL and finishes after a
+     * takeover cannot free the taker's fresh lock.
      */
     const LOCK_OPTION = 'grs_sync_lock';
+
+    /**
+     * Full "timestamp:token" lock value this process wrote, or '' when it
+     * holds no lock. Fences release_lock() to the caller's own lock.
+     */
+    private static $lock_token = '';
 
     /**
      * Seconds after which a crashed sync's lock is considered stale.
@@ -53,17 +62,15 @@ class GRS_Sync {
 
         // Cheap pre-check only; a competing sync may finish between this
         // read and the lock, so it cannot be trusted on its own.
+        // Guard outcomes go through finish() so the admin status badge can
+        // show skipped/rate_limited/locked, not only ok/error.
         $guard = self::check_interval($trigger);
         if ($guard !== true) {
-            return $guard;
+            return self::finish($trigger, $guard['status'], $guard['message'], 0);
         }
 
         if (!self::acquire_lock()) {
-            return array(
-                'status' => 'locked',
-                'message' => __('Another sync is already running.', 'google-reviews-slider'),
-                'reviews_saved' => 0,
-            );
+            return self::finish($trigger, 'locked', __('Another sync is already running.', 'google-reviews-slider'), 0);
         }
 
         try {
@@ -71,7 +78,7 @@ class GRS_Sync {
             // last_success/last_attempt between here and do_sync.
             $guard = self::check_interval($trigger);
             if ($guard !== true) {
-                return $guard;
+                return self::finish($trigger, $guard['status'], $guard['message'], 0);
             }
 
             $result = self::do_sync($place_id, $data_id, $options, $trigger);
@@ -93,6 +100,10 @@ class GRS_Sync {
         $status = get_option('grs_sync_status', array());
         unset($status['last_success']);
         update_option('grs_sync_status', $status, false);
+        // Durable flag, not just the last_success clear above: an in-flight
+        // sync's finish() would re-arm the monthly guard and swallow the
+        // request. Cleared only in do_sync()'s success path.
+        update_option('grs_resync_pending', time(), false);
         wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
     }
 
@@ -104,6 +115,10 @@ class GRS_Sync {
      */
     public static function reset_for_new_place() {
         delete_option('grs_sync_status');
+        // Durable flag, not just the status delete above: an in-flight
+        // sync's finish() would re-arm the monthly guard and swallow the
+        // request. Cleared only in do_sync()'s success path.
+        update_option('grs_resync_pending', time(), false);
         wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
     }
 
@@ -117,7 +132,9 @@ class GRS_Sync {
         // seconds earlier cannot block Sync Now with a misleading message.
         $last_manual_attempt = isset($status['last_manual_attempt']) ? intval($status['last_manual_attempt']) : 0;
 
-        if ($trigger === 'cron' && $last_success && (time() - $last_success) < self::CRON_MIN_INTERVAL) {
+        // A pending resync request overrides the monthly guard; otherwise a
+        // place/min-rating change inside the 27-day window would be skipped.
+        if ($trigger === 'cron' && !get_option('grs_resync_pending') && $last_success && (time() - $last_success) < self::CRON_MIN_INTERVAL) {
             return array(
                 'status' => 'skipped',
                 'message' => __('Cron sync skipped: last successful sync is under a month old.', 'google-reviews-slider'),
@@ -139,6 +156,8 @@ class GRS_Sync {
     private static function acquire_lock() {
         global $wpdb;
 
+        $lock_value = time() . ':' . uniqid('', true);
+
         // A contended acquire makes these INSERTs hit the UNIQUE KEY by
         // design; without suppression each miss writes duplicate-entry
         // noise to debug.log.
@@ -150,36 +169,38 @@ class GRS_Sync {
         $acquired = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
             self::LOCK_OPTION,
-            (string) time()
+            $lock_value
         ));
 
         if ($acquired) {
             $wpdb->suppress_errors($previous);
             wp_cache_delete(self::LOCK_OPTION, 'options');
+            self::$lock_token = $lock_value;
             return true;
         }
 
         // Conditional DELETE frees only a stale lock, never a fresh one a
         // competing process just wrote, then a single retry races cleanly.
-        // option_value holds time() as a string; Unix timestamps keep the
-        // same digit count until 2286, so lexicographic compare equals
-        // numeric compare here.
+        // The timestamp prefix of "timestamp:token" must be compared
+        // numerically (SUBSTRING_INDEX also handles legacy bare-timestamp
+        // values left by pre-token versions).
         $wpdb->query($wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value < %s",
+            "DELETE FROM {$wpdb->options} WHERE option_name = %s AND CAST(SUBSTRING_INDEX(option_value, ':', 1) AS UNSIGNED) < %d",
             self::LOCK_OPTION,
-            (string) (time() - self::LOCK_TTL)
+            time() - self::LOCK_TTL
         ));
 
         $acquired = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
             self::LOCK_OPTION,
-            (string) time()
+            $lock_value
         ));
 
         $wpdb->suppress_errors($previous);
 
         if ($acquired) {
             wp_cache_delete(self::LOCK_OPTION, 'options');
+            self::$lock_token = $lock_value;
             return true;
         }
 
@@ -188,7 +209,19 @@ class GRS_Sync {
 
     private static function release_lock() {
         global $wpdb;
-        $wpdb->delete($wpdb->options, array('option_name' => self::LOCK_OPTION));
+
+        if (self::$lock_token === '') {
+            return;
+        }
+
+        // Matching on the full "timestamp:token" value keeps a sync that
+        // outlived LOCK_TTL from deleting a successor's fresh lock.
+        $wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s",
+            self::LOCK_OPTION,
+            self::$lock_token
+        ));
+        self::$lock_token = '';
         wp_cache_delete(self::LOCK_OPTION, 'options');
     }
 
@@ -247,6 +280,7 @@ class GRS_Sync {
         }
 
         GRS_Database::log_extraction($place_id, 'success', $saved);
+        delete_option('grs_resync_pending');
         // Only now is it safe to drop other places' rows: the new place's
         // set is stored, so a failed place switch can never zero the site.
         GRS_Database::delete_orphan_reviews($place_id);
@@ -339,11 +373,46 @@ class GRS_Sync {
     }
 
     /**
-     * Data for the admin status panel.
+     * Re-arm the monthly recurrence if it has been lost. A pending
+     * one-shot satisfies wp_next_scheduled() but dies after one firing;
+     * the recurring event must exist independently or auto-refresh
+     * silently stops. Scanning the whole cron array (instead of
+     * wp_get_scheduled_event, which returns only the earliest event)
+     * avoids double-scheduling when a one-shot sorts before a live
+     * recurring event.
+     */
+    private static function ensure_recurring_scheduled() {
+        if (!function_exists('_get_cron_array')) {
+            return;
+        }
+
+        $crons = _get_cron_array();
+        if (is_array($crons)) {
+            foreach ($crons as $hooks) {
+                if (empty($hooks['grs_auto_refresh_reviews'])) {
+                    continue;
+                }
+                foreach ($hooks['grs_auto_refresh_reviews'] as $event) {
+                    if (!empty($event['schedule'])) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
+    }
+
+    /**
+     * Data for the admin status panel. Also self-heals a missing monthly
+     * recurrence: admin page views are frequent enough and the check is
+     * cheap.
      *
      * @return array {last_success, last_attempt, status, message, reviews_saved, next_cron, api_calls_30d}
      */
     public static function get_status() {
+        self::ensure_recurring_scheduled();
+
         $status = get_option('grs_sync_status', array());
 
         return array(

@@ -54,6 +54,13 @@ function grs_direct_display($atts) {
         'arrows' => 'true'
     ), $atts, 'google_reviews_slider');
 
+    // Normalized to 'true'/'false' strings so 'TRUE', '1' and 'yes' all
+    // satisfy the === 'true' markup comparisons below and the JS's
+    // data-autoplay !== 'false' check.
+    foreach (array('show_summary', 'autoplay', 'arrows') as $flag) {
+        $atts[$flag] = filter_var($atts[$flag], FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+    }
+
     // Widgets, templates, and builder modules bypass the head-time
     // post_content scan; late enqueue prints styles in the footer, an
     // acceptable fallback so the markup is never dead.

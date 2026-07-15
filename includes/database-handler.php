@@ -115,7 +115,9 @@ class GRS_Database {
      * front-end would otherwise hit a "Table doesn't exist" error on every
      * request and fall through to an external API fetch + bulk save on each
      * page load, exhausting PHP workers and taking the whole account down.
-     * This runs at most one cheap SHOW TABLES per request.
+     * A missing history or API-log table silently kills logging, so all
+     * three are checked. This runs at most three cheap SHOW TABLES per
+     * request, only on the first call.
      */
     public static function ensure_tables() {
         static $checked = false;
@@ -126,11 +128,18 @@ class GRS_Database {
         $checked = true;
 
         global $wpdb;
-        $reviews_table = $wpdb->prefix . 'grs_reviews';
-        $found = $wpdb->get_var("SHOW TABLES LIKE '" . esc_sql($reviews_table) . "'");
+        $tables = array(
+            $wpdb->prefix . 'grs_reviews',
+            $wpdb->prefix . 'grs_extraction_history',
+            $wpdb->prefix . 'grs_api_log',
+        );
 
-        if ($found !== $reviews_table) {
-            self::create_tables();
+        foreach ($tables as $table) {
+            $found = $wpdb->get_var("SHOW TABLES LIKE '" . esc_sql($table) . "'");
+            if ($found !== $table) {
+                self::create_tables();
+                return;
+            }
         }
     }
 

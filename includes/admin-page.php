@@ -81,9 +81,10 @@ add_action('admin_init', 'grs_settings_init');
 /**
  * Sanitize the settings array and reconcile place changes: a new Place ID
  * invalidates the derived data_id and the stored business identity, and
- * queues a near-immediate sync. Until that sync completes, visitors may
- * briefly see no slider for the new place; the old place's rows are kept
- * only so reverting to it is instant.
+ * queues a near-immediate sync — including the very first Place ID save,
+ * so onboarding does not depend on the admin pressing Sync Now. Until
+ * that sync completes, visitors may briefly see no slider for the new
+ * place; the old place's rows are kept only so reverting to it is instant.
  */
 function grs_sanitize_settings($input) {
     $old = get_option('grs_settings', array());
@@ -103,14 +104,15 @@ function grs_sanitize_settings($input) {
 
     $old_place = isset($old['grs_place_id']) ? $old['grs_place_id'] : '';
 
-    if ($old_place !== '' && $clean['grs_place_id'] !== $old_place) {
+    if ($clean['grs_place_id'] !== $old_place && $clean['grs_place_id'] !== '') {
         if (!empty($old['grs_data_id']) && $clean['grs_data_id'] === $old['grs_data_id']) {
             $clean['grs_data_id'] = '';
         }
         delete_option('grs_business_info');
 
         // Cached pages keep serving the old place's reviews even if the
-        // next sync fails, so they must die at place-change time.
+        // next sync fails, so they must die at place-change time. On the
+        // first configuration the purge is harmless.
         require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
         GRS_Sync::purge_page_caches();
         GRS_Sync::reset_for_new_place();
@@ -138,7 +140,7 @@ function grs_api_key_render() {
     ?>
     <input type='text' name='grs_settings[grs_api_key]' style="width: 400px;" 
            value='<?php echo isset($options['grs_api_key']) ? esc_attr($options['grs_api_key']) : ''; ?>'>
-    <p class="description">Enter your Google Places API key. <a href="https://console.cloud.google.com" target="_blank">Get API Key</a></p>
+    <p class="description">Used only for the business-finder map below. Reviews are fetched via SerpAPI. <a href="https://console.cloud.google.com" target="_blank">Get API Key</a></p>
     <?php
 }
 
@@ -285,7 +287,7 @@ function grs_options_page() {
         <h2>How to Use the Google Reviews Slider</h2>
         <ol>
             <li>
-                <strong>Enter your API Key:</strong> This key is required to fetch reviews from Google.
+                <strong>Enter your API Key:</strong> This Google key powers the map search below for finding your Place ID.
                 <ul>
                     <li>Go to the <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
                     <li>Create a new project or select an existing one</li>
