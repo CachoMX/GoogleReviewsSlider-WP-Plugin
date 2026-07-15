@@ -3,8 +3,6 @@
  * Optimized for iOS/Safari compatibility
  */
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('GRS: Initializing Swiper...');
-
     // Initialize all sliders
     document.querySelectorAll('.grs-swiper').forEach(function(el) {
         var autoplay = el.dataset.autoplay !== 'false';
@@ -53,11 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 dynamicBullets: true
             },
 
-            // Navigation (buttons are outside swiper, in parent container)
-            navigation: {
-                nextEl: el.closest('.grs-direct-slider-container').querySelector('.grs-nav-next'),
-                prevEl: el.closest('.grs-direct-slider-container').querySelector('.grs-nav-prev')
-            },
+            // Nav buttons live outside the swiper element and are wired up
+            // manually below; passing them to Swiper's navigation module too
+            // would bind a second click handler and advance two slides per click.
 
             // Responsive breakpoints
             breakpoints: {
@@ -95,7 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // iOS WebKit fix: manual nav handlers as fallback for external buttons
+        // touchend calls preventDefault, which suppresses the synthetic click
+        // that follows a tap, so mobile taps advance exactly one slide.
         var container = el.closest('.grs-direct-slider-container');
         var prevBtn = container ? container.querySelector('.grs-nav-prev') : null;
         var nextBtn = container ? container.querySelector('.grs-nav-next') : null;
@@ -125,8 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 swiper.slideNext();
             });
         }
-
-        console.log('GRS: Swiper initialized successfully');
     });
 
     // Read more/less functionality
