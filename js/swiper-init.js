@@ -10,12 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
         var slidesDesktop = parseInt(el.dataset.slidesDesktop) || 3;
         var slidesTablet = parseInt(el.dataset.slidesTablet) || 2;
         var slidesMobile = parseInt(el.dataset.slidesMobile) || 1;
+        // Swiper 11 disables loop with a console warning when
+        // slides <= slidesPerView; skip it up front in that case.
+        var slideCount = el.querySelectorAll('.swiper-slide').length;
 
         var swiper = new Swiper(el, {
             // Core settings
             slidesPerView: slidesMobile,
             spaceBetween: 20,
-            loop: true,
+            loop: slideCount > slidesDesktop,
             grabCursor: true,
 
             // iOS/Safari critical settings

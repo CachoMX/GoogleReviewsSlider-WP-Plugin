@@ -346,6 +346,9 @@ function grs_handle_extract_reviews() {
         // old place must die now, though, even if the sync below fails.
         require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
         GRS_Sync::purge_page_caches();
+        // Also clears last_attempt, so the 2-minute manual rate limit
+        // cannot block the admin's very next click after a place switch.
+        GRS_Sync::reset_for_new_place();
     }
 
     require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');

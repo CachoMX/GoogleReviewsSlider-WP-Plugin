@@ -65,8 +65,15 @@ class GRS_Reviews_Manager {
                     'skipped' => array('Skipped', '#0c5460', '#d1ecf1'),
                 );
                 $badge = isset($status_labels[$sync['status']]) ? $status_labels[$sync['status']] : null;
+                // The frontend's "Based on X reviews" reads grs_business_info,
+                // so the admin must be able to see what it holds.
+                $business_info = get_option('grs_business_info', array());
+                $biz_name = !empty($business_info['name']) ? $business_info['name'] : '—';
+                $biz_rating = !empty($business_info['rating']) ? $business_info['rating'] . '★' : '—';
+                $biz_total = !empty($business_info['total_reviews']) ? intval($business_info['total_reviews']) . ' reviews on Google' : '— reviews on Google';
                 ?>
                 <div style="background:#f0f8ff;padding:10px;border-radius:4px;margin-bottom:15px;border-left:4px solid #0073aa;">
+                    <strong>Business (from last sync):</strong> <?php echo esc_html($biz_name); ?> &mdash; <?php echo esc_html($biz_rating); ?> &mdash; <?php echo esc_html($biz_total); ?><br>
                     <strong>Auto-sync:</strong> once every 30 days<br>
                     <strong>Next scheduled sync:</strong> <?php echo $sync['next_cron'] ? esc_html(wp_date('Y-m-d H:i', $sync['next_cron'])) : 'Not scheduled'; ?><br>
                     <strong>Last successful sync:</strong> <?php echo $sync['last_success'] ? esc_html(wp_date('Y-m-d H:i', $sync['last_success'])) : 'Never'; ?><br>
@@ -121,10 +128,10 @@ class GRS_Reviews_Manager {
                             <td><?php echo date('Y-m-d H:i:s', strtotime($entry['extraction_date'])); ?></td>
                             <td>
                                 <span class="status-badge status-<?php echo esc_attr($entry['status']); ?>">
-                                    <?php echo ucfirst($entry['status']); ?>
+                                    <?php echo esc_html(ucfirst($entry['status'])); ?>
                                 </span>
                             </td>
-                            <td><?php echo $entry['reviews_extracted']; ?></td>
+                            <td><?php echo intval($entry['reviews_extracted']); ?></td>
                             <td><?php echo esc_html($entry['error_message'] ?: '-'); ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -150,11 +157,7 @@ class GRS_Reviews_Manager {
                     <button type="button" id="refresh-reviews-btn" class="button">
                         <span class="dashicons dashicons-update"></span> Refresh
                     </button>
-                    
-                    <button type="button" id="remove-duplicates-btn" class="button">
-                        <span class="dashicons dashicons-trash"></span> Remove Duplicates
-                    </button>
-                    
+
                     <button type="button" id="delete-all-reviews-btn" class="button" style="background: #dc3545; color: white; border-color: #dc3545;">
                         <span class="dashicons dashicons-warning"></span> Delete All Reviews
                     </button>
@@ -471,41 +474,6 @@ class GRS_Reviews_Manager {
                 $(this).text(cell.hasClass('review-text-full') ? 'Show less' : 'Read more');
             });
             
-            // Remove duplicates
-            $('#remove-duplicates-btn').on('click', function() {
-                var button = $(this);
-                
-                if (confirm('This will remove duplicate reviews. Continue?')) {
-                    button.prop('disabled', true);
-                    button.html('<span class="dashicons dashicons-update spinning"></span> Removing duplicates...');
-                    
-                    $.ajax({
-                        url: ajaxurl,
-                        type: 'POST',
-                        data: {
-                            action: 'grs_remove_duplicates',
-                            place_id: placeId,
-                            nonce: '<?php echo wp_create_nonce("grs_nonce"); ?>'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                alert('Removed ' + response.data + ' duplicate reviews.');
-                                location.reload();
-                            } else {
-                                alert('Error removing duplicates: ' + response.data);
-                            }
-                        },
-                        error: function() {
-                            alert('Error removing duplicates.');
-                        },
-                        complete: function() {
-                            button.prop('disabled', false);
-                            button.html('<span class="dashicons dashicons-trash"></span> Remove Duplicates');
-                        }
-                    });
-                }
-            });
-            
             // Delete all reviews
             $('#delete-all-reviews-btn').on('click', function() {
                 var button = $(this);
@@ -626,8 +594,11 @@ function grs_handle_get_reviews_table() {
     }
     
     check_ajax_referer('grs_nonce', 'nonce');
-    
-    $place_id = sanitize_text_field($_POST['place_id']);
+
+    $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
+    if ($place_id === '') {
+        wp_send_json_error('Place ID is required');
+    }
     $min_rating = isset($_POST['min_rating']) ? intval($_POST['min_rating']) : 0;
     
     ob_start();
@@ -635,23 +606,6 @@ function grs_handle_get_reviews_table() {
     $html = ob_get_clean();
     
     wp_send_json_success($html);
-}
-
-// AJAX handler for removing duplicates
-add_action('wp_ajax_grs_remove_duplicates', 'grs_handle_remove_duplicates');
-function grs_handle_remove_duplicates() {
-    if (!current_user_can('manage_options')) {
-        wp_die('Unauthorized');
-    }
-    
-    check_ajax_referer('grs_nonce', 'nonce');
-    
-    $place_id = sanitize_text_field($_POST['place_id']);
-    
-    require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
-    $removed = GRS_Database::remove_duplicates($place_id);
-    
-    wp_send_json_success($removed);
 }
 
 // AJAX handler for deleting all reviews
@@ -662,9 +616,12 @@ function grs_handle_delete_all_reviews() {
     }
     
     check_ajax_referer('grs_nonce', 'nonce');
-    
-    $place_id = sanitize_text_field($_POST['place_id']);
-    
+
+    $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
+    if ($place_id === '') {
+        wp_send_json_error('Place ID is required');
+    }
+
     require_once(GRS_PLUGIN_PATH . 'includes/database-handler.php');
     require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
     $deleted = GRS_Database::delete_all_reviews($place_id);

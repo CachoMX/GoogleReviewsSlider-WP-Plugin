@@ -80,10 +80,10 @@ add_action('admin_init', 'grs_settings_init');
 
 /**
  * Sanitize the settings array and reconcile place changes: a new Place ID
- * invalidates the derived data_id and the stored business identity. The
- * previous place's reviews are kept and cleaned up as orphans only after
- * the next successful sync (GRS_Sync), so a failed sync can never leave
- * the site with zero reviews.
+ * invalidates the derived data_id and the stored business identity, and
+ * queues a near-immediate sync. Until that sync completes, visitors may
+ * briefly see no slider for the new place; the old place's rows are kept
+ * only so reverting to it is instant.
  */
 function grs_sanitize_settings($input) {
     $old = get_option('grs_settings', array());
@@ -108,6 +108,7 @@ function grs_sanitize_settings($input) {
         // next sync fails, so they must die at place-change time.
         require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
         GRS_Sync::purge_page_caches();
+        GRS_Sync::reset_for_new_place();
     }
 
     return $clean;
@@ -421,6 +422,14 @@ function grs_options_page() {
 
         const input = document.getElementById("pac-input");
         const searchBox = new google.maps.places.SearchBox(input);
+
+        // Enter would submit the surrounding options.php form mid-edit,
+        // saving a half-updated place config.
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+            }
+        });
 
         map.addListener("bounds_changed", () => {
             searchBox.setBounds(map.getBounds());

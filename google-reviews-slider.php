@@ -147,7 +147,9 @@ function grs_upgrade_to_280() {
     // Existing installs sit on the generic 'monthly' schedule, whose
     // interval another plugin controls; move them to grs_monthly.
     wp_clear_scheduled_hook('grs_auto_refresh_reviews');
-    wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
+    if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
+        wp_schedule_event(time() + DAY_IN_SECONDS, 'grs_monthly', 'grs_auto_refresh_reviews');
+    }
 
     // Cached pages still carry pre-2.8.0 markup and stale review data.
     require_once(GRS_PLUGIN_PATH . 'includes/sync-handler.php');
@@ -156,6 +158,10 @@ function grs_upgrade_to_280() {
 
 add_action('admin_notices', 'grs_update_notice');
 function grs_update_notice() {
+    // Non-admins must neither see nor consume the one-shot notice.
+    if (!current_user_can('manage_options')) {
+        return;
+    }
     if (get_option('grs_notice_seen_version') === GRS_VERSION) {
         return;
     }

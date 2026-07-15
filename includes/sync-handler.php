@@ -83,12 +83,28 @@ class GRS_Sync {
     }
 
     /**
+     * Reset sync bookkeeping and queue a near-immediate one-shot sync.
+     * Called on place changes: the fresh place has zero stored rows, so
+     * the monthly guard (keyed to the old place's last_success) must not
+     * defer its first sync, and visitors should not wait for the admin
+     * to remember Sync Now.
+     */
+    public static function reset_for_new_place() {
+        delete_option('grs_sync_status');
+        if (!wp_next_scheduled('grs_auto_refresh_reviews')) {
+            wp_schedule_single_event(time() + 30, 'grs_auto_refresh_reviews');
+        }
+    }
+
+    /**
      * @return true|array True to proceed, or a rate_limited result array.
      */
     private static function check_interval($trigger) {
         $status = get_option('grs_sync_status', array());
         $last_success = isset($status['last_success']) ? intval($status['last_success']) : 0;
-        $last_attempt = isset($status['last_attempt']) ? intval($status['last_attempt']) : 0;
+        // Manual rate limiting keys off its own clock so a cron attempt
+        // seconds earlier cannot block Sync Now with a misleading message.
+        $last_manual_attempt = isset($status['last_manual_attempt']) ? intval($status['last_manual_attempt']) : 0;
 
         if ($trigger === 'cron' && $last_success && (time() - $last_success) < self::CRON_MIN_INTERVAL) {
             return array(
@@ -98,7 +114,7 @@ class GRS_Sync {
             );
         }
 
-        if ($trigger === 'manual' && $last_attempt && (time() - $last_attempt) < self::MANUAL_MIN_INTERVAL) {
+        if ($trigger === 'manual' && $last_manual_attempt && (time() - $last_manual_attempt) < self::MANUAL_MIN_INTERVAL) {
             return array(
                 'status' => 'rate_limited',
                 'message' => __('Please wait a couple of minutes between manual syncs.', 'google-reviews-slider'),
@@ -174,8 +190,11 @@ class GRS_Sync {
                     GRS_Database::log_extraction($place_id, 'failed', 0, $data_id->get_error_message());
                     return self::finish($trigger, 'error', $data_id->get_error_message(), 0);
                 }
-                $options['grs_data_id'] = $data_id;
-                update_option('grs_settings', $options);
+                // Re-read before write-back: the $options snapshot from
+                // run() start would clobber a concurrent admin save.
+                $fresh_options = get_option('grs_settings', array());
+                $fresh_options['grs_data_id'] = $data_id;
+                update_option('grs_settings', $fresh_options);
             }
         }
 
@@ -188,15 +207,17 @@ class GRS_Sync {
             return self::finish($trigger, 'error', $result->get_error_message(), 0);
         }
 
-        if (!empty($result['place_info'])) {
-            self::store_business_info($result['place_info']);
-        }
-
         if (empty($result['reviews'])) {
             // Existing reviews stay untouched: an empty API answer must
             // never blank out the live slider.
             GRS_Database::log_extraction($place_id, 'failed', 0, 'API returned no usable reviews');
             return self::finish($trigger, 'error', __('The API returned no usable reviews. Existing reviews were kept.', 'google-reviews-slider'), 0);
+        }
+
+        // Business identity updates only on syncs that will actually
+        // replace reviews, so a rejected sync cannot desync the two.
+        if (!empty($result['place_info'])) {
+            self::store_business_info($result['place_info']);
         }
 
         $saved = GRS_Database::replace_reviews($place_id, $result['reviews']);
@@ -244,6 +265,9 @@ class GRS_Sync {
     private static function record_attempt($trigger) {
         $status = get_option('grs_sync_status', array());
         $status['last_attempt'] = time();
+        if ($trigger === 'manual') {
+            $status['last_manual_attempt'] = time();
+        }
         $status['trigger'] = $trigger;
         update_option('grs_sync_status', $status, false);
     }

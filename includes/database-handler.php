@@ -39,9 +39,11 @@ class GRS_Database {
         
         $charset_collate = $wpdb->get_charset_collate();
         
-        // Reviews table
+        // No "IF NOT EXISTS": dbDelta would parse the table name as 'IF'
+        // and then never diff/ALTER an existing table; dbDelta itself
+        // handles existence.
         $reviews_table = $wpdb->prefix . 'grs_reviews';
-        $sql_reviews = "CREATE TABLE IF NOT EXISTS $reviews_table (
+        $sql_reviews = "CREATE TABLE $reviews_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             place_id varchar(255) NOT NULL,
             review_id varchar(255) NOT NULL,
@@ -73,7 +75,7 @@ class GRS_Database {
         
         // Extraction history table
         $history_table = $wpdb->prefix . 'grs_extraction_history';
-        $sql_history = "CREATE TABLE IF NOT EXISTS $history_table (
+        $sql_history = "CREATE TABLE $history_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             place_id varchar(255) NOT NULL,
             extraction_date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -87,7 +89,7 @@ class GRS_Database {
         
         // API call audit table: one row per billable SerpAPI request
         $api_log_table = $wpdb->prefix . 'grs_api_log';
-        $sql_api_log = "CREATE TABLE IF NOT EXISTS $api_log_table (
+        $sql_api_log = "CREATE TABLE $api_log_table (
             id int(11) NOT NULL AUTO_INCREMENT,
             context varchar(50) NOT NULL,
             place_id varchar(255),
@@ -132,13 +134,18 @@ class GRS_Database {
     }
 
     /**
-     * Atomically replace all stored reviews for a place.
+     * Replace all stored reviews for a place via stage-then-swap.
      *
-     * Deletes old rows only after the caller has a validated, non-empty
-     * replacement set, so an upstream API failure can never leave the
-     * place without reviews. Rows beyond MAX_REVIEWS_PER_PLACE are
-     * dropped (input is expected newest-first; a defensive sort keeps
-     * the invariant even if the caller forgot).
+     * Transactions are a no-op on MyISAM, so the statement ordering is
+     * what guarantees an API/insert failure cannot destroy existing
+     * reviews: new rows are staged under a synthetic place_id first, and
+     * old rows are deleted only once the staged set is confirmed in the
+     * table. The only loss window left is a crash between the old-row
+     * delete and the staging rename. The '::staging' suffix cannot
+     * collide with a real place_id because Google place IDs never
+     * contain '::'. Rows beyond MAX_REVIEWS_PER_PLACE are dropped
+     * (input is expected newest-first; a defensive sort keeps the
+     * invariant even if the caller forgot).
      *
      * @param string $place_id
      * @param array  $reviews Mapped review rows (see GRS_SerpAPI::map_review()).
@@ -159,16 +166,18 @@ class GRS_Database {
         $reviews = array_slice($reviews, 0, self::MAX_REVIEWS_PER_PLACE);
 
         $table_name = $wpdb->prefix . 'grs_reviews';
+        $staging = $place_id . '::staging';
         $saved_count = 0;
 
-        // No-op on MyISAM; on InnoDB it makes delete+insert atomic.
+        // Still helps on InnoDB; the swap ordering below is the real
+        // guard on MyISAM.
         $wpdb->query('START TRANSACTION');
 
-        $wpdb->delete($table_name, array('place_id' => $place_id), array('%s'));
+        $wpdb->delete($table_name, array('place_id' => $staging), array('%s'));
 
         foreach ($reviews as $review) {
             $result = $wpdb->insert($table_name, array(
-                'place_id' => $place_id,
+                'place_id' => $staging,
                 'review_id' => $review['review_id'],
                 'author_name' => !empty($review['author_name']) ? $review['author_name'] : 'Anonymous',
                 'author_url' => isset($review['author_url']) ? $review['author_url'] : null,
@@ -195,9 +204,22 @@ class GRS_Database {
         }
 
         if ($saved_count === 0) {
+            // Old rows were never touched; only staging leftovers to clean.
+            $insert_error = $wpdb->last_error;
+            $wpdb->delete($table_name, array('place_id' => $staging), array('%s'));
             $wpdb->query('ROLLBACK');
-            return new WP_Error('insert_failed', 'All review inserts failed: ' . $wpdb->last_error);
+            return new WP_Error('insert_failed', 'All review inserts failed: ' . $insert_error);
         }
+
+        $wpdb->delete($table_name, array('place_id' => $place_id), array('%s'));
+
+        $wpdb->update(
+            $table_name,
+            array('place_id' => $place_id),
+            array('place_id' => $staging),
+            array('%s'),
+            array('%s')
+        );
 
         $wpdb->query('COMMIT');
 
@@ -440,42 +462,6 @@ class GRS_Database {
         return $wpdb->get_results($query, ARRAY_A);
     }
 
-    /**
-     * Remove duplicate reviews
-     * 
-     * @param string $place_id
-     * @return int Number of duplicates removed
-     */
-    public static function remove_duplicates($place_id = null) {
-        global $wpdb;
-        
-        $table_name = $wpdb->prefix . 'grs_reviews';
-        
-        // Find and delete duplicates, keeping the one with the lowest ID
-        if ($place_id) {
-            $query = "
-                DELETE r1 FROM $table_name r1
-                INNER JOIN $table_name r2 
-                WHERE r1.id > r2.id 
-                AND r1.place_id = r2.place_id 
-                AND r1.review_id = r2.review_id
-                AND r1.place_id = %s
-            ";
-            
-            return $wpdb->query($wpdb->prepare($query, $place_id));
-        } else {
-            $query = "
-                DELETE r1 FROM $table_name r1
-                INNER JOIN $table_name r2 
-                WHERE r1.id > r2.id 
-                AND r1.place_id = r2.place_id 
-                AND r1.review_id = r2.review_id
-            ";
-            
-            return $wpdb->query($query);
-        }
-    }
-    
     /**
      * Delete all reviews for a place
      * 

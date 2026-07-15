@@ -33,7 +33,9 @@ function grs_direct_enqueue_assets($force = false) {
 
     // Swiper JS only; its CDN CSS would override other carousels (e.g.
     // Elementor). All slider styles live in grs-direct.css scoped to .grs-swiper.
-    wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true);
+    // Pinned to the exact declared version; a floating @11 would drift
+    // to untested releases.
+    wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11.0.0/swiper-bundle.min.js', array(), '11.0.0', true);
 
     $version = defined('GRS_VERSION') ? GRS_VERSION : '2.0';
     wp_enqueue_style('grs-direct-styles', plugins_url('css/grs-direct.css', dirname(__FILE__)), array(), $version);
@@ -219,8 +221,7 @@ function grs_direct_display($atts) {
                                 </div>
 
                                 <div class="grs-direct-content">
-                                    <div class="grs-direct-text <?php echo $needs_truncation ? 'truncated' : ''; ?>"
-                                         data-full-text="<?php echo esc_attr($review_text); ?>">
+                                    <div class="grs-direct-text <?php echo $needs_truncation ? 'truncated' : ''; ?>">
                                         <?php echo esc_html($review_text); ?>
                                     </div>
 
