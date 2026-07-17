@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.8.1 - 2026-07-17
+
+### Fixed
+
+- **Critical: site-wide fatal during the 2.8.0 upgrade on sites running WP
+  Rocket.** The upgrade migration runs at `plugins_loaded`, where WP Rocket
+  is only half-initialized: `rocket_clean_domain()` already exists but the
+  `rocket_is_importing()` it calls does not, so purging the page cache
+  crashed every request until the plugin was reactivated. Cache purges now
+  wait for `wp_loaded` (all plugins fully loaded), and every third-party
+  purge call is isolated in its own try/catch - a broken cache plugin costs
+  a log line, never the site. Reported by Marco on easthollandvet.net.
+
 ## 2.8.0 - 2026-07-15
 
 Full rework of the data pipeline. Root-cause fixes for the backend/frontend

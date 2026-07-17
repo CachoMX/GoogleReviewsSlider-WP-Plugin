@@ -361,27 +361,69 @@ class GRS_Sync {
      * Best-effort purge of the page caches that serve the shortcode's
      * server-rendered HTML. Without this, the admin sees fresh data
      * while visitors keep getting the cached page (BUG 1 / CR-4).
+     *
+     * Runs no earlier than wp_loaded: during plugins_loaded (where the
+     * upgrade migration fires) a cache plugin can be half-initialized -
+     * WP Rocket's rocket_clean_domain() exists before the
+     * rocket_is_importing() it calls, and invoking it then fatals the
+     * whole site.
      */
     public static function purge_page_caches() {
-        do_action('grs_reviews_synced');
+        if (!did_action('wp_loaded')) {
+            add_action('wp_loaded', array(__CLASS__, 'execute_cache_purge'));
+            return;
+        }
+        self::execute_cache_purge();
+    }
 
-        if (has_action('litespeed_purge_all')) {
-            do_action('litespeed_purge_all');
-        }
-        if (function_exists('rocket_clean_domain')) {
-            rocket_clean_domain();
-        }
-        if (function_exists('w3tc_flush_posts')) {
-            w3tc_flush_posts();
-        }
-        if (function_exists('wp_cache_clear_cache')) {
-            wp_cache_clear_cache();
-        }
-        if (function_exists('sg_cachepress_purge_cache')) {
-            sg_cachepress_purge_cache();
-        }
-        if (class_exists('autoptimizeCache') && method_exists('autoptimizeCache', 'clearall')) {
-            autoptimizeCache::clearall();
+    /**
+     * Public only so add_action can reach it; call purge_page_caches().
+     */
+    public static function execute_cache_purge() {
+        self::call_quietly(function () {
+            do_action('grs_reviews_synced');
+        });
+        self::call_quietly(function () {
+            if (has_action('litespeed_purge_all')) {
+                do_action('litespeed_purge_all');
+            }
+        });
+        self::call_quietly(function () {
+            if (function_exists('rocket_clean_domain')) {
+                rocket_clean_domain();
+            }
+        });
+        self::call_quietly(function () {
+            if (function_exists('w3tc_flush_posts')) {
+                w3tc_flush_posts();
+            }
+        });
+        self::call_quietly(function () {
+            if (function_exists('wp_cache_clear_cache')) {
+                wp_cache_clear_cache();
+            }
+        });
+        self::call_quietly(function () {
+            if (function_exists('sg_cachepress_purge_cache')) {
+                sg_cachepress_purge_cache();
+            }
+        });
+        self::call_quietly(function () {
+            if (class_exists('autoptimizeCache') && method_exists('autoptimizeCache', 'clearall')) {
+                autoptimizeCache::clearall();
+            }
+        });
+    }
+
+    /**
+     * A purge is best-effort by definition: a broken or half-loaded
+     * third-party cache plugin must cost us a log line, never the site.
+     */
+    private static function call_quietly($callback) {
+        try {
+            $callback();
+        } catch (\Throwable $e) {
+            error_log('GRS: cache purge step failed: ' . $e->getMessage());
         }
     }
 

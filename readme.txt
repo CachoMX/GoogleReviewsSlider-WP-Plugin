@@ -4,7 +4,7 @@ Tags: google reviews, reviews slider, testimonials, google places, reviews carou
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.8.0
+Stable tag: 2.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,10 @@ Yes. It uses Swiper with per-breakpoint slide counts you can control from the sh
 All attributes are optional.
 
 == Changelog ==
+
+= 2.8.1 =
+* Critical fix: purging page caches during the upgrade routine could fatal the whole site when a cache plugin (e.g. WP Rocket) was only half-loaded at plugins_loaded time
+* Cache purges now wait until all plugins finish loading, and every third-party purge call is isolated so a broken cache plugin can never take the site down
 
 = 2.8.0 =
 * Fixed the backend/frontend desync: the frontend now reads only from the reviews table, the same data the admin sees
