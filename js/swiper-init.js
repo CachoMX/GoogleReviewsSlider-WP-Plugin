@@ -48,10 +48,14 @@ document.addEventListener('DOMContentLoaded', function() {
             } : false,
 
             // Pagination
+            // dynamicBullets injects an inline width + translateX on the
+            // .swiper-pagination element, which fights the CSS centering and
+            // shoves the dots off to one side. Keep it off so the bullets stay
+            // centered via plain text-align:center.
             pagination: {
                 el: el.querySelector('.swiper-pagination'),
                 clickable: true,
-                dynamicBullets: true
+                dynamicBullets: false
             },
 
             // Nav buttons live outside the swiper element and are wired up

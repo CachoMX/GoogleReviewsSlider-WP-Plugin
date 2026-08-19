@@ -4,7 +4,7 @@ Tags: google reviews, reviews slider, testimonials, google places, reviews carou
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 2.8.1
+Stable tag: 2.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,10 @@ Yes. It uses Swiper with per-breakpoint slide counts you can control from the sh
 All attributes are optional.
 
 == Changelog ==
+
+= 2.8.2 =
+* Fixed pagination dots not being centered (Swiper `dynamicBullets` injected an inline width/transform that fought the CSS centering — dots could sit far off to one side); bullets now stay centered via `dynamicBullets:false` + `text-align:center`
+* Hardened the navigation arrows so no theme focus/hover rule can render the arrow icon white on click; added a clean, consistent focus ring
 
 = 2.8.1 =
 * Critical fix: purging page caches during the upgrade routine could fatal the whole site when a cache plugin (e.g. WP Rocket) was only half-loaded at plugins_loaded time
