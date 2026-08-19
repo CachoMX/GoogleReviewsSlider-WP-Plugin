@@ -268,8 +268,11 @@
 .grs-swiper .swiper-pagination {
     position: absolute;
     bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    width: 100%;
+    transform: none;
+    text-align: center;
     z-index: 10;
 }
 
@@ -470,7 +473,10 @@
     position: relative;
     bottom: auto;
     left: auto;
+    right: auto;
     transform: none;
+    width: 100%;
+    text-align: center;
     margin: 20px auto 0;
 }
 
@@ -480,7 +486,10 @@
     position: relative;
     bottom: auto;
     left: auto;
+    right: auto;
     transform: none;
+    width: 100%;
+    text-align: center;
     margin: 20px auto 0;
 }
 
@@ -490,6 +499,36 @@
     position: relative;
     bottom: auto;
     left: auto;
+    right: auto;
     transform: none;
+    width: 100%;
+    text-align: center;
     margin: 20px auto 0;
+}
+
+/* Navigation arrow hardening — pin the icon color in every state so no theme
+   focus/hover rule can turn the arrow white (reported "arrow goes white on click"),
+   and replace the theme's heavy default focus ring with a clean one. */
+.grs-nav-button,
+.grs-nav-button:link,
+.grs-nav-button:visited {
+    background-color: #ffffff;
+    color: #666;
+}
+.grs-nav-button svg,
+.grs-nav-button path {
+    fill: currentColor !important;
+    color: inherit !important;
+}
+.grs-nav-button:hover,
+.grs-nav-button:focus,
+.grs-nav-button:active {
+    color: #555 !important;
+    background-color: #f0f0f0 !important;
+}
+.grs-nav-button:focus,
+.grs-nav-button:focus-visible {
+    outline: 2px solid #b8b8b8 !important;
+    outline-offset: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
 }
